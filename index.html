@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insiqt CRM</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ─── Login ─── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>Insiqt CRM</h1>
+    <p class="sub">Logg inn for å se salgspipeline</p>
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">E-post</label>
+        <input type="email" id="loginEmail" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="loginPassword">Passord</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn block" id="loginBtn">Logg inn</button>
+      <div class="error-msg" id="loginError"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ─── App ─── -->
+<div id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">I</div>
+      <div>
+        <div class="brand-title">Insiqt CRM</div>
+        <div class="brand-sub">Salgspipeline</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <a class="link-chip" href="https://cal.com/insiqt/30min" target="_blank" rel="noopener">📅 Book demo</a>
+      <a class="link-chip" href="mailto:contact@insiqt.ai">✉️ contact@insiqt.ai</a>
+      <span class="user-chip" id="userEmail"></span>
+      <button class="btn ghost" id="logoutBtn">Logg ut</button>
+    </div>
+  </header>
+
+  <div class="dashboard" id="dashboard"></div>
+
+  <div class="board-wrap">
+    <div class="board" id="board"></div>
+  </div>
+
+  <button class="btn fab" id="newLeadBtn">+ Ny lead</button>
+</div>
+
+<!-- ─── Modal ─── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Ny lead</h2>
+      <button class="close-x" id="closeModalBtn">&times;</button>
+    </div>
+
+    <form id="leadForm">
+      <div class="field">
+        <label for="companyName">Firmanavn</label>
+        <input type="text" id="companyName" required>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="contactName">Kontaktperson</label>
+          <input type="text" id="contactName">
+        </div>
+        <div class="field">
+          <label for="vehicleCount">Antall kjøretøy</label>
+          <input type="number" id="vehicleCount" min="0">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="contactEmail">E-post</label>
+          <input type="email" id="contactEmail">
+        </div>
+        <div class="field">
+          <label for="contactPhone">Telefon</label>
+          <input type="tel" id="contactPhone">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="leadStatus">Status</label>
+          <select id="leadStatus">
+            <option value="ny">Ny lead</option>
+            <option value="kontaktet">Kontaktet</option>
+            <option value="demo_booket">Demo booket</option>
+            <option value="tilbud_sendt">Tilbud sendt</option>
+            <option value="kunde">Kunde</option>
+            <option value="tapt">Tapt</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="leadSource">Kilde</label>
+          <select id="leadSource">
+            <option value="">Velg kilde…</option>
+            <option value="kald_kontakt">Kald kontakt</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="demo_forespørsel">Demo-forespørsel</option>
+            <option value="referanse">Referanse</option>
+            <option value="annet">Annet</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="followupDate">Neste oppfølgingsdato</label>
+        <input type="date" id="followupDate">
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn">Lagre</button>
+        <button type="button" class="btn danger" id="deleteLeadBtn" style="display:none">Slett</button>
+        <button type="button" class="btn ghost" id="closeModalBtn2" onclick="document.getElementById('modalOverlay').classList.remove('active')">Avbryt</button>
+      </div>
+    </form>
+
+    <div id="activitySection" style="display:none">
+      <div class="divider"></div>
+      <h2 style="font-size:0.95rem;margin-bottom:12px;">Aktivitetslogg</h2>
+      <div class="activity-log" id="activityList"></div>
+      <div class="add-activity-row">
+        <select id="activityType">
+          <option value="call">Samtale</option>
+          <option value="email">E-post</option>
+          <option value="meeting">Møte</option>
+          <option value="demo">Demo</option>
+          <option value="note">Notat</option>
+        </select>
+        <input type="text" id="activityNote" placeholder="F.eks. «Ringte, ikke svar»">
+        <button type="button" class="btn" id="addActivityBtn">Legg til</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
