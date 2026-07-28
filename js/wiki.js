@@ -11,6 +11,7 @@ const state = {
   expanded: new Set(),
   currentPageId: null,
   editing: false,
+  tableDraftRows: null,
 };
 
 function childrenOf(id) {
@@ -33,6 +34,11 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d + 'T00:00:00').toLocaleDateString('nb-NO', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 // ─── Data loading ──────────────────────────────────────────────
@@ -114,9 +120,45 @@ function openPage(id) {
   if (!page) return;
   state.currentPageId = id;
   state.editing = false;
+  state.tableDraftRows = null;
   showView('wiki');
   renderSidebarTree();
   renderWikiPage();
+}
+
+function headerHtml(page) {
+  const crumbs = breadcrumbFor(page)
+    .map((p) => `<span>${escapeHtml(p.icon || '📄')} ${escapeHtml(p.title)}</span>`)
+    .join('<span class="crumb-sep">/</span>');
+
+  const titleHtml = state.editing
+    ? `<div class="wiki-edit-head">
+        <input type="text" id="wikiIconInput" class="wiki-icon-input" value="${escapeHtml(page.icon || '📄')}" maxlength="4">
+        <input type="text" id="wikiTitleInput" class="wiki-title-input" value="${escapeHtml(page.title)}">
+      </div>`
+    : `<h1><span>${escapeHtml(page.icon || '📄')}</span> ${escapeHtml(page.title)}</h1>`;
+
+  return `
+    <div class="wiki-breadcrumb">${crumbs}</div>
+    <div class="wiki-header">
+      ${titleHtml}
+      <div class="wiki-actions">
+        <button class="btn ghost" id="wikiEditBtn">${state.editing ? 'Avbryt' : 'Rediger'}</button>
+        ${state.editing ? '<button class="btn" id="wikiSaveBtn">Lagre</button>' : ''}
+        <button class="btn ghost" id="wikiNewChildBtn">+ Ny underside</button>
+        ${page.is_teamspace_root ? '' : '<button class="btn danger" id="wikiDeleteBtn">Slett</button>'}
+      </div>
+    </div>
+  `;
+}
+
+function childrenHtml(page) {
+  const kids = childrenOf(page.id);
+  if (!kids.length) return '';
+  return `<div class="wiki-children">
+    <div class="wiki-children-label">Undersider</div>
+    ${kids.map((k) => `<div class="wiki-child-link" data-id="${k.id}">${escapeHtml(k.icon || '📄')} ${escapeHtml(k.title)}</div>`).join('')}
+  </div>`;
 }
 
 function renderWikiPage() {
@@ -124,92 +166,173 @@ function renderWikiPage() {
   const container = $('#wikiPage');
   if (!page) { container.innerHTML = ''; return; }
 
-  const crumbs = breadcrumbFor(page)
-    .map((p) => `<span>${escapeHtml(p.icon || '📄')} ${escapeHtml(p.title)}</span>`)
-    .join('<span class="crumb-sep">/</span>');
+  container.innerHTML = headerHtml(page)
+    + (page.page_type === 'table' ? renderTableBody(page) : renderDocBody(page))
+    + (state.editing ? '' : childrenHtml(page));
 
-  const kids = childrenOf(page.id);
-  const childrenHtml = kids.length
-    ? `<div class="wiki-children">
-        <div class="wiki-children-label">Undersider</div>
-        ${kids.map((k) => `<div class="wiki-child-link" data-id="${k.id}">${escapeHtml(k.icon || '📄')} ${escapeHtml(k.title)}</div>`).join('')}
-      </div>`
-    : '';
+  wireHeaderActions(page);
+  if (page.page_type === 'table') wireTableActions(page);
+  else wireDocActions(page);
+}
+
+// ─── Doc (markdown) pages ─────────────────────────────────────────
+function renderDocBody(page) {
+  if (state.editing) {
+    return `
+      <textarea id="wikiContentInput" class="wiki-content-input" placeholder="Skriv i markdown …">${escapeHtml(page.content || '')}</textarea>
+    `;
+  }
+  return `<div class="markdown-body" id="wikiContent">${marked.parse(page.content || '*Ingen innhold enda.*')}</div>`;
+}
+
+function wireDocActions(page) {
+  if (!state.editing) {
+    const contentEl = $('#wikiContent');
+    if (!contentEl) return;
+    contentEl.querySelectorAll('a').forEach((a) => {
+      const href = a.getAttribute('href') || '';
+      if (href.startsWith('page:')) {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          openPage(href.slice('page:'.length));
+        });
+      } else {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+  }
+}
+
+// ─── Table (tracker) pages ─────────────────────────────────────────
+function cellInputHtml(col, value) {
+  if (col.type === 'select') {
+    const opts = (col.options || []).map((o) => `<option ${o === value ? 'selected' : ''}>${escapeHtml(o)}</option>`);
+    return `<select data-key="${col.key}"><option value=""></option>${opts.join('')}</select>`;
+  }
+  const type = col.type === 'number' ? 'number' : col.type === 'date' ? 'date' : 'text';
+  return `<input type="${type}" data-key="${col.key}" value="${escapeHtml(value ?? '')}">`;
+}
+
+function formatCellValue(col, value) {
+  if (value === null || value === undefined || value === '') return '–';
+  if (col.type === 'date') return fmtDate(value);
+  return escapeHtml(String(value));
+}
+
+function renderTableBody(page) {
+  const cols = page.table_columns || [];
 
   if (state.editing) {
-    container.innerHTML = `
-      <div class="wiki-breadcrumb">${crumbs}</div>
-      <div class="wiki-edit-head">
-        <input type="text" id="wikiIconInput" class="wiki-icon-input" value="${escapeHtml(page.icon || '📄')}" maxlength="4">
-        <input type="text" id="wikiTitleInput" class="wiki-title-input" value="${escapeHtml(page.title)}">
+    const rows = state.tableDraftRows || (page.table_rows || []).map((r) => ({ ...r }));
+    state.tableDraftRows = rows;
+
+    return `
+      <div class="wiki-table-wrap">
+        <table class="wiki-table">
+          <thead><tr>${cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join('')}<th></th></tr></thead>
+          <tbody id="wikiTableBody">
+            ${rows.map((row, i) => `<tr data-row="${i}">${cols.map((c) => `<td>${cellInputHtml(c, row[c.key])}</td>`).join('')}<td><button type="button" class="row-del" data-row="${i}">×</button></td></tr>`).join('')}
+          </tbody>
+        </table>
       </div>
-      <textarea id="wikiContentInput" class="wiki-content-input" placeholder="Skriv i markdown …">${escapeHtml(page.content || '')}</textarea>
-      <div class="modal-actions">
-        <button class="btn" id="wikiSaveBtn">Lagre</button>
-        <button class="btn ghost" id="wikiCancelBtn">Avbryt</button>
-      </div>
+      <button type="button" class="btn ghost" id="wikiAddRowBtn" style="margin-top:10px">+ Ny rad</button>
     `;
-    $('#wikiSaveBtn').addEventListener('click', savePage);
-    $('#wikiCancelBtn').addEventListener('click', () => { state.editing = false; renderWikiPage(); });
-    return;
   }
 
-  container.innerHTML = `
-    <div class="wiki-breadcrumb">${crumbs}</div>
-    <div class="wiki-header">
-      <h1><span>${escapeHtml(page.icon || '📄')}</span> ${escapeHtml(page.title)}</h1>
-      <div class="wiki-actions">
-        <button class="btn ghost" id="wikiEditBtn">Rediger</button>
-        <button class="btn ghost" id="wikiNewChildBtn">+ Ny underside</button>
-        ${page.is_teamspace_root ? '' : '<button class="btn danger" id="wikiDeleteBtn">Slett</button>'}
-      </div>
+  const rows = page.table_rows || [];
+  return `
+    <div class="wiki-table-wrap">
+      <table class="wiki-table">
+        <thead><tr>${cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${rows.length
+            ? rows.map((row) => `<tr>${cols.map((c) => `<td>${formatCellValue(c, row[c.key])}</td>`).join('')}</tr>`).join('')
+            : `<tr><td colspan="${cols.length}" class="wiki-table-empty">Ingen rader enda.</td></tr>`}
+        </tbody>
+      </table>
     </div>
-    <div class="markdown-body" id="wikiContent">${marked.parse(page.content || '*Ingen innhold enda.*')}</div>
-    ${childrenHtml}
   `;
+}
 
-  $('#wikiEditBtn').addEventListener('click', () => { state.editing = true; renderWikiPage(); });
-  $('#wikiNewChildBtn').addEventListener('click', createChildPage);
-  const deleteBtn = $('#wikiDeleteBtn');
-  if (deleteBtn) deleteBtn.addEventListener('click', deletePage);
-
-  container.querySelectorAll('.wiki-child-link').forEach((el) => {
-    el.addEventListener('click', () => openPage(el.dataset.id));
-  });
-
-  // Internal `page:<uuid>` links navigate within the wiki; external links open in a new tab.
-  container.querySelectorAll('#wikiContent a').forEach((a) => {
-    const href = a.getAttribute('href') || '';
-    if (href.startsWith('page:')) {
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        openPage(href.slice('page:'.length));
-      });
-    } else {
-      a.setAttribute('target', '_blank');
-      a.setAttribute('rel', 'noopener noreferrer');
-    }
+function syncDraftFromDom(page) {
+  const body = $('#wikiTableBody');
+  if (!body) return;
+  const cols = page.table_columns || [];
+  state.tableDraftRows = Array.from(body.querySelectorAll('tr')).map((tr) => {
+    const row = {};
+    cols.forEach((c) => {
+      const el = tr.querySelector(`[data-key="${c.key}"]`);
+      let v = el ? el.value : '';
+      if (c.type === 'number') v = v === '' ? null : Number(v);
+      row[c.key] = v;
+    });
+    return row;
   });
 }
 
-async function savePage() {
-  const page = pageById(state.currentPageId);
-  if (!page) return;
+function wireTableActions(page) {
+  if (!state.editing) return;
 
+  $('#wikiAddRowBtn').addEventListener('click', () => {
+    syncDraftFromDom(page);
+    state.tableDraftRows.push({});
+    renderWikiPage();
+  });
+
+  document.querySelectorAll('.row-del').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      syncDraftFromDom(page);
+      const idx = parseInt(btn.dataset.row, 10);
+      state.tableDraftRows.splice(idx, 1);
+      renderWikiPage();
+    });
+  });
+}
+
+// ─── Shared header actions ────────────────────────────────────────
+function wireHeaderActions(page) {
+  $('#wikiEditBtn').addEventListener('click', () => {
+    state.editing = !state.editing;
+    if (!state.editing) state.tableDraftRows = null;
+    renderWikiPage();
+  });
+
+  const saveBtn = $('#wikiSaveBtn');
+  if (saveBtn) saveBtn.addEventListener('click', () => savePage(page));
+
+  $('#wikiNewChildBtn').addEventListener('click', createChildPage);
+
+  const deleteBtn = $('#wikiDeleteBtn');
+  if (deleteBtn) deleteBtn.addEventListener('click', deletePage);
+
+  $('#wikiPage').querySelectorAll('.wiki-child-link').forEach((el) => {
+    el.addEventListener('click', () => openPage(el.dataset.id));
+  });
+}
+
+async function savePage(page) {
   const title = $('#wikiTitleInput').value.trim();
   if (!title) { showToast('Tittel er påkrevd', true); return; }
 
   const payload = {
     title,
     icon: $('#wikiIconInput').value.trim() || '📄',
-    content: $('#wikiContentInput').value,
   };
+
+  if (page.page_type === 'table') {
+    syncDraftFromDom(page);
+    payload.table_rows = state.tableDraftRows;
+  } else {
+    payload.content = $('#wikiContentInput').value;
+  }
 
   const { error } = await supabase.from('wiki_pages').update(payload).eq('id', page.id);
   if (error) { showToast('Kunne ikke lagre: ' + error.message, true); return; }
 
   showToast('Side lagret');
   state.editing = false;
+  state.tableDraftRows = null;
   await loadPages();
   renderWikiPage();
 }
