@@ -28,34 +28,49 @@
   </div>
 </div>
 
-<!-- ─── App ─── -->
+<!-- ─── App shell ─── -->
 <div id="app">
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">I</div>
-      <div>
+  <aside id="sidebar">
+    <div class="sidebar-top">
+      <div class="brand-mini">
+        <div class="brand-mark">I</div>
         <div class="brand-title">Insiqt CRM</div>
-        <div class="brand-sub">Salgspipeline</div>
       </div>
     </div>
-    <div class="topbar-actions">
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" id="navPipeline" data-view="pipeline">📊 Pipeline</button>
+    </nav>
+
+    <div class="sidebar-section-label">Teamspaces</div>
+    <div class="sidebar-tree" id="sidebarTree"></div>
+
+    <div class="sidebar-bottom">
       <a class="link-chip" href="https://cal.com/insiqt/30min" target="_blank" rel="noopener">📅 Book demo</a>
       <a class="link-chip" href="mailto:contact@insiqt.ai">✉️ contact@insiqt.ai</a>
-      <span class="user-chip" id="userEmail"></span>
-      <button class="btn ghost" id="logoutBtn">Logg ut</button>
+      <div class="sidebar-user">
+        <span class="user-chip" id="userEmail"></span>
+        <button class="btn ghost" id="logoutBtn">Logg ut</button>
+      </div>
     </div>
-  </header>
+  </aside>
 
-  <div class="dashboard" id="dashboard"></div>
+  <main id="mainContent">
+    <div id="pipelineView" class="view active">
+      <div class="dashboard" id="dashboard"></div>
+      <div class="board-wrap">
+        <div class="board" id="board"></div>
+      </div>
+      <button class="btn fab" id="newLeadBtn">+ Ny lead</button>
+    </div>
 
-  <div class="board-wrap">
-    <div class="board" id="board"></div>
-  </div>
-
-  <button class="btn fab" id="newLeadBtn">+ Ny lead</button>
+    <div id="wikiView" class="view">
+      <div class="wiki-page" id="wikiPage"></div>
+    </div>
+  </main>
 </div>
 
-<!-- ─── Modal ─── -->
+<!-- ─── Lead Modal ─── -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-head">
@@ -149,6 +164,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/shell.js"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js';
+import { session } from './session.js';
 
 const COLUMNS = [
   { key: 'ny', label: 'Ny lead' },
@@ -28,12 +29,10 @@ const ACTIVITY_LABELS = {
 
 const state = {
   leads: [],
-  currentUserEmail: null,
   activeLeadId: null, // null = new lead
 };
 
 const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 function statusLabel(key) {
   return COLUMNS.find((c) => c.key === key)?.label || key;
@@ -48,7 +47,7 @@ function fmtDateTime(d) {
   return new Date(d).toLocaleString('nb-NO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-function showToast(msg, isError = false) {
+export function showToast(msg, isError = false) {
   const t = $('#toast');
   t.textContent = msg;
   t.classList.toggle('error', isError);
@@ -57,65 +56,8 @@ function showToast(msg, isError = false) {
   showToast._timer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ─── Auth ──────────────────────────────────────────────────────
-async function initAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    state.currentUserEmail = session.user.email;
-    enterApp();
-  } else {
-    showLogin();
-  }
-
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (session) {
-      state.currentUserEmail = session.user.email;
-      enterApp();
-    } else {
-      showLogin();
-    }
-  });
-}
-
-function showLogin() {
-  $('#loginScreen').style.display = 'flex';
-  $('#app').classList.remove('active');
-}
-
-function enterApp() {
-  $('#loginScreen').style.display = 'none';
-  $('#app').classList.add('active');
-  $('#userEmail').textContent = state.currentUserEmail;
-  refreshAll();
-}
-
-$('#loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = $('#loginEmail').value.trim();
-  const password = $('#loginPassword').value;
-  const btn = $('#loginBtn');
-  const errEl = $('#loginError');
-  errEl.style.display = 'none';
-  btn.disabled = true;
-  btn.textContent = 'Logger inn…';
-
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  btn.disabled = false;
-  btn.textContent = 'Logg inn';
-
-  if (error) {
-    errEl.textContent = 'Feil e-post eller passord.';
-    errEl.style.display = 'block';
-  }
-});
-
-$('#logoutBtn').addEventListener('click', async () => {
-  await supabase.auth.signOut();
-});
-
 // ─── Data loading ──────────────────────────────────────────────
-async function refreshAll() {
+export async function refreshAll() {
   await loadLeads();
   await loadDashboard();
 }
@@ -246,7 +188,7 @@ async function moveLead(leadId, newStatus) {
     lead_id: leadId,
     activity_type: 'status_change',
     note: `Flyttet fra ${statusLabel(oldStatus)} til ${statusLabel(newStatus)}`,
-    created_by: state.currentUserEmail,
+    created_by: session.email,
   });
 
   await refreshAll();
@@ -284,59 +226,6 @@ function closeModal() {
   state.activeLeadId = null;
 }
 
-$('#closeModalBtn').addEventListener('click', closeModal);
-$('#modalOverlay').addEventListener('click', (e) => { if (e.target.id === 'modalOverlay') closeModal(); });
-$('#newLeadBtn').addEventListener('click', () => openLeadModal(null));
-
-$('#leadForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const payload = {
-    company_name: $('#companyName').value.trim(),
-    contact_name: $('#contactName').value.trim() || null,
-    contact_email: $('#contactEmail').value.trim() || null,
-    contact_phone: $('#contactPhone').value.trim() || null,
-    vehicle_count: $('#vehicleCount').value ? parseInt($('#vehicleCount').value, 10) : null,
-    status: $('#leadStatus').value,
-    source: $('#leadSource').value || null,
-    next_followup_date: $('#followupDate').value || null,
-  };
-
-  if (!payload.company_name) { showToast('Firmanavn er påkrevd', true); return; }
-
-  if (state.activeLeadId) {
-    const oldLead = state.leads.find((l) => l.id === state.activeLeadId);
-    const { error } = await supabase.from('crm_leads').update(payload).eq('id', state.activeLeadId);
-    if (error) { showToast('Kunne ikke lagre: ' + error.message, true); return; }
-
-    if (oldLead && oldLead.status !== payload.status) {
-      await supabase.from('crm_activities').insert({
-        lead_id: state.activeLeadId,
-        activity_type: 'status_change',
-        note: `Flyttet fra ${statusLabel(oldLead.status)} til ${statusLabel(payload.status)}`,
-        created_by: state.currentUserEmail,
-      });
-    }
-    showToast('Lead oppdatert');
-  } else {
-    const { error } = await supabase.from('crm_leads').insert(payload);
-    if (error) { showToast('Kunne ikke opprette: ' + error.message, true); return; }
-    showToast('Lead opprettet');
-  }
-
-  closeModal();
-  await refreshAll();
-});
-
-$('#deleteLeadBtn').addEventListener('click', async () => {
-  if (!state.activeLeadId) return;
-  if (!confirm('Slette denne leaden permanent?')) return;
-  const { error } = await supabase.from('crm_leads').delete().eq('id', state.activeLeadId);
-  if (error) { showToast('Kunne ikke slette: ' + error.message, true); return; }
-  showToast('Lead slettet');
-  closeModal();
-  await refreshAll();
-});
-
 // ─── Activity log ────────────────────────────────────────────
 async function loadActivities(leadId) {
   const { data, error } = await supabase
@@ -358,28 +247,84 @@ async function loadActivities(leadId) {
   `).join('');
 }
 
-$('#addActivityBtn').addEventListener('click', async () => {
-  if (!state.activeLeadId) return;
-  const type = $('#activityType').value;
-  const note = $('#activityNote').value.trim();
-  if (!note) { showToast('Skriv en notat-tekst', true); return; }
-
-  const { error } = await supabase.from('crm_activities').insert({
-    lead_id: state.activeLeadId,
-    activity_type: type,
-    note,
-    created_by: state.currentUserEmail,
-  });
-  if (error) { showToast('Kunne ikke legge til: ' + error.message, true); return; }
-
-  $('#activityNote').value = '';
-  await loadActivities(state.activeLeadId);
-});
-
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
 
-initAuth();
+// ─── Wiring (called once by shell.js after login) ────────────────
+export function initPipeline() {
+  $('#closeModalBtn').addEventListener('click', closeModal);
+  $('#modalOverlay').addEventListener('click', (e) => { if (e.target.id === 'modalOverlay') closeModal(); });
+  $('#newLeadBtn').addEventListener('click', () => openLeadModal(null));
+
+  $('#leadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      company_name: $('#companyName').value.trim(),
+      contact_name: $('#contactName').value.trim() || null,
+      contact_email: $('#contactEmail').value.trim() || null,
+      contact_phone: $('#contactPhone').value.trim() || null,
+      vehicle_count: $('#vehicleCount').value ? parseInt($('#vehicleCount').value, 10) : null,
+      status: $('#leadStatus').value,
+      source: $('#leadSource').value || null,
+      next_followup_date: $('#followupDate').value || null,
+    };
+
+    if (!payload.company_name) { showToast('Firmanavn er påkrevd', true); return; }
+
+    if (state.activeLeadId) {
+      const oldLead = state.leads.find((l) => l.id === state.activeLeadId);
+      const { error } = await supabase.from('crm_leads').update(payload).eq('id', state.activeLeadId);
+      if (error) { showToast('Kunne ikke lagre: ' + error.message, true); return; }
+
+      if (oldLead && oldLead.status !== payload.status) {
+        await supabase.from('crm_activities').insert({
+          lead_id: state.activeLeadId,
+          activity_type: 'status_change',
+          note: `Flyttet fra ${statusLabel(oldLead.status)} til ${statusLabel(payload.status)}`,
+          created_by: session.email,
+        });
+      }
+      showToast('Lead oppdatert');
+    } else {
+      const { error } = await supabase.from('crm_leads').insert(payload);
+      if (error) { showToast('Kunne ikke opprette: ' + error.message, true); return; }
+      showToast('Lead opprettet');
+    }
+
+    closeModal();
+    await refreshAll();
+  });
+
+  $('#deleteLeadBtn').addEventListener('click', async () => {
+    if (!state.activeLeadId) return;
+    if (!confirm('Slette denne leaden permanent?')) return;
+    const { error } = await supabase.from('crm_leads').delete().eq('id', state.activeLeadId);
+    if (error) { showToast('Kunne ikke slette: ' + error.message, true); return; }
+    showToast('Lead slettet');
+    closeModal();
+    await refreshAll();
+  });
+
+  $('#addActivityBtn').addEventListener('click', async () => {
+    if (!state.activeLeadId) return;
+    const type = $('#activityType').value;
+    const note = $('#activityNote').value.trim();
+    if (!note) { showToast('Skriv en notat-tekst', true); return; }
+
+    const { error } = await supabase.from('crm_activities').insert({
+      lead_id: state.activeLeadId,
+      activity_type: type,
+      note,
+      created_by: session.email,
+    });
+    if (error) { showToast('Kunne ikke legge til: ' + error.message, true); return; }
+
+    $('#activityNote').value = '';
+    await loadActivities(state.activeLeadId);
+  });
+
+  refreshAll();
+}
