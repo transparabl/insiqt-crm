@@ -39,6 +39,15 @@ function pageById(id) {
   return state.pages.find((p) => p.id === id);
 }
 
+function isDescendantOf(candidateId, ancestorId) {
+  let p = pageById(candidateId);
+  while (p && p.parent_id) {
+    if (p.parent_id === ancestorId) return true;
+    p = pageById(p.parent_id);
+  }
+  return false;
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
@@ -81,6 +90,7 @@ function renderTreeNode(page, depth) {
   const row = document.createElement('div');
   row.className = 'tree-item' + (page.id === state.currentPageId ? ' active' : '');
   row.style.paddingLeft = `${8 + depth * 16}px`;
+  row.dataset.id = page.id;
 
   const arrow = document.createElement('span');
   arrow.className = 'tree-arrow';
@@ -103,6 +113,8 @@ function renderTreeNode(page, depth) {
   row.appendChild(label);
   wrap.appendChild(row);
 
+  wireTreeDrag(row, page);
+
   if (kids.length && isExpanded) {
     const childWrap = document.createElement('div');
     kids.forEach((kid) => childWrap.appendChild(renderTreeNode(kid, depth + 1)));
@@ -110,6 +122,94 @@ function renderTreeNode(page, depth) {
   }
 
   return wrap;
+}
+
+function wireTreeDrag(row, page) {
+  if (!page.is_teamspace_root) row.draggable = true;
+
+  row.addEventListener('dragstart', (e) => {
+    e.stopPropagation();
+    e.dataTransfer.setData('text/plain', page.id);
+  });
+
+  row.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    row.classList.remove('tree-drop-before', 'tree-drop-after', 'tree-drop-into');
+    if (page.is_teamspace_root) {
+      row.classList.add('tree-drop-into');
+      return;
+    }
+    const rect = row.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    if (y < rect.height * 0.25) row.classList.add('tree-drop-before');
+    else if (y > rect.height * 0.75) row.classList.add('tree-drop-after');
+    else row.classList.add('tree-drop-into');
+  });
+
+  row.addEventListener('dragleave', (e) => {
+    e.stopPropagation();
+    row.classList.remove('tree-drop-before', 'tree-drop-after', 'tree-drop-into');
+  });
+
+  row.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const zone = row.classList.contains('tree-drop-before') ? 'before'
+      : row.classList.contains('tree-drop-after') ? 'after' : 'into';
+    row.classList.remove('tree-drop-before', 'tree-drop-after', 'tree-drop-into');
+
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (!draggedId || draggedId === page.id) return;
+
+    if (zone === 'into') await movePageInto(draggedId, page.id);
+    else await movePageNextTo(draggedId, page.id, zone === 'after');
+  });
+}
+
+async function movePageInto(draggedId, newParentId) {
+  const dragged = pageById(draggedId);
+  if (!dragged || dragged.is_teamspace_root) return;
+  if (isDescendantOf(newParentId, draggedId)) { showToast('Kan ikke flytte en side inn i sin egen underside', true); return; }
+
+  const newParent = pageById(newParentId);
+  if (!newParent) return;
+
+  const { error } = await supabase.from('wiki_pages').update({
+    parent_id: newParentId,
+    teamspace: newParent.teamspace,
+    position: childrenOf(newParentId).length + 1,
+  }).eq('id', draggedId);
+
+  if (error) { showToast('Kunne ikke flytte side: ' + error.message, true); return; }
+  state.expanded.add(newParentId);
+  await loadPages();
+}
+
+async function movePageNextTo(draggedId, targetId, insertAfter) {
+  const dragged = pageById(draggedId);
+  const target = pageById(targetId);
+  if (!dragged || dragged.is_teamspace_root || !target) return;
+
+  const newParentId = target.parent_id;
+  if (newParentId && isDescendantOf(newParentId, draggedId)) { showToast('Ugyldig flytting', true); return; }
+
+  const siblings = childrenOf(newParentId).filter((p) => p.id !== draggedId);
+  const targetIdx = siblings.findIndex((p) => p.id === targetId);
+  siblings.splice(insertAfter ? targetIdx + 1 : targetIdx, 0, dragged);
+
+  const newParent = newParentId ? pageById(newParentId) : null;
+  for (let i = 0; i < siblings.length; i++) {
+    const s = siblings[i];
+    const payload = { position: i + 1 };
+    if (s.id === draggedId) {
+      payload.parent_id = newParentId;
+      payload.teamspace = newParent ? newParent.teamspace : s.teamspace;
+    }
+    await supabase.from('wiki_pages').update(payload).eq('id', s.id);
+  }
+
+  await loadPages();
 }
 
 // ─── Breadcrumb ────────────────────────────────────────────────
@@ -287,9 +387,9 @@ function renderTableBody(page) {
     return `
       <div class="wiki-table-wrap">
         <table class="wiki-table">
-          <thead><tr>${cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join('')}<th></th></tr></thead>
+          <thead><tr><th></th>${cols.map((c) => `<th>${escapeHtml(c.label)}</th>`).join('')}<th></th></tr></thead>
           <tbody id="wikiTableBody">
-            ${rows.map((row, i) => `<tr data-row="${i}">${cols.map((c) => `<td>${cellInputHtml(c, row[c.key])}</td>`).join('')}<td><button type="button" class="row-del" data-row="${i}">×</button></td></tr>`).join('')}
+            ${rows.map((row, i) => `<tr data-row="${i}"><td class="row-drag-handle" draggable="true" data-row="${i}">⠿</td>${cols.map((c) => `<td>${cellInputHtml(c, row[c.key])}</td>`).join('')}<td><button type="button" class="row-del" data-row="${i}">×</button></td></tr>`).join('')}
           </tbody>
         </table>
       </div>
@@ -342,6 +442,28 @@ function wireTableActions(page) {
       syncDraftFromDom(page);
       const idx = parseInt(btn.dataset.row, 10);
       state.tableDraftRows.splice(idx, 1);
+      renderWikiPage();
+    });
+  });
+
+  document.querySelectorAll('.row-drag-handle').forEach((handle) => {
+    handle.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', handle.dataset.row);
+    });
+  });
+
+  document.querySelectorAll('#wikiTableBody tr').forEach((tr) => {
+    tr.addEventListener('dragover', (e) => { e.preventDefault(); tr.classList.add('row-drag-over'); });
+    tr.addEventListener('dragleave', () => tr.classList.remove('row-drag-over'));
+    tr.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tr.classList.remove('row-drag-over');
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      const toIdx = parseInt(tr.dataset.row, 10);
+      if (Number.isNaN(fromIdx) || fromIdx === toIdx) return;
+      syncDraftFromDom(page);
+      const [moved] = state.tableDraftRows.splice(fromIdx, 1);
+      state.tableDraftRows.splice(toIdx, 0, moved);
       renderWikiPage();
     });
   });
