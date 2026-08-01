@@ -563,6 +563,28 @@ pre .block-content, pre.block-content {
 }
 .slash-menu-item:hover { background: rgba(37,99,235,0.08); }
 
+/* ─── Database views (table/board tabs) ─── */
+.view-tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+.view-tab {
+  background: none; border: 1px solid transparent; cursor: pointer;
+  padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+  color: var(--text-secondary);
+}
+.view-tab:hover { background: var(--secondary); }
+.view-tab.active { background: var(--secondary); border-color: var(--border); color: var(--text-primary); }
+.view-tab-add {
+  background: none; border: 1px dashed var(--border); cursor: pointer;
+  padding: 6px 12px; border-radius: 8px; font-size: 0.78rem; font-weight: 600;
+  color: var(--text-secondary);
+}
+.view-tab-add:hover { color: var(--text-primary); border-color: var(--accent); }
+
+.board-wrap-inline { overflow-x: auto; padding-bottom: 8px; }
+.board-wrap-inline .board { min-height: 200px; }
+.board-wrap-inline .column { background: var(--secondary); }
+.db-card .contact { margin-bottom: 0; }
+.db-card .contact:first-child { font-weight: 700; color: var(--text-primary); font-size: 0.85rem; }
+
 /* ─── Wiki tables (trackers) ─── */
 .wiki-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
 

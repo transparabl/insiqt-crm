@@ -3,6 +3,7 @@ import { session } from './session.js';
 import { showView } from './view.js';
 import { showToast } from './app.js';
 import { renderBlocksReadOnly, mountBlocksEditor } from './blocks.js';
+import { getViews, renderViewTabs, renderBoardView, wireBoardView, addBoardView } from './database.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -12,6 +13,7 @@ const state = {
   currentPageId: null,
   editing: false,
   tableDraftRows: null,
+  activeViewId: null,
 };
 
 let blocksEditor = null;
@@ -128,6 +130,7 @@ function openPage(id) {
   state.currentPageId = id;
   state.editing = false;
   state.tableDraftRows = null;
+  state.activeViewId = null;
   discardBlocksEditor();
   showView('wiki');
   renderSidebarTree();
@@ -175,12 +178,56 @@ function renderWikiPage() {
   if (!page) { container.innerHTML = ''; return; }
 
   container.innerHTML = headerHtml(page)
-    + (page.page_type === 'table' ? renderTableBody(page) : renderDocBody(page))
+    + (page.page_type === 'table' ? renderDatabaseSection(page) : renderDocBody(page))
     + (state.editing ? '' : childrenHtml(page));
 
   wireHeaderActions(page);
-  if (page.page_type === 'table') wireTableActions(page);
+  if (page.page_type === 'table') wireDatabaseSection(page);
   else wireDocActions(page);
+}
+
+// ─── Database (table/board) view switching ────────────────────────
+function activeView(page) {
+  const views = getViews(page);
+  if (!state.activeViewId || !views.find((v) => v.id === state.activeViewId)) state.activeViewId = views[0].id;
+  return views.find((v) => v.id === state.activeViewId);
+}
+
+function renderDatabaseSection(page) {
+  const views = getViews(page);
+  const view = activeView(page);
+  const tabs = renderViewTabs(views, view.id);
+
+  if (view.type === 'board' && !state.editing) {
+    return tabs + renderBoardView(page, view);
+  }
+  return tabs + renderTableBody(page);
+}
+
+function wireDatabaseSection(page) {
+  const view = activeView(page);
+
+  $('#wikiPage').querySelectorAll('.view-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.activeViewId = btn.dataset.view;
+      renderWikiPage();
+    });
+  });
+
+  $('#addViewBtn').addEventListener('click', () => {
+    addBoardView(page, async (newViewId) => {
+      await loadPages();
+      state.activeViewId = newViewId;
+      renderWikiPage();
+    });
+  });
+
+  if (view.type === 'board' && !state.editing) {
+    const boardEl = $('#wikiPage').querySelector('.board-wrap-inline');
+    if (boardEl) wireBoardView(boardEl, page, view, async () => { await loadPages(); renderWikiPage(); });
+  } else {
+    wireTableActions(page);
+  }
 }
 
 // ─── Doc (block) pages ─────────────────────────────────────────
@@ -304,6 +351,10 @@ function wireTableActions(page) {
 function wireHeaderActions(page) {
   $('#wikiEditBtn').addEventListener('click', () => {
     state.editing = !state.editing;
+    if (state.editing && page.page_type === 'table') {
+      const tableView = getViews(page).find((v) => v.type === 'table');
+      if (tableView) state.activeViewId = tableView.id;
+    }
     if (!state.editing) { state.tableDraftRows = null; discardBlocksEditor(); }
     renderWikiPage();
   });
