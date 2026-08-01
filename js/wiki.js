@@ -1,8 +1,8 @@
-import { marked } from 'https://esm.sh/marked@12';
 import { supabase } from './supabase-client.js';
 import { session } from './session.js';
 import { showView } from './view.js';
 import { showToast } from './app.js';
+import { renderBlocksReadOnly, mountBlocksEditor } from './blocks.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -13,6 +13,13 @@ const state = {
   editing: false,
   tableDraftRows: null,
 };
+
+let blocksEditor = null;
+
+function discardBlocksEditor() {
+  if (blocksEditor) blocksEditor.destroy();
+  blocksEditor = null;
+}
 
 function childrenOf(id) {
   return state.pages
@@ -121,6 +128,7 @@ function openPage(id) {
   state.currentPageId = id;
   state.editing = false;
   state.tableDraftRows = null;
+  discardBlocksEditor();
   showView('wiki');
   renderSidebarTree();
   renderWikiPage();
@@ -175,33 +183,35 @@ function renderWikiPage() {
   else wireDocActions(page);
 }
 
-// ─── Doc (markdown) pages ─────────────────────────────────────────
+// ─── Doc (block) pages ─────────────────────────────────────────
 function renderDocBody(page) {
   if (state.editing) {
-    return `
-      <textarea id="wikiContentInput" class="wiki-content-input" placeholder="Skriv i markdown …">${escapeHtml(page.content || '')}</textarea>
-    `;
+    return `<div id="wikiBlocksEditRoot" class="block-list-wrap"></div>`;
   }
-  return `<div class="markdown-body" id="wikiContent">${marked.parse(page.content || '*Ingen innhold enda.*')}</div>`;
+  return `<div class="markdown-body" id="wikiContent">${renderBlocksReadOnly(page.blocks)}</div>`;
 }
 
 function wireDocActions(page) {
-  if (!state.editing) {
-    const contentEl = $('#wikiContent');
-    if (!contentEl) return;
-    contentEl.querySelectorAll('a').forEach((a) => {
-      const href = a.getAttribute('href') || '';
-      if (href.startsWith('page:')) {
-        a.addEventListener('click', (e) => {
-          e.preventDefault();
-          openPage(href.slice('page:'.length));
-        });
-      } else {
-        a.setAttribute('target', '_blank');
-        a.setAttribute('rel', 'noopener noreferrer');
-      }
-    });
+  if (state.editing) {
+    const root = $('#wikiBlocksEditRoot');
+    if (root) blocksEditor = mountBlocksEditor(root, page);
+    return;
   }
+
+  const contentEl = $('#wikiContent');
+  if (!contentEl) return;
+  contentEl.querySelectorAll('a').forEach((a) => {
+    const href = a.getAttribute('href') || '';
+    if (href.startsWith('page:')) {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        openPage(href.slice('page:'.length));
+      });
+    } else {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
 }
 
 // ─── Table (tracker) pages ─────────────────────────────────────────
@@ -294,7 +304,7 @@ function wireTableActions(page) {
 function wireHeaderActions(page) {
   $('#wikiEditBtn').addEventListener('click', () => {
     state.editing = !state.editing;
-    if (!state.editing) state.tableDraftRows = null;
+    if (!state.editing) { state.tableDraftRows = null; discardBlocksEditor(); }
     renderWikiPage();
   });
 
@@ -324,7 +334,7 @@ async function savePage(page) {
     syncDraftFromDom(page);
     payload.table_rows = state.tableDraftRows;
   } else {
-    payload.content = $('#wikiContentInput').value;
+    payload.blocks = blocksEditor ? blocksEditor.getBlocks() : page.blocks;
   }
 
   const { error } = await supabase.from('wiki_pages').update(payload).eq('id', page.id);
@@ -333,6 +343,7 @@ async function savePage(page) {
   showToast('Side lagret');
   state.editing = false;
   state.tableDraftRows = null;
+  discardBlocksEditor();
   await loadPages();
   renderWikiPage();
 }

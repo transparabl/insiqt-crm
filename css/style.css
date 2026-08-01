@@ -504,13 +504,64 @@ a { color: inherit; }
   background: var(--primary); border: 1px solid var(--border); border-radius: 8px;
   padding: 10px 12px; color: var(--text-primary); font-size: 1.1rem; font-weight: 700;
 }
-.wiki-content-input {
-  width: 100%; min-height: 360px;
-  background: var(--primary); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px; color: var(--text-primary);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.85rem; line-height: 1.6; resize: vertical;
+/* ─── Block editor ─── */
+.block-list-wrap { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; min-height: 200px; }
+
+.block-row { position: relative; display: flex; align-items: flex-start; gap: 4px; padding: 2px 0; }
+.block-row:hover .block-handle { opacity: 1; }
+
+.block-handle {
+  flex-shrink: 0; width: 16px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary); font-size: 0.85rem; line-height: 1;
+  cursor: grab; opacity: 0; transition: opacity .1s; user-select: none;
 }
+
+.block-drag-over { background: rgba(37,99,235,0.06); border-radius: 6px; }
+
+.block-content {
+  flex: 1; min-width: 0; outline: none;
+  padding: 3px 4px; border-radius: 4px;
+}
+.block-content:focus { background: rgba(37,99,235,0.05); }
+
+h1.block-content { font-size: 1.3rem; font-weight: 800; margin: 10px 0 4px; }
+h2.block-content { font-size: 1.1rem; font-weight: 700; margin: 8px 0 4px; }
+h3.block-content { font-size: 1rem; font-weight: 700; margin: 6px 0 4px; }
+p.block-content { font-size: 0.92rem; line-height: 1.6; }
+blockquote.block-content { border-left: 3px solid var(--border); padding-left: 12px; color: var(--text-secondary); font-style: italic; }
+pre .block-content, pre.block-content {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem; background: var(--secondary); border-radius: 6px; padding: 8px 10px; display: block; white-space: pre-wrap;
+}
+
+.li-row, .todo-row { display: flex; align-items: flex-start; gap: 8px; flex: 1; }
+.li-bullet { flex-shrink: 0; color: var(--text-secondary); padding-top: 3px; font-size: 0.85rem; min-width: 14px; }
+.todo-check { margin-top: 6px; flex-shrink: 0; }
+.todo-row:has(.todo-check:checked) .block-content { text-decoration: line-through; color: var(--text-secondary); }
+
+.block-row[data-type="divider"] hr { border: none; border-top: 1px solid var(--border); flex: 1; margin: 10px 0; }
+
+.block-empty { color: var(--text-secondary); font-style: italic; }
+
+.slash-menu {
+  position: absolute;
+  background: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 6px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+.slash-menu-item {
+  background: none; border: none; text-align: left;
+  padding: 7px 10px; border-radius: 6px; font-size: 0.85rem;
+  color: var(--text-primary); cursor: pointer;
+}
+.slash-menu-item:hover { background: rgba(37,99,235,0.08); }
 
 /* ─── Wiki tables (trackers) ─── */
 .wiki-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
