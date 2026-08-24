@@ -39,11 +39,16 @@
     </div>
 
     <nav class="sidebar-nav">
-      <button class="nav-item active" id="navPipeline" data-view="pipeline">📊 Pipeline</button>
+      <button class="nav-item active" id="navDashboard" data-view="dashboard">🏠 Dashboard</button>
+      <button class="nav-item" id="navPipeline" data-view="pipeline">📊 Pipeline</button>
+      <button class="nav-item" id="navSalg" data-view="salg">🏆 Salg</button>
+      <button class="nav-item" id="navOnboarding" data-view="onboarding">🚀 Onboarding</button>
+      <button class="nav-item" id="navKunder" data-view="kunder">🏢 Kunder</button>
+      <button class="nav-item" id="navRingeliste" data-view="ringeliste">📞 Ringeliste</button>
+      <a class="nav-item" href="kart.html" target="_blank" rel="noopener">🗺 Kart ↗</a>
+      <a class="nav-item" href="https://insiqt-presentasjon.vercel.app" target="_blank" rel="noopener">🎤 Presentasjon ↗</a>
+      <a class="nav-item" href="https://insiqt-salg.vercel.app" target="_blank" rel="noopener">💼 Salgsverktøy ↗</a>
     </nav>
-
-    <div class="sidebar-section-label">Teamspaces</div>
-    <div class="sidebar-tree" id="sidebarTree"></div>
 
     <div class="sidebar-bottom">
       <a class="link-chip" href="https://cal.com/insiqt/30min" target="_blank" rel="noopener">📅 Book demo</a>
@@ -56,16 +61,93 @@
   </aside>
 
   <main id="mainContent">
-    <div id="pipelineView" class="view active">
-      <div class="dashboard" id="dashboard"></div>
+    <div id="dashboardView" class="view active">
+      <h1 class="view-title">Dashboard</h1>
+      <div class="dashboard" id="dashStats"></div>
+      <div class="dash-grid">
+        <div class="panel">
+          <h2 class="panel-title">Krever oppfølging</h2>
+          <div id="dashFollowup" class="list"></div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-title">Konvertering</h2>
+          <div id="dashConversion"></div>
+          <h2 class="panel-title" style="margin-top:18px">Per kilde</h2>
+          <div id="dashSources"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pipelineView" class="view">
+      <h1 class="view-title">Pipeline</h1>
       <div class="board-wrap">
         <div class="board" id="board"></div>
       </div>
-      <button class="btn fab" id="newLeadBtn">+ Ny lead</button>
+      <button class="btn fab" id="newLeadBtn">+ Legg til lead</button>
     </div>
 
-    <div id="wikiView" class="view">
-      <div class="wiki-page" id="wikiPage"></div>
+    <div id="salgView" class="view">
+      <h1 class="view-title">Salg</h1>
+      <div id="salgList" class="list"></div>
+    </div>
+
+    <div id="onboardingView" class="view">
+      <h1 class="view-title">Onboarding</h1>
+      <div id="onboardingList" class="list"></div>
+    </div>
+
+    <div id="kunderView" class="view">
+      <h1 class="view-title">Kunder</h1>
+      <div class="filter-row">
+        <input type="search" id="kundeSok" placeholder="Søk på navn, orgnr eller sted…">
+        <select id="kundeFilter">
+          <option value="aktiv_kunde">Aktive kunder</option>
+          <option value="alle">Alle selskaper</option>
+        </select>
+      </div>
+      <div id="kunderList" class="list"></div>
+    </div>
+
+    <div id="kundekortView" class="view">
+      <div id="kundekort"></div>
+    </div>
+
+    <div id="ringelisteView" class="view">
+      <h1 class="view-title">Ringeliste</h1>
+      <div class="pill-row" id="ringeStats"></div>
+
+      <div class="panel" style="margin-bottom:14px">
+        <h2 class="panel-title">Importer liste (.csv eller .xlsx)</h2>
+        <p class="muted" style="margin-bottom:10px">
+          Kolonnene gjenkjennes automatisk — både norske eksporter (Proff, Listeverktøy)
+          og engelske Brønnøysund-uttrekk (Name/JuridicalName, OrganizationNumber,
+          Municipality, Manager, Accounting …). Har filen Latitude/Longitude-kolonner
+          hoppes geokoding over for de radene. Både komma- og semikolonseparert CSV
+          og .xlsx fungerer, og duplikater på orgnummer hoppes over.
+        </p>
+        <input type="file" id="csvFil" accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <div id="csvPreview" style="margin-top:12px"></div>
+      </div>
+
+      <div class="filter-row">
+        <input type="search" id="ringeSok" placeholder="Søk på selskap, orgnr eller sted…">
+        <select id="ringeFilter">
+          <option value="ko">I køen</option>
+          <option value="ny">Ikke ringt</option>
+          <option value="ingen_svar">Ingen svar</option>
+          <option value="ring_senere">Ring senere</option>
+          <option value="ikke_interessert">Ikke interessert</option>
+          <option value="konvertert">Konvertert til lead</option>
+          <option value="alle">Alle</option>
+        </select>
+        <button class="btn" id="startRinging">📞 Start ringerunde</button>
+      </div>
+      <div id="ringeListe" class="list"></div>
+      <div id="ringeMer" style="text-align:center;margin-top:12px"></div>
+    </div>
+
+    <div id="ringekortView" class="view">
+      <div id="ringekort"></div>
     </div>
   </main>
 </div>
@@ -79,9 +161,26 @@
     </div>
 
     <form id="leadForm">
-      <div class="field">
-        <label for="companyName">Firmanavn</label>
-        <input type="text" id="companyName" required>
+      <div class="row-2">
+        <div class="field">
+          <label for="companyName">Firmanavn</label>
+          <input type="text" id="companyName" required>
+        </div>
+        <div class="field">
+          <label for="orgNo">Organisasjonsnummer</label>
+          <input type="text" id="orgNo" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="companyPlace">Sted</label>
+          <input type="text" id="companyPlace">
+        </div>
+        <div class="field">
+          <label for="vehicleCount">Antall kjøretøy</label>
+          <input type="number" id="vehicleCount" min="0">
+        </div>
       </div>
 
       <div class="row-2">
@@ -90,8 +189,8 @@
           <input type="text" id="contactName">
         </div>
         <div class="field">
-          <label for="vehicleCount">Antall kjøretøy</label>
-          <input type="number" id="vehicleCount" min="0">
+          <label for="contactRole">Rolle</label>
+          <input type="text" id="contactRole">
         </div>
       </div>
 
@@ -108,32 +207,52 @@
 
       <div class="row-2">
         <div class="field">
-          <label for="leadStatus">Status</label>
-          <select id="leadStatus">
-            <option value="ny">Ny lead</option>
-            <option value="kontaktet">Kontaktet</option>
-            <option value="demo_booket">Demo booket</option>
-            <option value="tilbud_sendt">Tilbud sendt</option>
-            <option value="kunde">Kunde</option>
-            <option value="tapt">Tapt</option>
+          <label for="leadTemp">Lead-temperatur</label>
+          <select id="leadTemp">
+            <option value="kald">❄️ Kald</option>
+            <option value="varm">🔥 Varm</option>
           </select>
         </div>
         <div class="field">
           <label for="leadSource">Kilde</label>
           <select id="leadSource">
             <option value="">Velg kilde…</option>
-            <option value="kald_kontakt">Kald kontakt</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="demo_forespørsel">Demo-forespørsel</option>
-            <option value="referanse">Referanse</option>
-            <option value="annet">Annet</option>
+            <option value="manual">Manuell</option>
+            <option value="field_visit">Bedriftsbesøk</option>
+            <option value="cold_call">Kald oppringing</option>
+            <option value="referral">Referanse</option>
+            <option value="website_demo">Website Demo</option>
+            <option value="cal.com">Demo booket (Cal.com)</option>
+            <option value="other">Annet</option>
           </select>
         </div>
       </div>
 
+      <div class="row-2">
+        <div class="field">
+          <label for="leadStatus">Status</label>
+          <select id="leadStatus">
+            <option value="lead">Lead</option>
+            <option value="kontaktet">Kontaktet</option>
+            <option value="demo_avtalt">Demo avtalt</option>
+            <option value="demo_gjennomfort">Demo gjennomført</option>
+            <option value="tilbud_sendt">Tilbud sendt</option>
+            <option value="oppfolging">Oppfølging</option>
+            <option value="won">Won</option>
+            <option value="onboarding">Onboarding</option>
+            <option value="aktiv_kunde">Aktiv kunde</option>
+            <option value="lost">Tapt</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="nextActivityAt">Neste aktivitet — når</label>
+          <input type="datetime-local" id="nextActivityAt">
+        </div>
+      </div>
+
       <div class="field">
-        <label for="followupDate">Neste oppfølgingsdato</label>
-        <input type="date" id="followupDate">
+        <label for="nextActivity">Neste aktivitet</label>
+        <input type="text" id="nextActivity" placeholder="F.eks. «Ring kunden», «Book demo»">
       </div>
 
       <div class="modal-actions">
@@ -142,28 +261,13 @@
         <button type="button" class="btn ghost" id="closeModalBtn2" onclick="document.getElementById('modalOverlay').classList.remove('active')">Avbryt</button>
       </div>
     </form>
-
-    <div id="activitySection" style="display:none">
-      <div class="divider"></div>
-      <h2 style="font-size:0.95rem;margin-bottom:12px;">Aktivitetslogg</h2>
-      <div class="activity-log" id="activityList"></div>
-      <div class="add-activity-row">
-        <select id="activityType">
-          <option value="call">Samtale</option>
-          <option value="email">E-post</option>
-          <option value="meeting">Møte</option>
-          <option value="demo">Demo</option>
-          <option value="note">Notat</option>
-        </select>
-        <input type="text" id="activityNote" placeholder="F.eks. «Ringte, ikke svar»">
-        <button type="button" class="btn" id="addActivityBtn">Legg til</button>
-      </div>
-    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<!-- Kun brukt til å lese .xlsx-filer i Ringeliste-importen -->
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module" src="js/shell.js"></script>
 </body>
 </html>

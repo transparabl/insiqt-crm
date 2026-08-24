@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Insiqt CRM — Kart</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+--primary:#FFFFFF;--secondary:#F7F8FA;--accent:#2563EB;--accent-hover:#1D4ED8;
+--text-primary:#0F172A;--text-secondary:#64748B;--border:rgba(15,23,42,.10);
+--success:#10B981;--danger:#EF4444;--warning:#F59E0B;
+--shadow:0 1px 3px rgba(15,23,42,.08),0 1px 2px rgba(15,23,42,.04);
+--skygge:0 2px 10px rgba(15,23,42,.18);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text-primary);background:var(--secondary)}
+#kart{position:absolute;inset:0}
+
+/* ─── Innlogging ─── */
+#laas{position:fixed;inset:0;z-index:200;background:var(--secondary);display:flex;align-items:center;justify-content:center;padding:24px}
+#laas .boks{max-width:360px;width:100%;background:var(--primary);border:1px solid var(--border);border-radius:14px;padding:32px;box-shadow:var(--shadow)}
+#laas h1{font-size:1.2rem;font-weight:800;margin-bottom:4px}
+#laas p{color:var(--text-secondary);font-size:.85rem;margin-bottom:20px}
+#laas input{width:100%;border:1px solid var(--border);border-radius:8px;padding:11px 13px;font:inherit;margin-bottom:12px}
+#laas input:focus{outline:0;border-color:var(--accent)}
+#laas button{width:100%;border:0;border-radius:8px;background:var(--accent);color:#fff;font:600 .9rem inherit;padding:12px;cursor:pointer}
+#laasFeil{color:var(--danger);font-size:.8rem;margin-top:10px;display:none}
+
+/* ─── Topplinje ─── */
+.topp{
+position:absolute;top:14px;left:14px;z-index:20;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+max-width:calc(100% - 110px);
+}
+.pille{
+background:var(--primary);border:1px solid var(--border);border-radius:10px;box-shadow:var(--skygge);
+padding:9px 13px;font-size:.84rem;font-weight:600;color:var(--text-primary);
+display:flex;align-items:center;gap:7px;text-decoration:none;cursor:pointer;white-space:nowrap;min-height:38px;
+}
+.pille:active{background:var(--secondary)}
+.pille.tall{font-variant-numeric:tabular-nums;color:var(--text-secondary);font-weight:500}
+.pille b{color:var(--text-primary);font-weight:700}
+#sok{
+background:var(--primary);border:1px solid var(--border);border-radius:10px;box-shadow:var(--skygge);
+padding:9px 13px;font:inherit;font-size:.84rem;width:190px;min-height:38px;
+}
+#sok:focus{outline:0;border-color:var(--accent)}
+
+/* ─── Filterrail til høyre ─── */
+.rail{
+position:absolute;top:50%;right:14px;transform:translateY(-50%);z-index:20;
+background:var(--primary);border:1px solid var(--border);border-radius:16px;box-shadow:var(--skygge);
+padding:7px;display:flex;flex-direction:column;gap:5px;max-height:calc(100% - 40px);overflow-y:auto;
+}
+.rail::-webkit-scrollbar{display:none}
+.rknapp{
+width:46px;height:46px;border-radius:12px;border:1px solid transparent;background:transparent;
+display:flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;
+position:relative;flex:0 0 auto;transition:background .12s;
+}
+.rknapp:active{transform:scale(.94)}
+.rknapp.av{opacity:.32}
+.rknapp.paa{background:var(--secondary);border-color:var(--border)}
+.rknapp .teller{
+position:absolute;bottom:2px;right:3px;font-size:9.5px;font-weight:700;
+color:var(--text-secondary);font-variant-numeric:tabular-nums;line-height:1;
+}
+.rskille{height:1px;background:var(--border);margin:3px 6px;flex:0 0 auto}
+.rtips{
+position:absolute;right:60px;top:50%;transform:translateY(-50%);
+background:var(--text-primary);color:#fff;font-size:12px;font-weight:600;
+padding:6px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;
+opacity:0;transition:opacity .12s;
+}
+.rknapp:hover .rtips{opacity:1}
+
+/* ─── Markører ─── */
+.mark{
+width:30px;height:30px;border-radius:50%;background:#fff;border:2px solid #fff;
+box-shadow:0 1px 5px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;
+font-size:14px;cursor:pointer;
+}
+.mark.varm{background:#F59E0B}
+.mark.won{background:#10B981;color:#fff}
+.mark.kunde{background:#10B981;color:#fff}
+.mark.tapt{background:#EF4444;color:#fff}
+.mark.ring{background:#fff}
+.klynge{
+border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;
+font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.85);cursor:pointer;
+font-variant-numeric:tabular-nums;
+}
+
+/* ─── Popup ─── */
+.maplibregl-popup-content{
+border-radius:14px;padding:16px 18px;box-shadow:var(--skygge);font-family:inherit;min-width:230px;
+}
+.pnavn{font-size:1rem;font-weight:700;margin-bottom:2px;line-height:1.25}
+.pmeta{font-size:.78rem;color:var(--text-secondary);margin-bottom:10px}
+.prad{display:flex;justify-content:space-between;gap:12px;font-size:.82rem;padding:5px 0;border-bottom:1px solid var(--border)}
+.prad:last-of-type{border-bottom:0}
+.prad span:first-child{color:var(--text-secondary)}
+.pknapper{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.pknapp{
+flex:1;min-width:88px;text-align:center;text-decoration:none;border-radius:9px;
+padding:9px 10px;font-size:.8rem;font-weight:600;border:1px solid var(--border);
+background:var(--secondary);color:var(--text-primary);cursor:pointer;
+}
+.pknapp.blaa{background:var(--accent);border-color:var(--accent);color:#fff}
+.pmerke{display:inline-block;font-size:.68rem;font-weight:700;border-radius:999px;padding:2px 8px;margin-bottom:8px}
+
+/* ─── Geokodings-panel ─── */
+#geo{
+position:absolute;left:14px;bottom:22px;z-index:20;background:var(--primary);
+border:1px solid var(--border);border-radius:14px;box-shadow:var(--skygge);
+padding:14px 16px;max-width:330px;display:none;
+}
+#geo.vis{display:block}
+#geo h3{font-size:.85rem;font-weight:700;margin-bottom:5px}
+#geo p{font-size:.78rem;color:var(--text-secondary);line-height:1.45;margin-bottom:10px}
+#geo button{border:0;border-radius:9px;background:var(--accent);color:#fff;font:600 .82rem inherit;padding:10px 14px;cursor:pointer}
+#geo button.grå{background:var(--secondary);color:var(--text-primary);border:1px solid var(--border)}
+#geoStatus{font-size:.78rem;color:var(--text-secondary);margin-top:9px;font-variant-numeric:tabular-nums}
+
+/* ─── Tom-tilstand ─── */
+#tom{
+position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:15;
+background:var(--primary);border:1px solid var(--border);border-radius:16px;box-shadow:var(--skygge);
+padding:26px 30px;max-width:420px;text-align:center;display:none;
+}
+#tom.vis{display:block}
+#tom h2{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+#tom p{font-size:.86rem;color:var(--text-secondary);line-height:1.5}
+
+@media (max-width:620px){
+.topp{max-width:calc(100% - 80px);gap:6px}
+#sok{width:130px}
+.rknapp{width:42px;height:42px}
+}
+</style>
+</head>
+<body>
+
+<div id="laas">
+  <div class="boks">
+    <h1>Insiqt CRM — Kart</h1>
+    <p>Logg inn for å se kundene i kartet</p>
+    <input type="email" id="lEpost" placeholder="E-post" autocomplete="username">
+    <input type="password" id="lPassord" placeholder="Passord" autocomplete="current-password">
+    <button id="lKnapp">Logg inn</button>
+    <div id="laasFeil"></div>
+  </div>
+</div>
+
+<div id="kart"></div>
+
+<div class="topp">
+  <a class="pille" href="index.html">← CRM</a>
+  <input type="search" id="sok" placeholder="Søk selskap…">
+  <span class="pille tall" id="teller">–</span>
+  <button class="pille" id="geoBtn">📍 Koordinater</button>
+</div>
+
+<div class="rail" id="rail"></div>
+
+<div id="geo">
+  <h3>Koordinater fra Kartverket</h3>
+  <p id="geoTekst"></p>
+  <div style="display:flex;gap:7px">
+    <button id="geoStart">Hent koordinater</button>
+    <button id="geoLukk" class="grå">Lukk</button>
+  </div>
+  <div id="geoStatus"></div>
+</div>
+
+<div id="tom">
+  <h2>Ingen selskaper i kartet ennå</h2>
+  <p>Kartet viser selskaper som har en adresse som kan slås opp i Kartverkets adresseregister. Trykk <b>📍 Koordinater</b> øverst for å hente koordinater for de som mangler det.</p>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './js/config.js';
+import { lenkeTilSalg } from './js/tilsalg.js';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (s) => document.querySelector(s);
+
+/* ══════════════════════════════════════════════════════════
+   Filtre — rail på høyre side
+   ══════════════════════════════════════════════════════════ */
+/* Kategorifiltre kombineres med ELLER — «vis meg disse typene».
+   Kravfiltre er avgrensninger som må oppfylles i tillegg, og er av fra start. */
+const FILTRE = [
+  { id:'varm',      ikon:'🔥', navn:'Varme leads',        test:(p)=>p.kilde==='company' && p.lead_temp==='varm' },
+  { id:'kald',      ikon:'❄️', navn:'Kalde leads',        test:(p)=>p.kilde==='company' && p.lead_temp==='kald' },
+  { skille:true },
+  { id:'lead',      ikon:'👤', navn:'Lead / kontaktet',   test:(p)=>p.kilde==='company' && ['lead','kontaktet'].includes(p.status) },
+  { id:'demo',      ikon:'📅', navn:'Demo',               test:(p)=>['demo_avtalt','demo_gjennomfort'].includes(p.status) },
+  { id:'tilbud',    ikon:'📄', navn:'Tilbud sendt',       test:(p)=>['tilbud_sendt','oppfolging'].includes(p.status) },
+  { id:'won',       ikon:'🏆', navn:'Salg',               test:(p)=>p.status==='won' },
+  { id:'onboard',   ikon:'🚀', navn:'Onboarding',         test:(p)=>p.status==='onboarding' },
+  { id:'kunde',     ikon:'🏢', navn:'Aktive kunder',      test:(p)=>p.status==='aktiv_kunde' },
+  { id:'tapt',      ikon:'✖️', navn:'Tapte',              test:(p)=>p.status==='lost' },
+  { skille:true },
+  { id:'ringe',     ikon:'📞', navn:'Ringeliste — ikke ringt', test:(p)=>p.kilde==='ringeliste' && p.status==='ny' },
+  { id:'ringt',     ikon:'📵', navn:'Ringt uten napp',    test:(p)=>p.kilde==='ringeliste' && ['ingen_svar','ring_senere','ikke_interessert'].includes(p.status) },
+  { skille:true },
+  { id:'oppfolg',   ikon:'⚠️', navn:'Bare de som krever oppfølging', krav:true, test:(p)=>p.forfalt },
+  { id:'telefon',   ikon:'☎️', navn:'Bare de med telefonnummer',     krav:true, test:(p)=>!!p.phone },
+];
+const KATEGORI = FILTRE.filter(f => f.id && !f.krav);
+const KRAV     = FILTRE.filter(f => f.krav);
+const PAA = new Set(KATEGORI.map(f => f.id));   // kategorier på, krav av
+
+/* ══════════════════════════════════════════════════════════
+   Kart
+   ══════════════════════════════════════════════════════════ */
+let kart, punkter = [], markorer = [], popup;
+
+const STIL = {
+  version: 8,
+  sources: {
+    sat: {
+      type: 'raster',
+      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: 'Bilder: Esri, Maxar, Earthstar Geographics · Adresser: Kartverket'
+    },
+    // Veier og gatenavn oppå satellittbildet — det er dét man trenger
+    // når man skal finne frem til en bedrift.
+    etiketter: {
+      type: 'raster',
+      tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}'],
+      tileSize: 256, maxzoom: 19
+    }
+  },
+  layers: [
+    { id:'sat', type:'raster', source:'sat' },
+    { id:'etiketter', type:'raster', source:'etiketter' }
+  ]
+};
+
+function startKart() {
+  kart = new maplibregl.Map({
+    container: 'kart',
+    style: STIL,
+    center: [18.955, 69.649],   // Tromsø som utgangspunkt
+    zoom: 10,
+    attributionControl: { compact: true }
+  });
+  kart.addControl(new maplibregl.NavigationControl({ showCompass:false }), 'top-right');
+  kart.addControl(new maplibregl.GeolocateControl({ trackUserLocation:false }), 'top-right');
+  kart.on('moveend', tegn);
+  kart.on('zoomend', tegn);
+}
+
+/* ─── Hent data ─── */
+async function hentPunkter() {
+  const naa = Date.now();
+  const [c, r] = await Promise.all([
+    supabase.from('companies').select('id,name,org_no,place,address,lat,lng,status,lead_temp,lead_source,vehicle_count,ansatte,financials,mrr,next_activity,next_activity_at').not('lat','is',null),
+    supabase.from('ringeliste').select('id,company_name,org_no,place,address,lat,lng,status,phone,email,website,contact_name,ansatte,financials,company_id').not('lat','is',null),
+  ]);
+
+  const fraC = (c.data||[]).map(x => ({
+    kilde:'company', id:x.id, navn:x.name, org_no:x.org_no, place:x.place, address:x.address,
+    lat:x.lat, lng:x.lng, status:x.status, lead_temp:x.lead_temp, lead_source:x.lead_source,
+    vehicle_count:x.vehicle_count, ansatte:x.ansatte, financials:x.financials, mrr:x.mrr, phone:null,
+    forfalt: !!(x.next_activity_at && new Date(x.next_activity_at).getTime() < naa),
+    next_activity:x.next_activity,
+  }));
+  const fraR = (r.data||[])
+    .filter(x => !x.company_id)   // konverterte vises som selskap, ikke dobbelt
+    .map(x => ({
+      kilde:'ringeliste', id:x.id, navn:x.company_name, org_no:x.org_no, place:x.place, address:x.address,
+      lat:x.lat, lng:x.lng, status:x.status, phone:x.phone, email:x.email, website:x.website,
+      contact_name:x.contact_name, ansatte:x.ansatte, financials:x.financials, forfalt:false,
+    }));
+
+  punkter = fraC.concat(fraR);
+}
+
+/* ─── Filtrering ─── */
+function synlige() {
+  const q = ($('#sok').value || '').toLowerCase().trim();
+  return punkter.filter(p => {
+    // Minst én aktiv kategori må treffe …
+    if (!KATEGORI.some(f => PAA.has(f.id) && f.test(p))) return false;
+    // … og alle aktive krav må være oppfylt
+    if (!KRAV.every(f => !PAA.has(f.id) || f.test(p))) return false;
+    if (!q) return true;
+    return (p.navn||'').toLowerCase().includes(q)
+        || (p.org_no||'').includes(q)
+        || (p.place||'').toLowerCase().includes(q);
+  });
+}
+
+/* ─── Klyngeinndeling etter skjermpiksler ─── */
+function klynger(liste) {
+  const rute = 58;                    // px — hvor tett før de slås sammen
+  const kart2 = new Map();
+  liste.forEach(p => {
+    const pt = kart.project([p.lng, p.lat]);
+    const k = Math.round(pt.x/rute) + ':' + Math.round(pt.y/rute);
+    if (!kart2.has(k)) kart2.set(k, []);
+    kart2.get(k).push(p);
+  });
+  return [...kart2.values()];
+}
+
+function ikonFor(p) {
+  if (p.kilde === 'ringeliste') return { klasse:'ring', tegn:'📞' };
+  if (p.status === 'aktiv_kunde') return { klasse:'kunde', tegn:'🏢' };
+  if (p.status === 'won' || p.status === 'onboarding') return { klasse:'won', tegn:'🏆' };
+  if (p.status === 'lost') return { klasse:'tapt', tegn:'✕' };
+  if (p.lead_temp === 'varm') return { klasse:'varm', tegn:'🔥' };
+  return { klasse:'', tegn:'📍' };
+}
+
+function tegn() {
+  if (!kart) return;
+  markorer.forEach(m => m.remove());
+  markorer = [];
+
+  const liste = synlige();
+  $('#teller').innerHTML = '<b>' + liste.length + '</b>&nbsp;av ' + punkter.length;
+  $('#tom').classList.toggle('vis', punkter.length === 0);
+
+  // Tellere per filter
+  FILTRE.forEach(f => {
+    if (!f.id) return;
+    const n = punkter.filter(f.test).length;
+    const el = document.getElementById('f-' + f.id);
+    if (el) el.querySelector('.teller').textContent = n || '';
+  });
+
+  klynger(liste).forEach(gruppe => {
+    const el = document.createElement('div');
+    if (gruppe.length === 1) {
+      const p = gruppe[0];
+      const i = ikonFor(p);
+      el.className = 'mark ' + i.klasse;
+      el.textContent = i.tegn;
+      el.onclick = (e) => { e.stopPropagation(); visPopup(p); };
+    } else {
+      const d = Math.min(30 + gruppe.length * 1.6, 54);
+      el.className = 'klynge';
+      el.style.width = d + 'px';
+      el.style.height = d + 'px';
+      el.style.fontSize = (d < 40 ? 12 : 14) + 'px';
+      el.textContent = gruppe.length;
+      el.onclick = (e) => {
+        e.stopPropagation();
+        kart.easeTo({ center:[gruppe[0].lng, gruppe[0].lat], zoom: Math.min(kart.getZoom()+2, 18) });
+      };
+    }
+    const snittLng = gruppe.reduce((s,p)=>s+p.lng,0)/gruppe.length;
+    const snittLat = gruppe.reduce((s,p)=>s+p.lat,0)/gruppe.length;
+    markorer.push(new maplibregl.Marker({ element: el }).setLngLat([snittLng, snittLat]).addTo(kart));
+  });
+}
+
+/* ─── Popup ─── */
+const STATUS_TEKST = {
+  lead:'Lead', kontaktet:'Kontaktet', demo_avtalt:'Demo avtalt', demo_gjennomfort:'Demo gjennomført',
+  tilbud_sendt:'Tilbud sendt', oppfolging:'Oppfølging', won:'Salg', onboarding:'Onboarding',
+  aktiv_kunde:'Aktiv kunde', lost:'Tapt',
+  ny:'Ikke ringt', ingen_svar:'Ingen svar', ring_senere:'Ring senere',
+  ikke_interessert:'Ikke interessert', konvertert:'Konvertert',
+};
+const esc = (s) => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
+function visPopup(p) {
+  if (popup) popup.remove();
+  const erRing = p.kilde === 'ringeliste';
+  const merke = erRing
+    ? '<span class="pmerke" style="background:#eef1f4;color:#64748B">Ringeliste</span>'
+    : '<span class="pmerke" style="background:rgba(37,99,235,.1);color:#2563EB">' + esc(STATUS_TEKST[p.status]||p.status) + '</span>';
+
+  const finansAr = p.financials ? Object.keys(p.financials).sort().reverse()[0] : null;
+  const finans = finansAr ? p.financials[finansAr] : null;
+
+  const rader = [];
+  if (p.org_no) rader.push(['Orgnr', esc(p.org_no)]);
+  if (p.contact_name) rader.push(['Daglig leder', esc(p.contact_name)]);
+  if (p.vehicle_count != null) rader.push(['Kjøretøy', p.vehicle_count]);
+  if (p.ansatte != null) rader.push(['Ansatte', p.ansatte]);
+  if (finans?.driftsinntekter != null) rader.push(['Omsetning ' + finansAr, Math.round(finans.driftsinntekter).toLocaleString('nb-NO') + ' kr']);
+  if (p.mrr) rader.push(['MRR', Math.round(p.mrr).toLocaleString('nb-NO') + ' kr']);
+  if (p.next_activity) rader.push(['Neste', esc(p.next_activity)]);
+
+  const knapper = [];
+  if (p.phone) knapper.push('<a class="pknapp blaa" href="tel:' + esc(p.phone) + '">📞 Ring</a>');
+  knapper.push('<a class="pknapp blaa" target="_blank" rel="noopener" href="' + lenkeTilSalg(p) + '">🎯 Insiqt Salg</a>');
+  knapper.push('<a class="pknapp" target="_blank" rel="noopener" href="https://www.proff.no/bransjes%C3%B8k?q=' +
+    encodeURIComponent(p.org_no || p.navn) + '">Proff ↗</a>');
+  if (!erRing) knapper.push('<a class="pknapp" href="index.html?kunde=' + p.id + '">Kundekort →</a>');
+  knapper.push('<a class="pknapp" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' +
+    p.lat + ',' + p.lng + '">Veibeskrivelse ↗</a>');
+
+  popup = new maplibregl.Popup({ offset: 20, maxWidth: '320px' })
+    .setLngLat([p.lng, p.lat])
+    .setHTML(
+      merke +
+      '<div class="pnavn">' + esc(p.navn) + '</div>' +
+      '<div class="pmeta">' + esc([p.address, p.place].filter(Boolean).join(' · ')) + '</div>' +
+      rader.map(r => '<div class="prad"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>').join('') +
+      '<div class="pknapper">' + knapper.join('') + '</div>'
+    )
+    .addTo(kart);
+}
+
+/* ══════════════════════════════════════════════════════════
+   Geokoding mot Kartverket (Geonorge) — gratis, ingen nøkkel
+   ══════════════════════════════════════════════════════════ */
+async function slaaOpp(adresse, poststed) {
+  const sok = [adresse, poststed].filter(Boolean).join(' ');
+  if (!sok.trim()) return null;
+  const url = 'https://ws.geonorge.no/adresser/v1/sok?treffPerSide=1&sok=' + encodeURIComponent(sok);
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const a = (j.adresser || [])[0];
+    if (!a || !a.representasjonspunkt) return null;
+    return { lat: a.representasjonspunkt.lat, lng: a.representasjonspunkt.lon };
+  } catch { return null; }
+}
+
+async function manglerKoordinater() {
+  const [c, r] = await Promise.all([
+    supabase.from('companies').select('id,name,address,place').is('lat', null),
+    supabase.from('ringeliste').select('id,company_name,address,place').is('lat', null).neq('status','konvertert'),
+  ]);
+  return {
+    companies: (c.data||[]).filter(x => x.address || x.place),
+    ringeliste: (r.data||[]).filter(x => x.address || x.place),
+  };
+}
+
+async function geokod() {
+  const m = await manglerKoordinater();
+  const alle = [
+    ...m.companies.map(x => ({ tabell:'companies', id:x.id, navn:x.name, address:x.address, place:x.place })),
+    ...m.ringeliste.map(x => ({ tabell:'ringeliste', id:x.id, navn:x.company_name, address:x.address, place:x.place })),
+  ];
+  if (!alle.length) { $('#geoStatus').textContent = 'Alle med adresse har allerede koordinater.'; return; }
+
+  const btn = $('#geoStart');
+  btn.disabled = true;
+  let ok = 0, feil = 0;
+
+  for (let i = 0; i < alle.length; i++) {
+    const rad = alle[i];
+    $('#geoStatus').textContent = `Slår opp ${i+1} av ${alle.length} — ${ok} funnet, ${feil} uten treff`;
+    let pos = await slaaOpp(rad.address, rad.place);
+    if (!pos && rad.place) pos = await slaaOpp(null, rad.place);   // fall tilbake til poststed/kommune
+    if (pos) {
+      await supabase.from(rad.tabell)
+        .update({ lat: pos.lat, lng: pos.lng, geokodet_at: new Date().toISOString() })
+        .eq('id', rad.id);
+      ok++;
+    } else {
+      await supabase.from(rad.tabell)
+        .update({ geokodet_at: new Date().toISOString() })
+        .eq('id', rad.id);
+      feil++;
+    }
+    await new Promise(r => setTimeout(r, 120));   // vær grei mot Geonorge
+  }
+
+  btn.disabled = false;
+  $('#geoStatus').textContent = `Ferdig: ${ok} plassert i kartet, ${feil} uten treff.`;
+  await hentPunkter();
+  tegn();
+  if (ok) zoomTilAlle();
+}
+
+function zoomTilAlle() {
+  if (!punkter.length) return;
+  const b = new maplibregl.LngLatBounds();
+  punkter.forEach(p => b.extend([p.lng, p.lat]));
+  kart.fitBounds(b, { padding: 90, maxZoom: 14, duration: 700 });
+}
+
+/* ══════════════════════════════════════════════════════════
+   Oppstart
+   ══════════════════════════════════════════════════════════ */
+function byggRail() {
+  const rail = $('#rail');
+  rail.innerHTML = '';
+  FILTRE.forEach(f => {
+    if (f.skille) {
+      const d = document.createElement('div');
+      d.className = 'rskille';
+      rail.appendChild(d);
+      return;
+    }
+    const b = document.createElement('button');
+    b.className = 'rknapp ' + (PAA.has(f.id) ? 'paa' : 'av');
+    b.id = 'f-' + f.id;
+    b.innerHTML = '<span>' + f.ikon + '</span><span class="teller"></span>' +
+                  '<span class="rtips">' + f.navn + '</span>';
+    b.onclick = () => {
+      if (PAA.has(f.id)) { PAA.delete(f.id); b.classList.replace('paa','av'); }
+      else { PAA.add(f.id); b.classList.replace('av','paa'); }
+      tegn();
+    };
+    rail.appendChild(b);
+  });
+}
+
+async function start() {
+  $('#laas').style.display = 'none';
+  startKart();
+  byggRail();
+  await hentPunkter();
+  kart.on('load', () => { tegn(); if (punkter.length) zoomTilAlle(); });
+
+  $('#sok').addEventListener('input', tegn);
+
+  $('#geoBtn').onclick = async () => {
+    const m = await manglerKoordinater();
+    const n = m.companies.length + m.ringeliste.length;
+    $('#geoTekst').innerHTML = n
+      ? `<b>${n}</b> selskaper har adresse eller poststed, men mangler koordinater. Oppslaget går mot Kartverkets adresseregister og tar omtrent ${Math.ceil(n*0.35)} sekunder.`
+      : 'Alle selskaper med adresse har allerede koordinater. Importer en liste med adressekolonne i Ringeliste for å få flere inn i kartet.';
+    $('#geoStart').style.display = n ? '' : 'none';
+    $('#geoStatus').textContent = '';
+    $('#geo').classList.add('vis');
+  };
+  $('#geoLukk').onclick = () => $('#geo').classList.remove('vis');
+  $('#geoStart').onclick = geokod;
+}
+
+// Innlogging — samme Supabase-brukere som CRM-et
+const { data:{ session } } = await supabase.auth.getSession();
+if (session) start();
+
+$('#lKnapp').onclick = async () => {
+  const btn = $('#lKnapp');
+  btn.disabled = true; btn.textContent = 'Logger inn…';
+  const { error } = await supabase.auth.signInWithPassword({
+    email: $('#lEpost').value.trim(), password: $('#lPassord').value,
+  });
+  btn.disabled = false; btn.textContent = 'Logg inn';
+  if (error) { $('#laasFeil').textContent = 'Feil e-post eller passord.'; $('#laasFeil').style.display = 'block'; }
+  else start();
+};
+$('#lPassord').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#lKnapp').click(); });
+</script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 import { supabase } from './supabase-client.js';
 import { session } from './session.js';
 import { showView } from './view.js';
-import { initPipeline, refreshAll as refreshPipeline } from './app.js';
-import { initWiki } from './wiki.js';
+import { initPipeline, refreshAll } from './app.js';
+import { initKundekort } from './kundekort.js';
+import { initModuler } from './moduler.js';
+import { initDashboard } from './dashboard.js';
+import { initRingeliste } from './ringeliste.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -41,10 +44,21 @@ function enterApp() {
 
   if (!bootstrapped) {
     bootstrapped = true;
-    initPipeline();
-    initWiki();
+    initDashboard();
+    initModuler();
+    initKundekort();
+    initRingeliste();
+    initPipeline(); // sist: den kjører første refreshAll, som varsler de andre
+
+    // Dyplenke: ?kunde=<id> åpner kundekortet direkte (brukes i e-post til Ove)
+    const kundeId = new URLSearchParams(location.search).get('kunde');
+    if (kundeId) {
+      setTimeout(() => window.dispatchEvent(
+        new CustomEvent('open-kundekort', { detail: { companyId: kundeId } }),
+      ), 600);
+    }
   } else {
-    refreshPipeline();
+    refreshAll();
   }
 }
 
@@ -73,6 +87,11 @@ $('#logoutBtn').addEventListener('click', async () => {
   await supabase.auth.signOut();
 });
 
-$('#navPipeline').addEventListener('click', () => showView('pipeline'));
+document.querySelectorAll('.nav-item[data-view]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    showView(btn.dataset.view);
+    refreshAll();
+  });
+});
 
 initAuth();

@@ -1,50 +1,94 @@
 import { supabase } from './supabase-client.js';
 import { session } from './session.js';
 
-const COLUMNS = [
-  { key: 'ny', label: 'Ny lead' },
+// Kanban viser løpet frem til salg. Won/onboarding/aktiv/tapt bor i egne moduler.
+export const PIPELINE_COLUMNS = [
+  { key: 'lead', label: 'Lead' },
   { key: 'kontaktet', label: 'Kontaktet' },
-  { key: 'demo_booket', label: 'Demo booket' },
+  { key: 'demo_avtalt', label: 'Demo avtalt' },
+  { key: 'demo_gjennomfort', label: 'Demo gjennomført' },
   { key: 'tilbud_sendt', label: 'Tilbud sendt' },
-  { key: 'kunde', label: 'Kunde' },
-  { key: 'tapt', label: 'Tapt' },
+  { key: 'oppfolging', label: 'Oppfølging' },
 ];
 
-const SOURCE_LABELS = {
-  kald_kontakt: 'Kald kontakt',
-  linkedin: 'LinkedIn',
-  demo_forespørsel: 'Demo-forespørsel',
-  referanse: 'Referanse',
-  annet: 'Annet',
+export const STATUS_LABELS = {
+  lead: 'Lead',
+  kontaktet: 'Kontaktet',
+  demo_avtalt: 'Demo avtalt',
+  demo_gjennomfort: 'Demo gjennomført',
+  tilbud_sendt: 'Tilbud sendt',
+  oppfolging: 'Oppfølging',
+  won: 'Won',
+  onboarding: 'Onboarding',
+  aktiv_kunde: 'Aktiv kunde',
+  lost: 'Tapt',
 };
 
-const ACTIVITY_LABELS = {
+export const SOURCE_LABELS = {
+  website_demo: 'Website Demo',
+  'cal.com': 'Demo booket (Cal.com)',
+  manual: 'Manuell',
+  field_visit: 'Bedriftsbesøk',
+  cold_call: 'Kald oppringing',
+  referral: 'Referanse',
+  salgsverktoy: 'Salgsverktøyet',
+  other: 'Annet',
+};
+
+export const ACTIVITY_LABELS = {
+  lead_opprettet: 'Lead opprettet',
+  kontaktet: 'Kontaktet',
+  demo_booket: 'Demo booket',
+  demo_gjennomfort: 'Demo gjennomført',
+  tilbud_sendt: 'Tilbud sendt',
+  tilbud_apnet: 'Tilbud åpnet',
+  akseptert: 'Tilbud akseptert',
+  avslatt: 'Tilbud avslått',
+  markert_som_salg: 'Markert som salg',
+  sendt_til_onboarding: 'Sendt til onboarding',
+  onboarding_status: 'Onboarding',
+  status_change: 'Statusendring',
   call: 'Samtale',
   email: 'E-post',
   meeting: 'Møte',
   demo: 'Demo',
   note: 'Notat',
-  status_change: 'Statusendring',
 };
 
-const state = {
-  leads: [],
-  activeLeadId: null, // null = new lead
+export const state = {
+  companies: [],
+  contacts: {},        // company_id -> [contacts]
+  activeCompanyId: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
 
-function statusLabel(key) {
-  return COLUMNS.find((c) => c.key === key)?.label || key;
+export function statusLabel(key) {
+  return STATUS_LABELS[key] || key;
 }
 
-function fmtDate(d) {
+export function tempIcon(c) {
+  return c.lead_temp === 'varm' ? '🔥' : c.lead_temp === 'kald' ? '❄️' : '';
+}
+
+export function fmtDate(d) {
   if (!d) return '';
-  return new Date(d + 'T00:00:00').toLocaleDateString('nb-NO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return new Date(d).toLocaleDateString('nb-NO', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function fmtDateTime(d) {
+export function fmtDateTime(d) {
   return new Date(d).toLocaleString('nb-NO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+export function fmtKr(v) {
+  if (v == null) return '–';
+  return Math.round(Number(v)).toLocaleString('nb-NO') + ' kr';
+}
+
+export function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
 }
 
 export function showToast(msg, isError = false) {
@@ -56,60 +100,52 @@ export function showToast(msg, isError = false) {
   showToast._timer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ─── Data loading ──────────────────────────────────────────────
-export async function refreshAll() {
-  await loadLeads();
-  await loadDashboard();
+export async function logActivity(companyId, type, note, offerId = null) {
+  await supabase.from('company_activities').insert({
+    company_id: companyId,
+    offer_id: offerId,
+    type,
+    note,
+    actor: session.email,
+  });
 }
 
-async function loadLeads() {
+// ─── Data loading ──────────────────────────────────────────────
+const listeners = [];
+export function onCompaniesChanged(fn) { listeners.push(fn); }
+
+export async function refreshAll() {
   const { data, error } = await supabase
-    .from('crm_leads')
+    .from('companies')
     .select('*')
     .order('created_at', { ascending: true });
 
   if (error) {
-    showToast('Kunne ikke hente leads: ' + error.message, true);
+    showToast('Kunne ikke hente selskaper: ' + error.message, true);
     return;
   }
-  state.leads = data || [];
+  state.companies = data || [];
   renderBoard();
+  listeners.forEach((fn) => { try { fn(); } catch (_) { /* modulfeil skal ikke rive resten */ } });
 }
 
-async function loadDashboard() {
-  const counts = Object.fromEntries(COLUMNS.map((c) => [c.key, 0]));
-  state.leads.forEach((l) => { counts[l.status] = (counts[l.status] || 0) + 1; });
-
-  $('#dashboard').innerHTML = COLUMNS.map((c) => `
-    <div class="stat-card ${c.key === 'kunde' ? 'success' : ''}">
-      <div class="n">${counts[c.key] || 0}</div>
-      <div class="l">${c.label}</div>
-    </div>
-  `).join('') + `
-    <div class="stat-card accent">
-      <div class="n" id="demosThisMonthN">…</div>
-      <div class="l">Demoer booket denne måneden</div>
-    </div>
-  `;
-
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const { count, error } = await supabase
-    .from('crm_activities')
-    .select('id', { count: 'exact', head: true })
-    .eq('activity_type', 'status_change')
-    .ilike('note', '%Demo booket%')
-    .gte('created_at', startOfMonth.toISOString());
-
-  $('#demosThisMonthN').textContent = error ? '–' : count;
+export async function primaryContact(companyId) {
+  if (!state.contacts[companyId]) {
+    const { data } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('is_primary', { ascending: false })
+      .order('created_at', { ascending: true });
+    state.contacts[companyId] = data || [];
+  }
+  return state.contacts[companyId][0] || null;
 }
 
 // ─── Board rendering ───────────────────────────────────────────
 function renderBoard() {
   const board = $('#board');
-  board.innerHTML = COLUMNS.map((col) => `
+  board.innerHTML = PIPELINE_COLUMNS.map((col) => `
     <div class="column">
       <div class="column-head">
         <h3>${col.label}</h3>
@@ -119,15 +155,15 @@ function renderBoard() {
     </div>
   `).join('');
 
-  COLUMNS.forEach((col) => {
+  PIPELINE_COLUMNS.forEach((col) => {
     const body = $(`#col-${col.key}`);
-    const leads = state.leads.filter((l) => l.status === col.key);
-    $(`#count-${col.key}`).textContent = leads.length;
+    const companies = state.companies.filter((c) => c.status === col.key);
+    $(`#count-${col.key}`).textContent = companies.length;
 
-    if (leads.length === 0) {
-      body.innerHTML = '<div class="empty-col">Ingen leads</div>';
+    if (companies.length === 0) {
+      body.innerHTML = '<div class="empty-col">Ingen selskaper</div>';
     } else {
-      leads.forEach((lead) => body.appendChild(buildCard(lead)));
+      companies.forEach((c) => body.appendChild(buildCard(c)));
     }
 
     body.addEventListener('dragover', (e) => {
@@ -138,159 +174,155 @@ function renderBoard() {
     body.addEventListener('drop', async (e) => {
       e.preventDefault();
       body.classList.remove('drag-over');
-      const leadId = e.dataTransfer.getData('text/plain');
-      await moveLead(leadId, col.key);
+      const id = e.dataTransfer.getData('text/plain');
+      await moveCompany(id, col.key);
     });
   });
 }
 
-function followupBadge(lead) {
-  if (!lead.next_followup_date) return '';
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const due = new Date(lead.next_followup_date + 'T00:00:00');
-  const diffDays = Math.round((due - today) / 86400000);
+function followupBadge(c) {
+  if (!c.next_activity_at) return '';
+  const due = new Date(c.next_activity_at);
+  const diffDays = Math.round((due - Date.now()) / 86400000);
   let cls = '';
   if (diffDays < 0) cls = 'overdue';
   else if (diffDays <= 3) cls = 'soon';
-  return `<span class="badge ${cls}">${fmtDate(lead.next_followup_date)}</span>`;
+  return `<span class="badge ${cls}">${fmtDate(c.next_activity_at)}</span>`;
 }
 
-function buildCard(lead) {
+function buildCard(c) {
   const card = document.createElement('div');
   card.className = 'lead-card';
   card.draggable = true;
   card.innerHTML = `
-    <div class="company">${escapeHtml(lead.company_name)}</div>
-    <div class="contact">${escapeHtml(lead.contact_name || 'Ingen kontaktperson')}</div>
+    <div class="company">${tempIcon(c)} ${escapeHtml(c.name)}</div>
+    <div class="contact">${escapeHtml(c.next_activity || SOURCE_LABELS[c.lead_source] || '')}</div>
     <div class="meta-row">
-      <span class="badge">${lead.vehicle_count != null ? lead.vehicle_count + ' kjøretøy' : '–'}</span>
-      ${followupBadge(lead)}
+      <span class="badge">${c.vehicle_count != null ? c.vehicle_count + ' kjøretøy' : '–'}</span>
+      ${followupBadge(c)}
     </div>
   `;
   card.addEventListener('dragstart', (e) => {
-    e.dataTransfer.setData('text/plain', lead.id);
+    e.dataTransfer.setData('text/plain', c.id);
     setTimeout(() => card.classList.add('dragging'), 0);
   });
   card.addEventListener('dragend', () => card.classList.remove('dragging'));
-  card.addEventListener('click', () => openLeadModal(lead.id));
+  card.addEventListener('click', () => window.dispatchEvent(
+    new CustomEvent('open-kundekort', { detail: { companyId: c.id } }),
+  ));
   return card;
 }
 
-async function moveLead(leadId, newStatus) {
-  const lead = state.leads.find((l) => l.id === leadId);
-  if (!lead || lead.status === newStatus) return;
-  const oldStatus = lead.status;
+export async function moveCompany(id, newStatus) {
+  const c = state.companies.find((x) => x.id === id);
+  if (!c || c.status === newStatus) return;
+  const oldStatus = c.status;
 
-  const { error } = await supabase.from('crm_leads').update({ status: newStatus }).eq('id', leadId);
-  if (error) { showToast('Kunne ikke flytte lead: ' + error.message, true); return; }
+  const { error } = await supabase.from('companies').update({ status: newStatus }).eq('id', id);
+  if (error) { showToast('Kunne ikke flytte: ' + error.message, true); return; }
 
-  await supabase.from('crm_activities').insert({
-    lead_id: leadId,
-    activity_type: 'status_change',
-    note: `Flyttet fra ${statusLabel(oldStatus)} til ${statusLabel(newStatus)}`,
-    created_by: session.email,
-  });
-
+  await logActivity(id, 'status_change', `Flyttet fra ${statusLabel(oldStatus)} til ${statusLabel(newStatus)}`);
   await refreshAll();
 }
 
-// ─── Modal: lead details / new lead ─────────────────────────────
-function emptyLead() {
-  return { id: null, company_name: '', contact_name: '', contact_email: '', contact_phone: '', vehicle_count: '', status: 'ny', source: '', next_followup_date: '' };
+// ─── Modal: nytt/rediger selskap ───────────────────────────────
+function emptyCompany() {
+  return {
+    id: null, name: '', org_no: '', place: '', vehicle_count: '',
+    lead_temp: 'kald', lead_source: '', status: 'lead',
+    next_activity: '', next_activity_at: null,
+  };
 }
 
-async function openLeadModal(leadId) {
-  state.activeLeadId = leadId;
-  const lead = leadId ? state.leads.find((l) => l.id === leadId) : emptyLead();
+export async function openCompanyModal(companyId) {
+  state.activeCompanyId = companyId;
+  const c = companyId ? state.companies.find((x) => x.id === companyId) : emptyCompany();
+  const kontakt = companyId ? await primaryContact(companyId) : null;
 
-  $('#modalTitle').textContent = leadId ? 'Rediger lead' : 'Ny lead';
-  $('#companyName').value = lead.company_name || '';
-  $('#contactName').value = lead.contact_name || '';
-  $('#contactEmail').value = lead.contact_email || '';
-  $('#contactPhone').value = lead.contact_phone || '';
-  $('#vehicleCount').value = lead.vehicle_count ?? '';
-  $('#leadStatus').value = lead.status || 'ny';
-  $('#leadSource').value = lead.source || '';
-  $('#followupDate').value = lead.next_followup_date || '';
+  $('#modalTitle').textContent = companyId ? 'Rediger selskap' : 'Legg til lead';
+  $('#companyName').value = c.name || '';
+  $('#orgNo').value = c.org_no || '';
+  $('#companyPlace').value = c.place || '';
+  $('#vehicleCount').value = c.vehicle_count ?? '';
+  $('#contactName').value = kontakt?.name || '';
+  $('#contactRole').value = kontakt?.role || '';
+  $('#contactEmail').value = kontakt?.email || '';
+  $('#contactPhone').value = kontakt?.phone || '';
+  $('#leadTemp').value = c.lead_temp || 'kald';
+  $('#leadSource').value = c.lead_source || '';
+  $('#leadStatus').value = c.status || 'lead';
+  $('#nextActivity').value = c.next_activity || '';
+  $('#nextActivityAt').value = c.next_activity_at
+    ? new Date(new Date(c.next_activity_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    : '';
 
-  $('#deleteLeadBtn').style.display = leadId ? 'inline-flex' : 'none';
-  $('#activitySection').style.display = leadId ? 'block' : 'none';
-
-  if (leadId) await loadActivities(leadId);
-
+  $('#deleteLeadBtn').style.display = companyId ? 'inline-flex' : 'none';
   $('#modalOverlay').classList.add('active');
 }
 
 function closeModal() {
   $('#modalOverlay').classList.remove('active');
-  state.activeLeadId = null;
+  state.activeCompanyId = null;
 }
 
-// ─── Activity log ────────────────────────────────────────────
-async function loadActivities(leadId) {
-  const { data, error } = await supabase
-    .from('crm_activities')
-    .select('*')
-    .eq('lead_id', leadId)
-    .order('created_at', { ascending: false });
-
-  const list = $('#activityList');
-  if (error) { list.innerHTML = '<div class="empty-col">Kunne ikke hente logg</div>'; return; }
-  if (!data || data.length === 0) { list.innerHTML = '<div class="empty-col">Ingen aktivitet enda</div>'; return; }
-
-  list.innerHTML = data.map((a) => `
-    <div class="activity-item">
-      <span class="a-type">${ACTIVITY_LABELS[a.activity_type] || a.activity_type}</span>
-      <span class="a-time">${fmtDateTime(a.created_at)}</span>
-      <div class="a-note">${escapeHtml(a.note || '')}</div>
-    </div>
-  `).join('');
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-// ─── Wiring (called once by shell.js after login) ────────────────
+// ─── Wiring (kalles én gang av shell.js etter innlogging) ──────
 export function initPipeline() {
   $('#closeModalBtn').addEventListener('click', closeModal);
   $('#modalOverlay').addEventListener('click', (e) => { if (e.target.id === 'modalOverlay') closeModal(); });
-  $('#newLeadBtn').addEventListener('click', () => openLeadModal(null));
+  $('#newLeadBtn').addEventListener('click', () => openCompanyModal(null));
 
   $('#leadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
-      company_name: $('#companyName').value.trim(),
-      contact_name: $('#contactName').value.trim() || null,
-      contact_email: $('#contactEmail').value.trim() || null,
-      contact_phone: $('#contactPhone').value.trim() || null,
+      name: $('#companyName').value.trim(),
+      org_no: $('#orgNo').value.replace(/\D/g, '') || null,
+      place: $('#companyPlace').value.trim() || null,
       vehicle_count: $('#vehicleCount').value ? parseInt($('#vehicleCount').value, 10) : null,
+      lead_temp: $('#leadTemp').value || null,
+      lead_source: $('#leadSource').value || null,
       status: $('#leadStatus').value,
-      source: $('#leadSource').value || null,
-      next_followup_date: $('#followupDate').value || null,
+      next_activity: $('#nextActivity').value.trim() || null,
+      next_activity_at: $('#nextActivityAt').value ? new Date($('#nextActivityAt').value).toISOString() : null,
+      assigned_to: session.email,
     };
+    if (!payload.name) { showToast('Firmanavn er påkrevd', true); return; }
 
-    if (!payload.company_name) { showToast('Firmanavn er påkrevd', true); return; }
+    const kontakt = {
+      name: $('#contactName').value.trim() || null,
+      role: $('#contactRole').value.trim() || null,
+      email: $('#contactEmail').value.trim() || null,
+      phone: $('#contactPhone').value.trim() || null,
+    };
+    const harKontakt = kontakt.name || kontakt.email || kontakt.phone;
 
-    if (state.activeLeadId) {
-      const oldLead = state.leads.find((l) => l.id === state.activeLeadId);
-      const { error } = await supabase.from('crm_leads').update(payload).eq('id', state.activeLeadId);
+    if (state.activeCompanyId) {
+      const old = state.companies.find((x) => x.id === state.activeCompanyId);
+      const { error } = await supabase.from('companies').update(payload).eq('id', state.activeCompanyId);
       if (error) { showToast('Kunne ikke lagre: ' + error.message, true); return; }
 
-      if (oldLead && oldLead.status !== payload.status) {
-        await supabase.from('crm_activities').insert({
-          lead_id: state.activeLeadId,
-          activity_type: 'status_change',
-          note: `Flyttet fra ${statusLabel(oldLead.status)} til ${statusLabel(payload.status)}`,
-          created_by: session.email,
-        });
+      if (harKontakt) {
+        const eksisterende = await primaryContact(state.activeCompanyId);
+        if (eksisterende) {
+          await supabase.from('contacts').update(kontakt).eq('id', eksisterende.id);
+        } else {
+          await supabase.from('contacts').insert({ ...kontakt, company_id: state.activeCompanyId, is_primary: true });
+        }
+        delete state.contacts[state.activeCompanyId];
       }
-      showToast('Lead oppdatert');
+
+      if (old && old.status !== payload.status) {
+        await logActivity(state.activeCompanyId, 'status_change',
+          `Flyttet fra ${statusLabel(old.status)} til ${statusLabel(payload.status)}`);
+      }
+      showToast('Selskap oppdatert');
     } else {
-      const { error } = await supabase.from('crm_leads').insert(payload);
+      const { data, error } = await supabase.from('companies').insert(payload).select('id').single();
       if (error) { showToast('Kunne ikke opprette: ' + error.message, true); return; }
+      if (harKontakt) {
+        await supabase.from('contacts').insert({ ...kontakt, company_id: data.id, is_primary: true });
+      }
+      await logActivity(data.id, 'lead_opprettet',
+        `${payload.lead_temp === 'varm' ? 'Varm' : 'Kald'} lead opprettet (${SOURCE_LABELS[payload.lead_source] || 'ukjent kilde'})`);
       showToast('Lead opprettet');
     }
 
@@ -299,31 +331,13 @@ export function initPipeline() {
   });
 
   $('#deleteLeadBtn').addEventListener('click', async () => {
-    if (!state.activeLeadId) return;
-    if (!confirm('Slette denne leaden permanent?')) return;
-    const { error } = await supabase.from('crm_leads').delete().eq('id', state.activeLeadId);
+    if (!state.activeCompanyId) return;
+    if (!confirm('Slette dette selskapet permanent? Historikken slettes også.')) return;
+    const { error } = await supabase.from('companies').delete().eq('id', state.activeCompanyId);
     if (error) { showToast('Kunne ikke slette: ' + error.message, true); return; }
-    showToast('Lead slettet');
+    showToast('Selskap slettet');
     closeModal();
     await refreshAll();
-  });
-
-  $('#addActivityBtn').addEventListener('click', async () => {
-    if (!state.activeLeadId) return;
-    const type = $('#activityType').value;
-    const note = $('#activityNote').value.trim();
-    if (!note) { showToast('Skriv en notat-tekst', true); return; }
-
-    const { error } = await supabase.from('crm_activities').insert({
-      lead_id: state.activeLeadId,
-      activity_type: type,
-      note,
-      created_by: session.email,
-    });
-    if (error) { showToast('Kunne ikke legge til: ' + error.message, true); return; }
-
-    $('#activityNote').value = '';
-    await loadActivities(state.activeLeadId);
   });
 
   refreshAll();
