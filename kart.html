@@ -443,6 +443,26 @@ async function manglerKoordinater() {
   };
 }
 
+/** Enkel deterministisk hash — trenger ikke være kryptografisk, bare stabil per id. */
+function hashKode(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = (h << 5) - h + s.charCodeAt(i); h |= 0; }
+  return h;
+}
+
+// Stedsnivå-fallback (poststed/kommune, uten treff på selve adressen) gir samme
+// punkt fra Geonorge for alle selskaper i samme sted — uten spredning klarer
+// klynger() aldri å skille dem, uansett zoom, siden de projiseres til nøyaktig
+// samme piksel. Sprer 60–360 m i en id-basert retning/avstand.
+function spreOffset(id, lat) {
+  const vinkel = (Math.abs(hashKode(id)) % 3600) / 3600 * Math.PI * 2;
+  const meter = 60 + (Math.abs(hashKode(id + ':r')) % 300);
+  return {
+    dLat: meter * Math.cos(vinkel) / 111320,
+    dLng: meter * Math.sin(vinkel) / (111320 * Math.cos(lat * Math.PI / 180)),
+  };
+}
+
 async function geokod() {
   const m = await manglerKoordinater();
   const alle = [
@@ -459,8 +479,13 @@ async function geokod() {
     const rad = alle[i];
     $('#geoStatus').textContent = `Slår opp ${i+1} av ${alle.length} — ${ok} funnet, ${feil} uten treff`;
     let pos = await slaaOpp(rad.address, rad.place);
-    if (!pos && rad.place) pos = await slaaOpp(null, rad.place);   // fall tilbake til poststed/kommune
+    let stedsniva = false;
+    if (!pos && rad.place) { pos = await slaaOpp(null, rad.place); stedsniva = true; }   // fall tilbake til poststed/kommune
     if (pos) {
+      if (stedsniva) {
+        const { dLat, dLng } = spreOffset(rad.id, pos.lat);
+        pos = { lat: pos.lat + dLat, lng: pos.lng + dLng };
+      }
       await supabase.from(rad.tabell)
         .update({ lat: pos.lat, lng: pos.lng, geokodet_at: new Date().toISOString() })
         .eq('id', rad.id);
