@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insiqt kontrollsenter</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F172A'/%3E%3Crect x='14' y='7' width='4' height='4' rx='2' fill='%232563EB'/%3E%3Crect x='14' y='13' width='4' height='12' rx='2' fill='%232563EB'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7F8FA;--card:#fff;--ink:#0F172A;--mute:#64748B;--line:rgba(15,23,42,.10);--accent:#2563EB;--accent2:#1D4ED8;--navy:#080F1E;--ok:#10B981;--warn:#F59E0B;--bad:#EF4444;--r:10px}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+a{color:var(--accent)}
+button,.btn{font:600 14px Inter,sans-serif;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+button.pri,.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}button.pri:hover{background:var(--accent2)}
+button.bad{background:#fff;border-color:var(--bad);color:var(--bad)}
+button.sm,.btn.sm{min-height:32px;padding:0 10px;font-size:13px}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:15px Inter,sans-serif;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+textarea{min-height:90px;resize:vertical}
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
+header{background:var(--navy);color:#F1F5F9;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding:14px max(3vw,16px)}
+.logo{font-size:20px;font-weight:800;letter-spacing:-.5px}.logo span{color:var(--accent)}
+.tag{font-size:12px;color:#7E95B5;margin-left:10px;border-left:1px solid rgba(255,255,255,.12);padding-left:10px}
+header .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+header .right a,header .right button{background:transparent;color:#cbd5e1;border-color:rgba(255,255,255,.15)}
+nav{display:flex;gap:2px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--line);padding:0 max(3vw,16px);position:sticky;top:0;z-index:5}
+nav a{flex:none;padding:12px 14px;text-decoration:none;color:var(--mute);font-weight:600;font-size:14px;border-bottom:2px solid transparent}
+nav a.on{color:var(--ink);border-color:var(--accent)}
+main{padding:20px max(3vw,16px) 60px;max-width:1500px;margin:0 auto}
+h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{font-size:16px;margin-bottom:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.gside{grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)}
+@media(max-width:1000px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g2,.gside{grid-template-columns:minmax(0,1fr)}}
+.kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-1px}.kpi span{color:var(--mute);font-size:13px}.kpi.bad b{color:var(--bad)}
+.list{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+@media(max-width:640px){.row{grid-template-columns:minmax(0,1fr)}}
+.meta{font-size:12px;color:var(--mute);display:flex;flex-wrap:wrap;gap:2px 10px}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;background:#EEF2FF;color:var(--accent);white-space:nowrap}
+.chip.ok{background:#ECFDF5;color:#047857}.chip.warn{background:#FFFBEB;color:#B45309}.chip.bad{background:#FEF2F2;color:#B91C1C}.chip.mute{background:#F1F5F9;color:var(--mute)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.frame{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff;height:min(78vh,900px)}
+.frame iframe{width:100%;height:100%;border:0}
+.framebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.framebar select{width:auto}
+.note{font-size:13px;color:var(--mute)}
+.err{color:var(--bad);font-size:13px}
+.empty{color:var(--mute);padding:12px 0}
+.hide{display:none!important}
+.sys{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.sys a{display:block;text-decoration:none;color:var(--ink)}.sys a:hover{border-color:var(--accent)}
+.sys small{display:block;color:var(--mute);font-size:12px;margin-top:4px}
+.swatch{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;padding:0;text-align:left;display:block;width:100%;min-height:auto}
+.swatch i{display:block;height:36px}.swatch span{display:block;padding:5px 8px;font-size:12px;font-weight:500}
+.ov{position:fixed;inset:0;background:rgba(8,15,30,.5);display:none;align-items:flex-start;justify-content:center;padding:6vh 12px;z-index:20;overflow:auto}
+.ov.on{display:flex}.modal{background:#fff;border-radius:12px;width:min(560px,100%);padding:22px}
+.foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 16px;border-radius:8px;z-index:30;display:none;max-width:90vw}.toast.on{display:block}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy)}
+#login .card{width:min(380px,92vw)}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px}@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+<div id="login" class="hide">
+  <form class="card" id="loginForm">
+    <div class="logo" style="color:var(--ink)">Insiqt<span>.ai</span></div>
+    <p class="note">Kontrollsenter. Logg inn med CRM-brukeren din.</p>
+    <label for="lEmail">E-post</label><input id="lEmail" type="email" required autocomplete="username">
+    <label for="lPass">Passord</label><input id="lPass" type="password" required autocomplete="current-password">
+    <div class="foot"><button class="pri" id="lBtn">Logg inn</button></div>
+    <div class="err" id="lErr"></div>
+  </form>
+</div>
+
+<div id="app" class="hide">
+<header>
+  <div style="display:flex;align-items:center"><span class="logo">Insiqt<span>.ai</span></span><span class="tag">Kontrollsenter</span></div>
+  <div class="right"><span class="note" style="color:#7E95B5" id="who"></span><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart ↗</a><button class="sm" id="logout">Logg ut</button></div>
+</header>
+<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#systemer">Systemer og dokumenter</a><a href="#branding">Branding</a></nav>
+<main>
+  <div id="setup" class="card hide" style="margin-bottom:16px;border-color:var(--warn)"></div>
+
+  <section data-v="oversikt">
+    <div class="grid g4" id="kpis"></div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Neste steg</h3><ul class="list" id="next"></ul></div>
+      <div class="card"><h3>Nettsiden</h3><ul class="list" id="ovWeb"></ul><div style="margin-top:10px"><a class="btn sm pri" href="#nettside">Endre nettsiden</a></div></div>
+    </div>
+  </section>
+
+  <section data-v="nettside" class="hide">
+    <div class="grid gside">
+      <div>
+        <div class="framebar">
+          <select id="pageSel" aria-label="Side"></select>
+          <span class="chip" id="frameMode">Live: insiqt.ai</span>
+          <button class="sm" id="backLive" style="display:none">Tilbake til live</button>
+          <a class="btn sm" id="frameOpen" href="https://insiqt.ai/" target="_blank" rel="noopener">Åpne i ny fane ↗</a>
+        </div>
+        <div class="frame"><iframe id="frame" title="Nettsiden" src="https://insiqt.ai/" referrerpolicy="no-referrer"></iframe></div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Ny endring på denne siden</h3>
+          <form id="webForm">
+            <label for="wTitle">Kort navn</label><input id="wTitle" required placeholder="F.eks. Ny ingress på forsiden">
+            <label for="wReq">Hva vil du endre?</label><textarea id="wReq" required placeholder="Beskriv hvor på siden og hva som skal stå der i stedet. F.eks. «Bytt undertittelen under hovedoverskriften til: …»"></textarea>
+            <label for="wNew">Ny tekst (valgfritt)</label><textarea id="wNew" style="min-height:60px"></textarea>
+            <div class="foot"><button class="pri" id="wBtn">Lag forhåndsvisning</button></div>
+          </form>
+          <p class="note">Claude gjør endringen i koden i bakgrunnen og lager en forhåndsvisning på en egen gren. Det tar vanligvis 1–3 minutter. Ingenting går live før du trykker «Publiser».</p>
+        </div>
+        <div class="card" style="margin-top:16px"><h3>Endringer</h3><ul class="list" id="webList"></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section data-v="oppgaver" class="hide">
+    <div class="framebar"><h2 style="margin:0 10px 0 0">Oppgaver og bugs</h2><button class="sm pri" id="newBug">+ Bug eller forbedring</button><button class="sm" id="newTask">+ Oppgave</button><a class="btn sm" href="https://app.notion.com/p/396088745714803ca495ec23507f9811" target="_blank" rel="noopener">Notion ↗</a></div>
+    <div class="grid g2"><div class="card"><h3>Bugs og forbedringer</h3><ul class="list" id="bugList"></ul></div><div class="card"><h3>Oppgaver</h3><ul class="list" id="taskList"></ul></div></div>
+  </section>
+
+  <section data-v="pipeline" class="hide">
+    <div class="framebar"><h2 style="margin:0 10px 0 0">Pipeline</h2><a class="btn sm pri" href="index.html">Åpne CRM</a></div>
+    <div class="grid g4" id="pipeKpis"></div>
+    <div class="grid g2" style="margin-top:16px"><div class="card"><h3>Oppfølging</h3><ul class="list" id="pipeList"></ul></div><div class="card"><h3>Tilbud</h3><ul class="list" id="offerList"></ul></div></div>
+  </section>
+
+  <section data-v="systemer" class="hide">
+    <h2>Systemer</h2><div class="sys" id="sys"></div>
+    <h2 style="margin-top:28px">Dokumenter</h2><div class="sys" id="docs"></div>
+    <p class="note" style="margin-top:12px">Google Drive kobles inn når en Google-tilkobling for john@insiqt.ai er satt opp (se «Oppsett» øverst når det mangler).</p>
+  </section>
+
+  <section data-v="branding" class="hide">
+    <h2>Branding</h2>
+    <div class="grid g2">
+      <div class="card"><h3>Logo</h3><div id="logos"></div><h3 style="margin-top:18px">Farger</h3><div class="sys" id="colors" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))"></div><h3 style="margin-top:18px">Skrift</h3><p><b style="font-size:20px">Inter</b> – 300 til 900. Logoen bruker 800 med -0,5 px bokstavavstand.</p></div>
+      <div class="card"><h3>Filer</h3><p class="note">Logoversjoner, PDF-er og bilder lagres privat i Supabase og er tilgjengelige for alle som er logget inn.</p><input type="file" id="up" aria-label="Last opp fil"><ul class="list" id="files" style="margin-top:10px"></ul></div>
+    </div>
+  </section>
+</main>
+</div>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './js/config.js';
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PAGES = [['index.html', 'Forside'], ['plattform.html', 'Plattform'], ['sjafor-app.html', 'Sjåfør-app'], ['ai-radgivning.html', 'Intelligence'], ['om-oss.html', 'Om oss'], ['kontakt.html', 'Kontakt'], ['karriere.html', 'Karriere'], ['partnere.html', 'Partnere'], ['blogg.html', 'Blogg'], ['kjore-og-hviletid.html', 'Kjøre- og hviletid'], ['personvern.html', 'Personvern'], ['vilkar.html', 'Vilkår'], ['cookies.html', 'Cookies'], ['styles.css', 'Design (styles.css)']];
+const ST = { foreslatt: ['I kø', 'mute'], arbeider: ['Claude jobber', ''], klar: ['Klar for gjennomsyn', 'warn'], publiserer: ['Publiserer', ''], publisert: ['Publisert', 'ok'], avvist: ['Avvist', 'mute'], feilet: ['Feilet', 'bad'] };
+const CRM_ST = [['lead', 'Lead'], ['kontaktet', 'Kontaktet'], ['demo_avtalt', 'Demo avtalt'], ['demo_gjennomfort', 'Demo gjennomført'], ['tilbud_sendt', 'Tilbud sendt'], ['oppfolging', 'Oppfølging'], ['won', 'Vunnet'], ['onboarding', 'Onboarding'], ['aktiv_kunde', 'Aktiv kunde'], ['lost', 'Tapt']];
+const CRM_LBL = Object.fromEntries(CRM_ST);
+const S = { status: {}, web: [], bugs: [], tasks: [], companies: [], offers: [], ring: 0, preview: {}, err: {} };
+const days = d => d ? Math.round((new Date(String(d).slice(0, 10) + 'T00:00') - new Date(new Date().toDateString())) / 864e5) : null;
+const fmt = d => d ? new Date(d).toLocaleString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+const fmtD = d => d ? new Date(String(d).length > 10 ? d : d + 'T00:00').toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+const rel = d => { const n = days(d); return n === null ? '' : n === 0 ? 'i dag' : n === 1 ? 'i morgen' : n === -1 ? 'i går' : n < 0 ? `${-n} dager siden` : `om ${n} dager`; };
+function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 4500); }
+async function api(action, body = {}) {
+  const { data, error } = await sb.functions.invoke('kontroll', { body: { action, ...body } });
+  if (error) { let m = error.message; try { const j = await error.context.json(); m = j.error || m; } catch (_) { } throw new Error(m); }
+  if (data && data.error) throw new Error(data.error);
+  return data;
+}
+
+/* ---------- auth ---------- */
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('#login').classList.remove('hide'); return; }
+  $('#login').classList.add('hide'); $('#app').classList.remove('hide');
+  $('#who').textContent = session.user.email;
+  route(); loadAll();
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('#lBtn').disabled = true; $('#lErr').textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email: $('#lEmail').value.trim(), password: $('#lPass').value });
+  $('#lBtn').disabled = false;
+  if (error) { $('#lErr').textContent = 'Feil e-post eller passord.'; return; }
+  boot();
+});
+$('#logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+/* ---------- data ---------- */
+async function loadStatus() { try { S.status = await api('status'); } catch (e) { S.status = {}; S.err.status = e.message; } renderSetup(); }
+async function loadWeb() { const { data, error } = await sb.from('website_changes').select('*').order('created_at', { ascending: false }).limit(50); if (error) S.err.web = error.message; else { S.web = data; delete S.err.web; } }
+async function loadCRM() {
+  const [c, o, r] = await Promise.all([
+    sb.from('companies').select('id,name,place,status,next_activity,next_activity_at,mrr,vehicle_count,assigned_to').order('next_activity_at', { ascending: true, nullsFirst: false }),
+    sb.from('offers').select('id,ref,status,company_name,company_id,price_month,sent_at,accepted_at,valid_until').order('created_at', { ascending: false }).limit(30),
+    sb.from('ringeliste').select('id', { count: 'exact', head: true }).eq('status', 'ny')]);
+  if (c.error) S.err.crm = c.error.message; else { S.companies = c.data; delete S.err.crm; }
+  if (!o.error) S.offers = o.data; S.ring = r.count || 0;
+}
+async function loadNotion() {
+  if (!S.status.notion) return;
+  try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
+}
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion()]); render(); poll(); }
+
+/* ---------- render ---------- */
+function renderSetup() {
+  const s = S.status, miss = [];
+  if (!s.github) miss.push('<li><b>GitHub-token</b> (Supabase-secret <code>GITHUB_TOKEN</code>): fine-grained token for repoet transparabl/insiqt-ai-website med «Contents: Read and write» og «Checks: Read».</li>');
+  if (!s.anthropic) miss.push('<li><b>Claude API-nøkkel</b> (Supabase-secret <code>ANTHROPIC_API_KEY</code>) fra console.anthropic.com.</li>');
+  if (!s.notion) miss.push('<li><b>Notion-integrasjon</b> (Supabase-secret <code>NOTION_TOKEN</code>): lag en intern integrasjon på notion.so/profile/integrations og del sidene «Company - Insiqt.ai» og «Software» med den.</li>');
+  const box = $('#setup');
+  if (!miss.length) { box.classList.add('hide'); return; }
+  box.classList.remove('hide');
+  box.innerHTML = `<h3>Oppsett som mangler</h3><p class="note">Legg inn nøklene i Supabase → Project Settings → Edge Functions → Secrets. Siden virker uten dem, men funksjonene under står stille til de er på plass.</p><ul>${miss.join('')}</ul>${S.err.status ? `<p class="err">${esc(S.err.status)}</p>` : ''}`;
+}
+const openCo = c => !['won', 'aktiv_kunde', 'lost', 'onboarding'].includes(c.status);
+function nextSteps() {
+  const it = [];
+  S.companies.filter(openCo).forEach(c => { const n = days(c.next_activity_at); if (n !== null && n <= 0) it.push([n < 0 ? 'bad' : 'warn', `${c.next_activity || 'Følg opp'}: ${c.name}`, `${CRM_LBL[c.status] || c.status} · ${rel(c.next_activity_at)}`, `index.html?kunde=${c.id}`]); });
+  S.web.filter(w => w.status === 'klar').forEach(w => it.push(['warn', `Se gjennom nettsideendring: ${w.title}`, 'Forhåndsvisning klar', '#nettside']));
+  S.web.filter(w => w.status === 'feilet').forEach(w => it.push(['bad', `Nettsideendring feilet: ${w.title}`, (w.error || '').slice(0, 90), '#nettside']));
+  S.offers.filter(o => ['sent', 'viewed'].includes(o.status) && days(o.sent_at) <= -7).forEach(o => it.push(['warn', `Følg opp tilbud: ${o.company_name || ''}`, `Sendt ${rel(o.sent_at)}`, o.company_id ? `index.html?kunde=${o.company_id}` : 'index.html']));
+  S.bugs.filter(b => !['Løst', 'Rejected', 'Tasks backlog'].includes(b.Status) && (String(b.Prioritet).startsWith('P1') || b.Alvorlighet === 'Blokkerer')).forEach(b => it.push(['bad', b.Name, `Bug · ${b.Prioritet || b.Alvorlighet}`, b.url]));
+  S.tasks.filter(t => !['Done', 'Canceled'].includes(t.Status) && t.Dates && days(t.Dates) < 0).forEach(t => it.push(['bad', t['Project name'], `Oppgave forfalt ${rel(t.Dates)}`, t.url]));
+  return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
+}
+function render() { renderOverview(); renderWeb(); renderTasks(); renderPipe(); renderSystems(); renderBrand(); }
+function renderOverview() {
+  const due = S.companies.filter(c => openCo(c) && days(c.next_activity_at) < 0).length;
+  const klar = S.web.filter(w => w.status === 'klar').length;
+  const openBugs = S.bugs.filter(b => !['Løst', 'Rejected', 'Tasks backlog'].includes(b.Status)).length;
+  $('#kpis').innerHTML = `<div class="card kpi ${due ? 'bad' : ''}"><b>${due}</b><span>CRM-oppfølginger forfalt</span></div><div class="card kpi"><b>${klar}</b><span>nettsideendringer til gjennomsyn</span></div><div class="card kpi"><b>${S.status.notion ? openBugs : '–'}</b><span>åpne bugs${S.status.notion ? '' : ' (Notion ikke koblet)'}</span></div><div class="card kpi"><b>${S.ring}</b><span>urørte i ringelisten</span></div>`;
+  const ns = nextSteps();
+  $('#next').innerHTML = (S.err.crm ? `<li class="err">CRM: ${esc(S.err.crm)}</li>` : '') + (S.err.notion ? `<li class="err">Notion: ${esc(S.err.notion)}</li>` : '') + (ns.length ? ns.slice(0, 15).map(([lv, t, why, href]) => `<li class="row"><span class="chip ${lv}">${lv === 'bad' ? 'Haster' : 'Viktig'}</span><div><b>${esc(t)}</b><div class="meta">${esc(why)}</div></div><div class="acts"><a class="btn sm" href="${esc(href)}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>Åpne</a></div></li>`).join('') : '<li class="empty">Ingenting haster.</li>');
+  $('#ovWeb').innerHTML = S.web.slice(0, 5).map(webRowShort).join('') || '<li class="empty">Ingen endringer ennå.</li>';
+}
+const webRowShort = w => `<li class="row"><span class="chip ${ST[w.status][1]}">${ST[w.status][0]}</span><div><b>${esc(w.title)}</b><div class="meta"><span>${esc(w.page)}</span><span>${esc(fmt(w.created_at))}</span></div></div><div></div></li>`;
+function renderWeb() {
+  const sel = $('#pageSel'); if (!sel.options.length) sel.innerHTML = PAGES.map(([p, n]) => `<option value="${p}">${n}</option>`).join('');
+  $('#webList').innerHTML = (S.err.web ? `<li class="err">${esc(S.err.web)}</li>` : '') + (S.web.length ? S.web.map(w => {
+    const [lab, cls] = ST[w.status]; const pv = S.preview[w.id];
+    const build = w.status === 'klar' ? (pv === 'klar' ? '<span class="chip ok">Forhåndsvisning bygget</span>' : pv === 'feilet' ? '<span class="chip bad">Bygging feilet</span>' : '<span class="chip mute"><span class="spin"></span> Cloudflare bygger</span>') : '';
+    return `<li class="row"><span class="chip ${cls}">${w.status === 'arbeider' || w.status === 'publiserer' ? '<span class="spin"></span> ' : ''}${lab}</span><div><b>${esc(w.title)}</b><div class="meta"><span>${esc(w.page)}</span><span>${esc(fmt(w.created_at))}</span><span>${esc((w.created_by || '').split('@')[0])}</span></div>
+      <div class="note">${esc(w.summary || w.request).slice(0, 220)}</div>${w.error ? `<div class="err">${esc(w.error)}</div>` : ''}${build}</div>
+      <div class="acts">${w.status === 'klar' ? `<button class="sm" data-pv="${w.id}">Vis</button><a class="btn sm" href="${esc(w.preview_url)}" target="_blank" rel="noopener">↗</a><button class="sm pri" data-pub="${w.id}">Publiser</button><button class="sm bad" data-rej="${w.id}">Avvis</button>` : ''}${w.status === 'feilet' ? `<button class="sm" data-retry="${w.id}">Prøv igjen</button><button class="sm bad" data-rej="${w.id}">Avvis</button>` : ''}${w.status === 'publisert' ? `<a class="btn sm" href="https://insiqt.ai/${w.page.endsWith('.html') && w.page !== 'index.html' ? w.page : ''}" target="_blank" rel="noopener">Live ↗</a>` : ''}</div></li>`;
+  }).join('') : '<li class="empty">Ingen endringer ennå. Beskriv en endring over.</li>');
+}
+const STATUSES_BUG = ['Ny', 'Til vurdering', 'Planlagt', 'Under arbeid', 'Blokkert', 'Løst', 'To review', 'Validating', 'Tasks backlog', 'Rejected'];
+const STATUSES_TASK = ['Backlog', 'Planning', 'In progress', 'Paused', 'Done', 'Canceled'];
+function renderTasks() {
+  if (!S.status.notion) { const m = '<li class="empty">Notion er ikke koblet til ennå. Se «Oppsett som mangler» øverst.</li>'; $('#bugList').innerHTML = m; $('#taskList').innerHTML = m; return; }
+  const e = S.err.notion ? `<li class="err">${esc(S.err.notion)}</li>` : '';
+  const bugs = S.bugs.filter(b => !['Løst', 'Rejected', 'Tasks backlog'].includes(b.Status)).sort((a, b) => String(a.Prioritet || 'P9').localeCompare(String(b.Prioritet || 'P9')));
+  $('#bugList').innerHTML = e + (bugs.map(b => `<li class="row"><span class="chip ${String(b.Prioritet).startsWith('P1') ? 'bad' : String(b.Prioritet).startsWith('P2') ? 'warn' : 'mute'}">${esc(b.Prioritet || 'Ingen prioritet')}</span><div><b>${esc(b.Name)}</b><div class="meta"><span>${esc(b.Hvor || '')}</span><span>${esc(b.Alvorlighet || '')}</span><span>${esc((b.Ansvarlig || []).join(', ') || 'Ingen ansvarlig')}</span></div></div><div class="acts"><select data-st="bug" data-id="${b.id}" style="width:auto;padding:4px">${STATUSES_BUG.map(s => `<option ${s === b.Status ? 'selected' : ''}>${s}</option>`).join('')}</select><a class="btn sm" href="${esc(b.url)}" target="_blank" rel="noopener">↗</a></div></li>`).join('') || '<li class="empty">Ingen åpne bugs.</li>');
+  const tasks = S.tasks.filter(t => !['Done', 'Canceled'].includes(t.Status)).sort((a, b) => String(a.Dates || '9').localeCompare(String(b.Dates || '9')));
+  $('#taskList').innerHTML = e + (tasks.map(t => `<li class="row"><span class="chip ${t.Dates && days(t.Dates) < 0 ? 'bad' : t.Priority === 'High' ? 'warn' : 'mute'}">${esc(t.Priority || '–')}</span><div><b>${esc(t['Project name'])}</b><div class="meta"><span>${esc((t.Owner || []).join(', ') || 'Ingen eier')}</span>${t.Dates ? `<span>${esc(fmtD(t.Dates))} (${rel(t.Dates)})</span>` : ''}</div></div><div class="acts"><select data-st="task" data-id="${t.id}" style="width:auto;padding:4px">${STATUSES_TASK.map(s => `<option ${s === t.Status ? 'selected' : ''}>${s}</option>`).join('')}</select><a class="btn sm" href="${esc(t.url)}" target="_blank" rel="noopener">↗</a></div></li>`).join('') || '<li class="empty">Ingen åpne oppgaver.</li>');
+}
+function renderPipe() {
+  const C = S.companies, cnt = {}; C.forEach(c => cnt[c.status] = (cnt[c.status] || 0) + 1);
+  const won = C.filter(c => ['won', 'onboarding', 'aktiv_kunde'].includes(c.status)); const mrr = won.reduce((a, c) => a + (+c.mrr || 0), 0);
+  $('#pipeKpis').innerHTML = `<div class="card kpi"><b>${C.filter(openCo).length}</b><span>åpne leads</span></div><div class="card kpi"><b>${cnt.tilbud_sendt || 0}</b><span>tilbud sendt</span></div><div class="card kpi"><b>${won.length}</b><span>vunnet · ${mrr.toLocaleString('nb-NO')} kr MRR</span></div><div class="card kpi"><b>${S.ring}</b><span>urørte i ringelisten</span></div>`;
+  $('#pipeList').innerHTML = (S.err.crm ? `<li class="err">${esc(S.err.crm)}</li>` : '') + (C.filter(openCo).map(c => `<li class="row"><span class="chip ${days(c.next_activity_at) < 0 ? 'bad' : 'mute'}">${esc(CRM_LBL[c.status] || c.status)}</span><div><b>${esc(c.name)}</b><div class="meta"><span>${esc(c.place || '')}</span><span>${c.next_activity_at ? esc((c.next_activity || 'Neste aktivitet') + ' ' + fmtD(c.next_activity_at)) : 'Ingen neste aktivitet'}</span></div></div><div class="acts"><a class="btn sm" href="index.html?kunde=${c.id}">Kundekort</a></div></li>`).join('') || '<li class="empty">Ingen åpne leads.</li>');
+  const ost = { sent: 'Sendt', viewed: 'Åpnet', accepted: 'Akseptert', declined: 'Avslått' };
+  $('#offerList').innerHTML = S.offers.map(o => `<li class="row"><span class="chip ${o.status === 'accepted' ? 'ok' : o.status === 'declined' ? 'mute' : 'warn'}">${esc(ost[o.status] || o.status)}</span><div><b>${esc(o.company_name || '')}</b><div class="meta">${o.price_month ? `<span>${(+o.price_month).toLocaleString('nb-NO')} kr/mnd</span>` : ''}${o.sent_at ? `<span>Sendt ${esc(rel(o.sent_at))}</span>` : ''}</div></div><div class="acts">${o.company_id ? `<a class="btn sm" href="index.html?kunde=${o.company_id}">Kundekort</a>` : ''}</div></li>`).join('') || '<li class="empty">Ingen tilbud.</li>';
+}
+const SYSTEMS = [['Insiqt-plattformen', 'https://ca-insiqt-web-prod.ashyisland-4121c7a0.norwayeast.azurecontainerapps.io/oversikt', 'Produksjon på Azure. Krever innlogging.'], ['app.insiqt.ai', 'https://app.insiqt.ai/login', 'Innloggingen nettsiden lenker til.'], ['Nettsiden insiqt.ai', 'https://insiqt.ai/', 'Cloudflare Pages fra GitHub.'], ['CRM', 'index.html', 'Pipeline, kundekort, ringeliste.'], ['Kart', 'kart.html', 'Leads og ringeliste på kart.'], ['Salgsverktøyet', 'https://insiqt-salg.vercel.app/', 'Tilbud og lønnsomhetsanalyse.'], ['Presentasjon', 'https://insiqt-presentasjon.vercel.app/', 'Salgspresentasjonen.'], ['Kode for nettsiden', 'https://github.com/transparabl/insiqt-ai-website', 'GitHub-repo (frontend/).']];
+const DOCS = [['Notion – Company Insiqt.ai', 'https://app.notion.com/p/396088745714803ca495ec23507f9811', 'Forsiden med driftsbilde.'], ['Notion – Software', 'https://app.notion.com/p/39608874571480769ec0c83afa14fb84', 'Teknisk dokumentasjon og Bug Tracker.'], ['Integrasjoner', 'https://app.notion.com/p/42108874571481b686aaec50e12fae29', 'Prioritert 1–100 med oppsettsteg.'], ['Gjøremål', 'https://app.notion.com/p/04108874571482a9807181adfce574d3', 'Alle oppgaver.'], ['Team Meetings', 'https://app.notion.com/p/6a208874571482bc88fb8157c27dc91d', 'Møter og referater.'], ['Kunder og avtalestatus', 'https://app.notion.com/p/19837448f97b4c99aaca6d81799895ec', 'Piloter og signerte avtaler.'], ['E-postmaler', 'https://app.notion.com/p/421088745714816f91b2e0c5691bbe91', 'Tilbud, oppfølging, onboarding.'], ['Oppsett og tilganger', 'https://app.notion.com/p/42108874571481faa3f1e02fe7f4e692', 'Hvordan alt henger sammen.'], ['Google Drive', 'https://drive.google.com/', 'Åpner Drive. Innebygd liste kommer når Google er koblet.']];
+const card = ([n, u, d]) => `<a class="card" href="${u}" ${u.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}><b>${esc(n)}${u.startsWith('http') ? ' ↗' : ''}</b><small>${esc(d)}</small></a>`;
+function renderSystems() { $('#sys').innerHTML = SYSTEMS.map(card).join(''); $('#docs').innerHTML = DOCS.map(card).join(''); }
+const BRAND = { colors: [['Primær', '#080F1E'], ['Sekundær', '#0D1829'], ['Flate', '#111E33'], ['Aksent', '#2563EB'], ['Aksent hover', '#1D4ED8'], ['Highlight', '#06B6D4'], ['Suksess', '#10B981'], ['Advarsel', '#F59E0B'], ['Fare', '#EF4444'], ['Tekst lys', '#F1F5F9'], ['Tekst sekundær', '#7E95B5'], ['Tekst dempet', '#3D5275']] };
+async function renderBrand() {
+  $('#logos').innerHTML = `<div style="display:flex;gap:12px;flex-wrap:wrap"><div style="background:#080F1E;padding:14px 18px;border-radius:8px"><span class="logo" style="color:#F1F5F9">Insiqt<span>.ai</span></span></div><div style="background:#fff;border:1px solid var(--line);padding:14px 18px;border-radius:8px"><span class="logo">Insiqt<span>.ai</span></span></div><img alt="Symbol" src="${document.querySelector('link[rel=icon]').href}" style="height:52px;width:52px"></div>`;
+  $('#colors').innerHTML = BRAND.colors.map(([n, h]) => `<button class="swatch" data-hex="${h}"><i style="background:${h}"></i><span>${n}<br><b>${h}</b></span></button>`).join('');
+  const { data, error } = await sb.storage.from('branding').list('', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+  if (error) { $('#files').innerHTML = `<li class="err">${esc(error.message)}</li>`; return; }
+  const items = (data || []).filter(f => f.name && !f.name.startsWith('.'));
+  if (!items.length) { $('#files').innerHTML = '<li class="empty">Ingen filer ennå.</li>'; return; }
+  const { data: urls } = await sb.storage.from('branding').createSignedUrls(items.map(f => f.name), 3600);
+  $('#files').innerHTML = items.map((f, i) => { const u = urls?.[i]?.signedUrl || '#'; const img = /\.(png|jpe?g|svg|webp|gif)$/i.test(f.name); return `<li class="row" style="grid-template-columns:56px minmax(0,1fr) auto">${img ? `<img src="${esc(u)}" alt="" style="max-width:52px;max-height:40px">` : '<span class="chip mute">Fil</span>'}<div><b>${esc(f.name)}</b><div class="meta"><span>${Math.round((f.metadata?.size || 0) / 1024)} kB</span></div></div><div class="acts"><a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">Åpne</a><button class="sm bad" data-del="${esc(f.name)}">Slett</button></div></li>`; }).join('');
+}
+
+/* ---------- polling ---------- */
+let pollT = null;
+async function poll() {
+  clearTimeout(pollT);
+  const busy = S.web.some(w => ['foreslatt', 'arbeider', 'publiserer'].includes(w.status));
+  const building = S.web.filter(w => w.status === 'klar' && S.preview[w.id] !== 'klar' && S.preview[w.id] !== 'feilet');
+  if (busy || building.length) {
+    pollT = setTimeout(async () => {
+      await loadWeb();
+      for (const w of building.slice(0, 3)) { try { S.preview[w.id] = (await api('web.preview', { id: w.id })).state; } catch (_) { } }
+      renderWeb(); renderOverview(); poll();
+    }, busy ? 4000 : 8000);
+  }
+}
+
+/* ---------- modal ---------- */
+function modal(html) { $('#modal').innerHTML = html; $('#ov').classList.add('on'); }
+function closeModal() { $('#ov').classList.remove('on'); }
+$('#ov').addEventListener('click', e => { if (e.target.id === 'ov' || e.target.dataset.close !== undefined) closeModal(); });
+function formModal(title, fields, onSubmit) {
+  modal(`<h3>${esc(title)}</h3><form id="mf">${fields.map(f => `<label for="m_${f.id}">${esc(f.label)}</label>${f.type === 'select' ? `<select id="m_${f.id}">${f.options.map(o => `<option>${esc(o)}</option>`).join('')}</select>` : f.type === 'textarea' ? `<textarea id="m_${f.id}"></textarea>` : `<input id="m_${f.id}" type="${f.type || 'text'}" ${f.req ? 'required' : ''}>`}`).join('')}<div class="foot"><button type="button" data-close>Avbryt</button><button class="pri">Lagre i Notion</button></div><div class="err" id="mErr"></div></form>`);
+  $('#mf').addEventListener('submit', async e => { e.preventDefault(); const v = {}; fields.forEach(f => v[f.id] = $('#m_' + f.id).value.trim()); const b = $('#mf .pri'); b.disabled = true; try { await onSubmit(v); closeModal(); toast('Lagret i Notion'); await loadNotion(); render(); } catch (err) { b.disabled = false; $('#mErr').textContent = err.message; } });
+}
+
+/* ---------- events ---------- */
+function frameTo(url, label, live) { $('#frame').src = url; $('#frameMode').textContent = label; $('#frameMode').className = 'chip' + (live ? '' : ' warn'); $('#backLive').style.display = live ? 'none' : ''; $('#frameOpen').href = url; }
+const liveUrl = () => { const p = $('#pageSel').value; return 'https://insiqt.ai/' + (p === 'index.html' || p === 'styles.css' ? '' : p); };
+$('#pageSel').onchange = () => frameTo(liveUrl(), 'Live: insiqt.ai', true);
+$('#backLive').onclick = () => frameTo(liveUrl(), 'Live: insiqt.ai', true);
+$('#webForm').addEventListener('submit', async e => {
+  e.preventDefault(); const b = $('#wBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Sender';
+  try { await api('web.request', { title: $('#wTitle').value.trim(), page: $('#pageSel').value, request: $('#wReq').value.trim(), new_text: $('#wNew').value.trim() || null }); $('#webForm').reset(); toast('Claude jobber med endringen'); await loadWeb(); renderWeb(); renderOverview(); poll(); }
+  catch (err) { toast(err.message); }
+  b.disabled = false; b.textContent = 'Lag forhåndsvisning';
+});
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return; const d = t.dataset;
+  if (d.pv) { const w = S.web.find(x => x.id === d.pv); $('#pageSel').value = w.page; frameTo(w.preview_url, 'Forhåndsvisning: ' + w.title, false); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  if (d.pub) { const w = S.web.find(x => x.id === d.pub); modal(`<h3>Publiser på insiqt.ai?</h3><p><b>${esc(w.title)}</b></p><p class="note">${esc(w.summary || '')}</p><p class="note">Endringen slås sammen med main, og Cloudflare publiserer den på insiqt.ai i løpet av et par minutter.</p><div class="foot"><button data-close>Avbryt</button><button class="pri" id="pubGo">Publiser</button></div>`); $('#pubGo').onclick = async () => { $('#pubGo').disabled = true; try { await api('web.publish', { id: w.id }); closeModal(); toast('Publisert – live om et par minutter'); } catch (err) { closeModal(); toast(err.message); } await loadWeb(); renderWeb(); renderOverview(); }; }
+  if (d.rej) { t.disabled = true; try { await api('web.reject', { id: d.rej }); toast('Avvist'); } catch (err) { toast(err.message); } await loadWeb(); renderWeb(); renderOverview(); }
+  if (d.retry) { t.disabled = true; try { await api('web.retry', { id: d.retry }); toast('Prøver på nytt'); } catch (err) { toast(err.message); } await loadWeb(); renderWeb(); poll(); }
+  if (d.hex) { try { await navigator.clipboard.writeText(d.hex); toast(d.hex + ' kopiert'); } catch (_) { toast(d.hex); } }
+  if (d.del) { if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Sikker?'; return; } const { error } = await sb.storage.from('branding').remove([d.del]); toast(error ? error.message : 'Slettet'); renderBrand(); }
+});
+document.addEventListener('change', async e => {
+  const t = e.target; if (!t.dataset.st) return; t.disabled = true;
+  try { await api('notion.status', { db: t.dataset.st, id: t.dataset.id, status: t.value }); toast('Status endret'); } catch (err) { toast(err.message); }
+  t.disabled = false;
+});
+$('#newBug').onclick = () => formModal('Ny bug eller forbedring', [{ id: 'name', label: 'Tittel', req: 1 }, { id: 'type', label: 'Type', type: 'select', options: ['Issue', 'Improvement', 'Feature'] }, { id: 'hvor', label: 'Område', type: 'select', options: ['Webplattform', 'Sjåførapp iOS', 'Sjåførapp Android', 'Nettside', 'Integrasjon', 'Eksport/rapport', 'Annet'] }, { id: 'alv', label: 'Alvorlighet', type: 'select', options: ['Irriterende', 'Blokkerer', 'Alvorlig', 'Kosmetisk'] }, { id: 'pri', label: 'Prioritet', type: 'select', options: ['P3 Normal', 'P1 Haster', 'P2 Viktig', 'P4 Lav'] }, { id: 'own', label: 'Ansvarlig', type: 'select', options: ['Raman', 'John', 'Ove', ''] }, { id: 'did', label: 'Hva jeg gjorde', type: 'textarea' }, { id: 'exp', label: 'Hva jeg forventet', type: 'textarea' }, { id: 'got', label: 'Hva som skjedde', type: 'textarea' }, { id: 'link', label: 'Lenke', type: 'url' }], v => api('notion.create', { db: 'bug', values: v }));
+$('#newTask').onclick = () => formModal('Ny oppgave', [{ id: 'name', label: 'Hva skal gjøres', req: 1 }, { id: 'du', label: 'Du skal …', type: 'textarea' }, { id: 'own', label: 'Ansvarlig', type: 'select', options: ['', 'John', 'Ove', 'Raman'] }, { id: 'pri', label: 'Prioritet', type: 'select', options: ['Medium', 'High', 'Low'] }, { id: 'omr', label: 'Område', type: 'select', options: ['Drift', 'Webplattform', 'App', 'Nettside', 'Integrasjon', 'Salg', 'Juridisk'] }, { id: 'due', label: 'Frist', type: 'date' }], v => api('notion.create', { db: 'task', values: v }));
+$('#up').onchange = async e => { const f = e.target.files[0]; if (!f) return; const name = f.name.replace(/[^\w.\-æøåÆØÅ ]/g, '_'); const { error } = await sb.storage.from('branding').upload(name, f, { upsert: true }); toast(error ? error.message : name + ' lastet opp'); e.target.value = ''; renderBrand(); };
+
+const VIEWS = ['oversikt', 'nettside', 'oppgaver', 'pipeline', 'systemer', 'branding'];
+function route() { const h = location.hash.slice(1); const v = VIEWS.includes(h) ? h : 'oversikt'; document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
+window.addEventListener('hashchange', route);
+sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
+boot();
+</script>
+</body>
+</html>
