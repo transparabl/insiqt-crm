@@ -2,11 +2,12 @@
 // Holder nøklene til GitHub, Claude API og Notion på serveren, aldri i nettleseren.
 // Krever innlogget Supabase-bruker (samme innlogging som CRM-et).
 //
-// Secrets (Supabase → Edge Functions → Secrets):
+// Nøkler: limes inn under Integrasjoner i kontrollsenteret (lagres i kontroll_secrets, bare lesbar for
+// denne funksjonen), eller settes som Supabase-secrets (Edge Functions → Secrets):
 //   GITHUB_TOKEN       fine-grained token, repo transparabl/insiqt-ai-website, Contents: read/write (+ Checks: read)
 //   ANTHROPIC_API_KEY  Claude API-nøkkel
 //   NOTION_TOKEN       intern Notion-integrasjon med tilgang til Company - Insiqt.ai og Software
-//   KONTROLL_ALLOWED   valgfri kommaseparert liste med e-poster som får bruke funksjonen
+//   KONTROLL_ALLOWED   valgfri kommaseparert liste med e-poster (standard: john@insiqt.ai, ove@insiqt.ai)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -25,7 +26,12 @@ const NOTION_DS: Record<string, string> = {
 };
 const PEOPLE: Record<string, string> = { John: "396d872b-594c-8169-84e2-0002a562bf33", Ove: "399d872b-594c-8138-acda-0002468eaab3", Raman: "3b5d872b-594c-816c-a540-0002ca104f85" };
 
-const env = (k: string) => Deno.env.get(k) || "";
+// Nøkler kan legges inn i kontrollsenteret (tabellen kontroll_secrets) eller som Supabase-secrets.
+// Nøkkel limt inn i kontrollsenteret vinner, slik at en ny nøkkel virker med en gang.
+const KEYS = ["GITHUB_TOKEN", "ANTHROPIC_API_KEY", "NOTION_TOKEN"] as const;
+const OVERRIDE: Record<string, string> = {};
+const env = (k: string) => OVERRIDE[k] || Deno.env.get(k) || "";
+const DEFAULT_ALLOWED = ["john@insiqt.ai", "ove@insiqt.ai"];
 const SB_URL = env("SUPABASE_URL");
 const admin = createClient(SB_URL, env("SUPABASE_SERVICE_ROLE_KEY"));
 
@@ -238,6 +244,52 @@ async function notionCreate(db: string, v: any, who: string) {
   throw new Error("Kan bare opprette bug eller oppgave.");
 }
 
+// ---------- nøkler ----------
+async function loadSecrets() {
+  const { data } = await admin.from("kontroll_secrets").select("name,value");
+  for (const k of KEYS) delete OVERRIDE[k];
+  for (const r of data || []) OVERRIDE[r.name] = r.value;
+}
+async function testKey(name: string, value: string): Promise<{ ok: boolean; message: string }> {
+  try {
+    if (name === "GITHUB_TOKEN") {
+      const h = { Authorization: `Bearer ${value}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "insiqt-kontroll" };
+      const r = await fetch(`https://api.github.com/repos/${REPO}/git/ref/heads/main`, { headers: h });
+      if (r.status === 401) return { ok: false, message: "GitHub godtar ikke tokenet. Sjekk at du kopierte hele, og at det ikke er utløpt." };
+      if (r.status === 404 || r.status === 403) return { ok: false, message: `Tokenet har ikke tilgang til ${REPO}. Velg repoet under «Repository access» og gi «Contents»-tilgang.` };
+      if (!r.ok) return { ok: false, message: `GitHub svarte ${r.status}.` };
+      const c = await fetch(`https://api.github.com/repos/${REPO}/commits/main/check-runs?per_page=1`, { headers: h });
+      return { ok: true, message: c.ok ? "Leser repoet og byggestatus. Skrivetilgang bekreftes ved første nettsideendring." : "Leser repoet. Mangler «Checks: Read», så byggestatus for forhåndsvisning vises ikke. Skrivetilgang bekreftes ved første nettsideendring." };
+    }
+    if (name === "ANTHROPIC_API_KEY") {
+      const r = await fetch("https://api.anthropic.com/v1/models?limit=100", { headers: { "x-api-key": value, "anthropic-version": "2023-06-01" } });
+      if (r.status === 401) return { ok: false, message: "Anthropic godtar ikke nøkkelen. Sjekk at du kopierte hele." };
+      if (r.status === 403) return { ok: false, message: "Nøkkelen er gyldig, men kontoen mangler tilgang. Sjekk betaling og kreditt i Console." };
+      if (!r.ok) return { ok: false, message: `Anthropic svarte ${r.status}.` };
+      const d = await r.json(); const has = (d.data || []).some((m: any) => m.id === MODEL);
+      return { ok: true, message: has ? `Nøkkelen virker, og modellen ${MODEL} er tilgjengelig.` : `Nøkkelen virker, men ${MODEL} står ikke i modell-listen. Si fra til Claude.` };
+    }
+    if (name === "NOTION_TOKEN") {
+      const h = { Authorization: `Bearer ${value}`, "Notion-Version": "2025-09-03", "Content-Type": "application/json" };
+      const me = await fetch("https://api.notion.com/v1/users/me", { headers: h });
+      if (me.status === 401) return { ok: false, message: "Notion godtar ikke nøkkelen. Kopier «Internal Integration Secret» på nytt." };
+      if (!me.ok) return { ok: false, message: `Notion svarte ${me.status}.` };
+      const probe = async (id: string) => (await fetch(`https://api.notion.com/v1/data_sources/${id}/query`, { method: "POST", headers: h, body: JSON.stringify({ page_size: 1 }) })).ok;
+      const [task, bug] = await Promise.all([probe(NOTION_DS.task), probe(NOTION_DS.bug)]);
+      if (!task && !bug) return { ok: false, message: "Nøkkelen virker, men integrasjonen ser ingen sider. Del «Company - Insiqt.ai» og «Software» med den (••• → Connections)." };
+      if (!task) return { ok: false, message: "Ser Bug Tracker, men ikke Gjøremål. Del «Company - Insiqt.ai» med integrasjonen." };
+      if (!bug) return { ok: false, message: "Ser Gjøremål, men ikke Bug Tracker. Del «Software» med integrasjonen." };
+      return { ok: true, message: "Nøkkelen virker og ser både Gjøremål og Bug Tracker." };
+    }
+    return { ok: false, message: "Ukjent nøkkel." };
+  } catch (e) { return { ok: false, message: "Fikk ikke kontakt: " + String((e as Error).message || e).slice(0, 150) }; }
+}
+async function secretStatus() {
+  const { data } = await admin.from("kontroll_secrets").select("name,last4,set_by,set_at,tested_at,test_ok,test_message");
+  const by = Object.fromEntries((data || []).map((r: any) => [r.name, r]));
+  return Object.fromEntries(KEYS.map(k => [k, by[k] ? { set: true, source: "kontrollsenter", ...by[k] } : Deno.env.get(k) ? { set: true, source: "supabase" } : { set: false }]));
+}
+
 // ---------- server ----------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -246,14 +298,40 @@ Deno.serve(async (req) => {
     const userClient = createClient(SB_URL, env("SUPABASE_ANON_KEY"), { global: { headers: { Authorization: auth } } });
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return json({ error: "Ikke innlogget." }, 401);
-    const allowed = env("KONTROLL_ALLOWED").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-    if (allowed.length && !allowed.includes((user.email || "").toLowerCase())) return json({ error: "Du har ikke tilgang til kontrollsenteret." }, 403);
+    const fromEnv = env("KONTROLL_ALLOWED").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    const allowed = fromEnv.length ? fromEnv : DEFAULT_ALLOWED;
+    if (!allowed.includes((user.email || "").toLowerCase())) return json({ error: "Du har ikke tilgang til kontrollsenteret." }, 403);
     const who = user.email || "ukjent";
     const body = await req.json().catch(() => ({}));
     const a = body.action as string;
-    const need = (k: string, label: string) => { if (!env(k)) throw new Error(`${label} er ikke satt opp ennå (Supabase-secret ${k}).`); };
+    await loadSecrets();
+    const need = (k: string, label: string) => { if (!env(k)) throw new Error(`${label} er ikke koblet til ennå. Se Integrasjoner i kontrollsenteret.`); };
 
-    if (a === "status") return json({ github: !!env("GITHUB_TOKEN"), anthropic: !!env("ANTHROPIC_API_KEY"), notion: !!env("NOTION_TOKEN"), user: who });
+    if (a === "status") return json({ github: !!env("GITHUB_TOKEN"), anthropic: !!env("ANTHROPIC_API_KEY"), notion: !!env("NOTION_TOKEN"), user: who, keys: await secretStatus() });
+    if (a === "secret.set") {
+      const name = String(body.name || ""), value = String(body.value || "").trim();
+      if (!(KEYS as readonly string[]).includes(name)) return json({ error: "Ukjent nøkkel." }, 400);
+      if (value.length < 20 || /\s/.test(value)) return json({ error: "Det ser ikke ut som en hel nøkkel. Kopier den på nytt." }, 400);
+      const t = await testKey(name, value);
+      if (!t.ok) return json({ ok: false, message: t.message });
+      const { error } = await admin.from("kontroll_secrets").upsert({ name, value, last4: value.slice(-4), set_by: who, set_at: new Date().toISOString(), tested_at: new Date().toISOString(), test_ok: true, test_message: t.message });
+      if (error) throw error;
+      return json({ ok: true, message: t.message });
+    }
+    if (a === "secret.test") {
+      const name = String(body.name || "");
+      if (!(KEYS as readonly string[]).includes(name)) return json({ error: "Ukjent nøkkel." }, 400);
+      if (!env(name)) return json({ ok: false, message: "Ingen nøkkel er lagt inn." });
+      const t = await testKey(name, env(name));
+      if (OVERRIDE[name]) await admin.from("kontroll_secrets").update({ tested_at: new Date().toISOString(), test_ok: t.ok, test_message: t.message }).eq("name", name);
+      return json(t);
+    }
+    if (a === "secret.remove") {
+      const name = String(body.name || "");
+      if (!(KEYS as readonly string[]).includes(name)) return json({ error: "Ukjent nøkkel." }, 400);
+      await admin.from("kontroll_secrets").delete().eq("name", name);
+      return json({ ok: true });
+    }
 
     if (a === "web.request") {
       need("GITHUB_TOKEN", "GitHub-tilgang"); need("ANTHROPIC_API_KEY", "Claude API");

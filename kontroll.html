@@ -34,6 +34,25 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
 .grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.gside{grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)}
 @media(max-width:1000px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g2,.gside{grid-template-columns:minmax(0,1fr)}}
+.ig{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:900px){.ig{grid-template-columns:minmax(0,1fr)}}
+.iglist{position:sticky;top:56px;max-height:calc(100vh - 80px);overflow:auto;padding:8px}
+.iglist h4{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin:14px 8px 6px}
+.iglist a[href^="#"]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:14px}
+.iglist a[href^="#"]:hover{background:#F1F5F9}.iglist a[href^="#"].on{background:#EEF2FF}
+.iglist a[href^="#"] small{grid-column:1/-1;color:var(--mute);font-size:12px}
+.steps{list-style:none;margin:0;padding:0;counter-reset:st}
+.steps li{display:grid;grid-template-columns:28px 26px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.steps li:last-child{border-bottom:0}
+.steps li::before{counter-increment:st;content:counter(st);width:26px;height:26px;border-radius:50%;background:#EEF2FF;color:var(--accent);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;grid-column:2;grid-row:1}
+.steps li.done::before{background:#ECFDF5;color:#047857;content:"✓"}
+.steps li.done .stxt{color:var(--mute);text-decoration:line-through}
+.steps input[type=checkbox]{width:20px;height:20px;margin:3px 0 0;grid-column:1;grid-row:1;accent-color:var(--ok)}
+.steps .stxt{grid-column:3}.steps .sact{grid-column:4}
+.steps .by{display:block;font-size:12px;color:var(--mute);text-decoration:none}
+.keybox{border:1px solid var(--line);border-radius:var(--r);padding:14px;background:#F8FAFC;margin:14px 0}
+.keybox.ok{border-color:#A7F3D0;background:#F0FDF4}.keybox.bad{border-color:#FECACA;background:#FEF2F2}
+.bar{height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok)}
 .kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-1px}.kpi span{color:var(--mute);font-size:13px}.kpi.bad b{color:var(--bad)}
 .list{list-style:none;margin:0;padding:0}
 .row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -83,7 +102,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
   <div style="display:flex;align-items:center"><span class="logo">Insiqt<span>.ai</span></span><span class="tag">Kontrollsenter</span></div>
   <div class="right"><span class="note" style="color:#7E95B5" id="who"></span><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart ↗</a><button class="sm" id="logout">Logg ut</button></div>
 </header>
-<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#systemer">Systemer og dokumenter</a><a href="#branding">Branding</a></nav>
+<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#systemer">Systemer og dokumenter</a><a href="#branding">Branding</a></nav>
 <main>
   <div id="setup" class="card hide" style="margin-bottom:16px;border-color:var(--warn)"></div>
 
@@ -137,6 +156,13 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <h2>Systemer</h2><div class="sys" id="sys"></div>
     <h2 style="margin-top:28px">Dokumenter</h2><div class="sys" id="docs"></div>
     <p class="note" style="margin-top:12px">Google Drive kobles inn når en Google-tilkobling for john@insiqt.ai er satt opp (se «Oppsett» øverst når det mangler).</p>
+  </section>
+
+  <section data-v="integrasjoner" class="hide">
+    <div class="ig">
+      <div class="card iglist" id="igList"></div>
+      <div id="igDetail"></div>
+    </div>
   </section>
 
   <section data-v="branding" class="hide">
@@ -206,18 +232,18 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion()]); render(); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides()]); render(); poll(); }
 
 /* ---------- render ---------- */
+const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs']];
 function renderSetup() {
-  const s = S.status, miss = [];
-  if (!s.github) miss.push('<li><b>GitHub-token</b> (Supabase-secret <code>GITHUB_TOKEN</code>): fine-grained token for repoet transparabl/insiqt-ai-website med «Contents: Read and write» og «Checks: Read».</li>');
-  if (!s.anthropic) miss.push('<li><b>Claude API-nøkkel</b> (Supabase-secret <code>ANTHROPIC_API_KEY</code>) fra console.anthropic.com.</li>');
-  if (!s.notion) miss.push('<li><b>Notion-integrasjon</b> (Supabase-secret <code>NOTION_TOKEN</code>): lag en intern integrasjon på notion.so/profile/integrations og del sidene «Company - Insiqt.ai» og «Software» med den.</li>');
-  const box = $('#setup');
-  if (!miss.length) { box.classList.add('hide'); return; }
+  const k = S.status.keys || {}, box = $('#setup');
+  const miss = KEYMAP.filter(([n]) => !(k[n] && k[n].set));
+  const bad = KEYMAP.filter(([n]) => k[n] && k[n].set && k[n].test_ok === false);
+  if (!S.status.user && S.err.status) { box.classList.remove('hide'); box.innerHTML = `<p class="err">${esc(S.err.status)}</p>`; return; }
+  if (!miss.length && !bad.length) { box.classList.add('hide'); return; }
   box.classList.remove('hide');
-  box.innerHTML = `<h3>Oppsett som mangler</h3><p class="note">Legg inn nøklene i Supabase → Project Settings → Edge Functions → Secrets. Siden virker uten dem, men funksjonene under står stille til de er på plass.</p><ul>${miss.join('')}</ul>${S.err.status ? `<p class="err">${esc(S.err.status)}</p>` : ''}`;
+  box.innerHTML = `<div class="framebar" style="justify-content:space-between;margin:0"><div><h3 style="margin:0">${miss.length ? `${miss.length} kobling${miss.length > 1 ? 'er' : ''} mangler` : 'En kobling feiler'}</h3><p class="note" style="margin:4px 0 0">Hver tar 2–3 minutter. Du limer nøkkelen inn her, og den testes med en gang.</p></div><div class="acts">${[...miss, ...bad].map(([n, slug, label, what]) => `<a class="btn sm ${miss.includes(KEYMAP.find(x => x[0] === n)) ? 'pri' : 'bad'}" href="#integrasjoner/${slug}">Koble til ${label} <span class="note" style="color:inherit;opacity:.8">(${what})</span></a>`).join('')}</div></div>`;
 }
 const openCo = c => !['won', 'aktiv_kunde', 'lost', 'onboarding'].includes(c.status);
 function nextSteps() {
@@ -230,7 +256,7 @@ function nextSteps() {
   S.tasks.filter(t => !['Done', 'Canceled'].includes(t.Status) && t.Dates && days(t.Dates) < 0).forEach(t => it.push(['bad', t['Project name'], `Oppgave forfalt ${rel(t.Dates)}`, t.url]));
   return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
 }
-function render() { renderOverview(); renderWeb(); renderTasks(); renderPipe(); renderSystems(); renderBrand(); }
+function render() { renderSetup(); renderOverview(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); }
 function renderOverview() {
   const due = S.companies.filter(c => openCo(c) && days(c.next_activity_at) < 0).length;
   const klar = S.web.filter(w => w.status === 'klar').length;
@@ -338,8 +364,101 @@ $('#newBug').onclick = () => formModal('Ny bug eller forbedring', [{ id: 'name',
 $('#newTask').onclick = () => formModal('Ny oppgave', [{ id: 'name', label: 'Hva skal gjøres', req: 1 }, { id: 'du', label: 'Du skal …', type: 'textarea' }, { id: 'own', label: 'Ansvarlig', type: 'select', options: ['', 'John', 'Ove', 'Raman'] }, { id: 'pri', label: 'Prioritet', type: 'select', options: ['Medium', 'High', 'Low'] }, { id: 'omr', label: 'Område', type: 'select', options: ['Drift', 'Webplattform', 'App', 'Nettside', 'Integrasjon', 'Salg', 'Juridisk'] }, { id: 'due', label: 'Frist', type: 'date' }], v => api('notion.create', { db: 'task', values: v }));
 $('#up').onchange = async e => { const f = e.target.files[0]; if (!f) return; const name = f.name.replace(/[^\w.\-æøåÆØÅ ]/g, '_'); const { error } = await sb.storage.from('branding').upload(name, f, { upsert: true }); toast(error ? error.message : name + ' lastet opp'); e.target.value = ''; renderBrand(); };
 
-const VIEWS = ['oversikt', 'nettside', 'oppgaver', 'pipeline', 'systemer', 'branding'];
-function route() { const h = location.hash.slice(1); const v = VIEWS.includes(h) ? h : 'oversikt'; document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
+
+/* ---------- integrasjoner ---------- */
+const IG = { guides: [], prog: [], notion: {}, sel: null, company: '', err: null };
+const pid = u => (String(u || '').match(/[0-9a-f]{32}/) || [''])[0];
+async function loadGuides() {
+  const [g, p] = await Promise.all([sb.from('integration_guides').select('*').order('sort'), sb.from('integration_progress').select('*')]);
+  if (g.error) IG.err = g.error.message; else { IG.guides = g.data; IG.err = null; }
+  if (!p.error) IG.prog = p.data;
+  if (S.status.notion) { try { const r = await api('notion.list', { db: 'integ' }); IG.notion = Object.fromEntries(r.rows.map(x => [String(x.id).replace(/-/g, ''), x])); } catch (_) { } }
+}
+const live = g => IG.notion[pid(g.notion_url)] || null;
+const keyOf = g => g.secret_name ? (S.status.keys || {})[g.secret_name] || { set: false } : null;
+const doneSet = (slug, sec, company) => new Set(IG.prog.filter(x => x.slug === slug && x.section === sec && (x.company_id || '') === (company || '')).map(x => x.step));
+function guideState(g) {
+  const k = keyOf(g); const n = live(g);
+  if (k) return k.set ? (k.test_ok === false ? ['Feiler', 'bad'] : ['Tilkoblet', 'ok']) : ['Ikke koblet', 'warn'];
+  const st = (n && n.Status) || g.status || '';
+  return [st, st.startsWith('Live') ? 'ok' : /Blokkert|Ikke bygget/.test(st) ? 'bad' : /Lovet|Planlagt|Under arbeid|Testes|Delvis/.test(st) ? 'warn' : 'mute'];
+}
+function igProgress(g) { const st = g.steps || {}; const n = (st.insiqt || []).length; return n ? [doneSet(g.slug, 'insiqt', '').size, n] : null; }
+function renderIG() {
+  if (!$('#igList')) return;
+  const sel = IG.sel && IG.guides.find(g => g.slug === IG.sel) || IG.guides[0];
+  const PH = ['Nå', 'Neste fase', 'Når plattformen vokser', 'Lengre sikt'];
+  const item = g => { const [lab, cls] = guideState(g); const pr = igProgress(g); const n = live(g); const loom = g.loom_url || (n && n['Loom-veiledning']); return `<a href="#integrasjoner/${g.slug}" class="${sel && sel.slug === g.slug ? 'on' : ''}"><span>${esc(g.name)}</span><span class="chip ${cls}">${esc(lab)}</span><small>${pr ? `${pr[0]}/${pr[1]} steg` : ''}${g.priority ? ` · prioritet ${(n && n.Prioritet) || g.priority}` : ''}${loom ? ' · Loom ✓' : ''}</small></a>`; };
+  const prod = IG.guides.filter(g => g.grp === 'produkt');
+  $('#igList').innerHTML = (IG.err ? `<p class="err">${esc(IG.err)}</p>` : '') + `<h4>Kontrollsenteret</h4>` + IG.guides.filter(g => g.grp === 'kontroll').map(item).join('') +
+    PH.map(ph => { const L = prod.filter(g => ((live(g) || {}).Fase || g.phase) === ph).sort((a, b) => (b.priority || 0) - (a.priority || 0)); return L.length ? `<h4>Produkt · ${ph}</h4>` + L.map(item).join('') : ''; }).join('') +
+    `<p class="note" style="margin:12px 8px 4px">Prioritet og status hentes fra <a href="https://app.notion.com/p/42108874571481b686aaec50e12fae29" target="_blank" rel="noopener">Integrasjoner i Notion</a>${S.status.notion ? '' : ' når Notion er koblet til'}.</p>`;
+  $('#igDetail').innerHTML = sel ? guideHTML(sel) : '<div class="card empty">Ingen guider lastet.</div>';
+}
+function stepsHTML(g, sec, company) {
+  const L = (g.steps || {})[sec] || []; if (!L.length) return '';
+  const done = doneSet(g.slug, sec, company);
+  const meta = i => IG.prog.find(x => x.slug === g.slug && x.section === sec && x.step === i && (x.company_id || '') === (company || ''));
+  return `<ol class="steps">${L.map((st, i) => { const m = meta(i); return `<li class="${done.has(i) ? 'done' : ''}"><input type="checkbox" aria-label="Steg ${i + 1} ferdig" data-igstep="${g.slug}|${sec}|${i}|${company || ''}" ${done.has(i) ? 'checked' : ''}><div class="stxt">${esc(st.t)}${st.who ? ` <span class="chip mute">${esc(st.who)}</span>` : ''}${m ? `<span class="by">Kryssa av av ${esc((m.done_by || '').split('@')[0])} ${esc(fmt(m.done_at))}</span>` : ''}</div><div class="sact">${st.link ? `<a class="btn sm" href="${esc(st.link)}" target="_blank" rel="noopener">${esc(st.lt || 'Åpne')} ↗</a>` : ''}</div></li>`; }).join('')}</ol>`;
+}
+function keyHTML(g) {
+  const k = keyOf(g); const cls = k.set ? (k.test_ok === false ? 'bad' : 'ok') : '';
+  const info = k.set ? (k.source === 'supabase' ? 'Ligger som Supabase-secret.' : `Lagt inn av ${esc((k.set_by || '').split('@')[0])} ${esc(fmt(k.set_at))}, slutter på …${esc(k.last4 || '')}.${k.tested_at ? ` Sist testet ${esc(fmt(k.tested_at))}.` : ''}`) : 'Ikke lagt inn ennå.';
+  return `<div class="keybox ${cls}"><div class="framebar" style="justify-content:space-between;margin:0"><b>${k.set ? (k.test_ok === false ? '✕ Nøkkelen feiler' : '✓ Tilkoblet') : 'Lim inn nøkkelen'}</b>${k.set ? `<div class="acts"><button class="sm" data-ktest="${g.secret_name}">Test på nytt</button>${k.source === 'kontrollsenter' ? `<button class="sm bad" data-krm="${g.secret_name}">Fjern</button>` : ''}</div>` : ''}</div>
+    <p class="note" style="margin:6px 0">${info}${k.test_message ? ` ${esc(k.test_message)}` : ''}</p>
+    <form data-kform="${g.secret_name}" class="framebar" style="margin:8px 0 0"><input type="password" autocomplete="off" spellcheck="false" placeholder="${k.set ? 'Lim inn ny nøkkel for å bytte' : 'Lim inn nøkkelen her'}" aria-label="Nøkkel for ${esc(g.name)}" style="flex:1;min-width:220px"><button class="pri">Lagre og test</button></form>
+    <p class="note" style="margin:6px 0 0">Nøkkelen sendes kryptert til serveren, testes mot tjenesten og lagres bare hvis den virker. Den vises aldri igjen her, og ligger ikke i Notion.</p><div class="note" data-kmsg="${g.secret_name}"></div></div>`;
+}
+function guideHTML(g) {
+  const n = live(g); const [lab, cls] = guideState(g); const loom = g.loom_url || (n && n['Loom-veiledning']) || '';
+  const hasKunde = ((g.steps || {}).kunde || []).length; const pr = igProgress(g);
+  const companies = S.companies.slice().sort((a, b) => a.name.localeCompare(b.name, 'nb'));
+  const cdone = IG.company ? doneSet(g.slug, 'kunde', IG.company).size : 0;
+  return `<div class="card"><div class="framebar" style="justify-content:space-between"><h2 style="margin:0">${esc(g.name)}</h2><span class="chip ${cls}">${esc(lab)}</span></div>
+  <p>${esc(g.purpose || '')}</p>
+  ${g.access ? `<p class="note"><b>Tilgang:</b> ${esc(g.access)}</p>` : ''}
+  ${(n && n.Blokkering) || g.blocker ? `<p class="err"><b>Blokkert:</b> ${esc((n && n.Blokkering) || g.blocker)}</p>` : ''}
+  ${n && n['Neste handling'] ? `<p class="note"><b>Neste handling (Notion):</b> ${esc(n['Neste handling'])}</p>` : ''}
+  ${g.verified ? `<p class="note"><i>${esc(g.verified)}</i></p>` : ''}
+  <div class="acts" style="justify-content:flex-start">${g.notion_url ? `<a class="btn sm" href="${esc(g.notion_url)}" target="_blank" rel="noopener">Notion ↗</a>` : ''}${g.docs_url ? `<a class="btn sm" href="${esc(g.docs_url)}" target="_blank" rel="noopener">Leverandørens dokumentasjon ↗</a>` : ''}${loom ? `<a class="btn sm pri" href="${esc(loom)}" target="_blank" rel="noopener">▶ Loom-veiledning</a>` : ''}</div>
+  ${g.secret_name ? keyHTML(g) : ''}
+  </div>
+  ${pr ? `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">${g.grp === 'kontroll' ? 'Steg for steg' : 'Insiqt gjør én gang'}</h3><span class="note">${pr[0]} av ${pr[1]} ferdig</span></div><div class="bar"><i style="width:${Math.round(pr[0] / pr[1] * 100)}%"></i></div>${stepsHTML(g, 'insiqt', '')}</div>` : ''}
+  ${hasKunde ? `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Per kunde</h3><select id="igCompany" style="width:auto;max-width:100%"><option value="">Velg kunde fra CRM-et …</option>${companies.map(c => `<option value="${c.id}" ${c.id === IG.company ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+    ${IG.company ? `<p class="note">${cdone} av ${hasKunde} steg ferdig for denne kunden.</p>${stepsHTML(g, 'kunde', IG.company)}` : `<p class="note">Velg en kunde for å krysse av stegene for akkurat den kunden. Stegene er:</p><ol class="note">${g.steps.kunde.map(st => `<li>${esc(st.t)}</li>`).join('')}</ol>`}</div>` : ''}
+  ${((g.steps || {}).test || []).length ? `<div class="card" style="margin-top:16px"><h3>Test og ferdig-kriterier</h3><p class="note">Integrasjonen regnes ikke som ferdig før alt her er krysset av.</p>${stepsHTML(g, 'test', '')}</div>` : ''}
+  ${g.grp === 'produkt' ? `<div class="card" style="margin-top:16px"><h3>Loom-veiledning</h3><form id="loomForm" class="framebar" style="margin:0"><input type="url" id="loomUrl" value="${esc(g.loom_url || '')}" placeholder="https://www.loom.com/share/…" style="flex:1;min-width:220px" aria-label="Loom-lenke"><button class="pri">Lagre</button></form><p class="note">Loom regnes som koblet for denne integrasjonen først når lenken står her.</p></div>` : ''}`;
+}
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.id === 'igCompany') { IG.company = t.value; renderIG(); return; }
+  if (!t.dataset.igstep) return;
+  const [slug, section, step, company] = t.dataset.igstep.split('|'); t.disabled = true;
+  try {
+    if (t.checked) { const { error } = await sb.from('integration_progress').insert({ slug, section, step: +step, company_id: company || null, done_by: S.status.user || '' }); if (error) throw error; }
+    else { let q = sb.from('integration_progress').delete().eq('slug', slug).eq('section', section).eq('step', +step); q = company ? q.eq('company_id', company) : q.is('company_id', null); const { error } = await q; if (error) throw error; }
+    const { data } = await sb.from('integration_progress').select('*'); IG.prog = data || IG.prog;
+  } catch (err) { toast(err.message); }
+  renderIG();
+});
+document.addEventListener('submit', async e => {
+  const f = e.target;
+  if (f.id === 'loomForm') { e.preventDefault(); const u = $('#loomUrl').value.trim(); if (u && !/^https:\/\/(www\.)?loom\.com\//.test(u)) { toast('Lenken må være en loom.com-lenke'); return; } const { error } = await sb.from('integration_guides').update({ loom_url: u || null, updated_at: new Date().toISOString() }).eq('slug', IG.sel); toast(error ? error.message : u ? 'Loom-lenken er lagret' : 'Loom-lenken er fjernet'); await loadGuides(); renderIG(); return; }
+  if (!f.dataset.kform) return; e.preventDefault();
+  const name = f.dataset.kform, inp = f.querySelector('input'), btn = f.querySelector('button'), msg = document.querySelector(`[data-kmsg="${name}"]`);
+  if (!inp.value.trim()) return; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Tester';
+  try { const r = await api('secret.set', { name, value: inp.value }); inp.value = ''; if (r.ok) { toast('Koblet til'); await loadStatus(); await Promise.all([loadNotion(), loadGuides()]); render(); } else { msg.innerHTML = `<p class="err">${esc(r.message)}</p>`; } }
+  catch (err) { msg.innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+  btn.disabled = false; btn.textContent = 'Lagre og test';
+});
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.ktest) { t.disabled = true; try { const r = await api('secret.test', { name: t.dataset.ktest }); toast(r.ok ? 'Virker' : r.message); } catch (err) { toast(err.message); } await loadStatus(); renderIG(); }
+  if (t.dataset.krm) { if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Sikker?'; return; } try { await api('secret.remove', { name: t.dataset.krm }); toast('Nøkkelen er fjernet'); } catch (err) { toast(err.message); } await loadStatus(); render(); }
+});
+
+const VIEWS = ['oversikt', 'nettside', 'oppgaver', 'pipeline', 'integrasjoner', 'systemer', 'branding'];
+function route() { const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt'; if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); } document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
 window.addEventListener('hashchange', route);
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
 boot();
