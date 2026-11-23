@@ -4,7 +4,7 @@
 //
 // Nøkler: limes inn under Integrasjoner i kontrollsenteret (lagres i kontroll_secrets, bare lesbar for
 // denne funksjonen), eller settes som Supabase-secrets (Edge Functions → Secrets):
-//   GITHUB_TOKEN       fine-grained token, repo transparabl/insiqt-ai-website, Contents: read/write (+ Checks: read)
+//   GITHUB_TOKEN       fine-grained token, repo transparabl/insiqt-ai-website, Contents: read/write
 //   ANTHROPIC_API_KEY  Claude API-nøkkel
 //   NOTION_TOKEN       intern Notion-integrasjon med tilgang til Company - Insiqt.ai og Software
 //   KONTROLL_ALLOWED   valgfri kommaseparert liste med e-poster (standard: john@insiqt.ai, ove@insiqt.ai)
@@ -165,14 +165,21 @@ async function rejectChange(id: string) {
 }
 
 async function previewState(id: string) {
-  const { data: ch } = await admin.from("website_changes").select("commit_sha,status").eq("id", id).single();
+  const { data: ch } = await admin.from("website_changes").select("commit_sha,status,preview_url,updated_at").eq("id", id).single();
   if (!ch?.commit_sha) return { state: "ukjent" };
+  // 1) Byggestatus fra GitHub, hvis tokenet har «Checks: Read»
   try {
     const { data } = await gh(`/commits/${ch.commit_sha}/check-runs`);
     const run = (data?.check_runs || []).find((c: any) => /cloudflare/i.test(c.name));
-    if (!run) return { state: "venter" };
-    return { state: run.status === "completed" ? (run.conclusion === "success" ? "klar" : "feilet") : "bygger" };
-  } catch { return { state: "ukjent" }; }
+    if (run) return { state: run.status === "completed" ? (run.conclusion === "success" ? "klar" : "feilet") : "bygger" };
+  } catch { /* uten Checks-tilgang: sjekk siden direkte */ }
+  // 2) Sjekk at forhåndsvisningen faktisk svarer
+  try {
+    const r = await fetch(ch.preview_url, { method: "GET", redirect: "follow" });
+    if (r.ok) return { state: "klar" };
+  } catch { /* ikke klar ennå */ }
+  const minutes = (Date.now() - new Date(ch.updated_at).getTime()) / 60000;
+  return { state: minutes > 15 ? "ukjent" : "bygger" };
 }
 
 // ---------- Notion ----------
@@ -259,7 +266,7 @@ async function testKey(name: string, value: string): Promise<{ ok: boolean; mess
       if (r.status === 404 || r.status === 403) return { ok: false, message: `Tokenet har ikke tilgang til ${REPO}. Velg repoet under «Repository access» og gi «Contents»-tilgang.` };
       if (!r.ok) return { ok: false, message: `GitHub svarte ${r.status}.` };
       const c = await fetch(`https://api.github.com/repos/${REPO}/commits/main/check-runs?per_page=1`, { headers: h });
-      return { ok: true, message: c.ok ? "Leser repoet og byggestatus. Skrivetilgang bekreftes ved første nettsideendring." : "Leser repoet. Mangler «Checks: Read», så byggestatus for forhåndsvisning vises ikke. Skrivetilgang bekreftes ved første nettsideendring." };
+      return { ok: true, message: c.ok ? "Leser repoet. Skrivetilgang bekreftes ved første nettsideendring." : "Leser repoet. Skrivetilgang bekreftes ved første nettsideendring." };
     }
     if (name === "ANTHROPIC_API_KEY") {
       const r = await fetch("https://api.anthropic.com/v1/models?limit=100", { headers: { "x-api-key": value, "anthropic-version": "2023-06-01" } });

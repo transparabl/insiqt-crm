@@ -28,7 +28,7 @@ g("kontroll-github", "kontroll", "GitHub – nettsideendringer", 1, secret_name=
     S("Åpne siden for nytt fine-grained token (Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token).", "John", "https://github.com/settings/personal-access-tokens/new", "Nytt token"),
     S("Navn: «Insiqt kontrollsenter». Utløp: 90 dager. Sett en påminnelse i kalenderen dagen før.", "John"),
     S("Resource owner: transparabl. Repository access: «Only select repositories» → velg insiqt-ai-website.", "John"),
-    S("Under Permissions → Repository permissions: «Contents» = Read and write, og «Checks» = Read-only. «Metadata» settes automatisk.", "John"),
+    S("Under Permissions → Repository permissions: velg «Contents» = Read and write. Det er alt som trengs. «Metadata» settes automatisk.", "John"),
     S("Trykk «Generate token» og kopier det. GitHub viser det bare én gang. Lagre en kopi i Proton Pass.", "John"),
     S("Lim tokenet inn i feltet under og trykk «Lagre og test».", "John"),
   ], "test": [

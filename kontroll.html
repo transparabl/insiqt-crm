@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795440876">
+<html lang="no" data-build="1795477308">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -275,7 +275,7 @@ function renderWeb() {
   const sel = $('#pageSel'); if (!sel.options.length) sel.innerHTML = PAGES.map(([p, n]) => `<option value="${p}">${n}</option>`).join('');
   $('#webList').innerHTML = (S.err.web ? `<li class="err">${esc(S.err.web)}</li>` : '') + (S.web.length ? S.web.map(w => {
     const [lab, cls] = ST[w.status]; const pv = S.preview[w.id];
-    const build = w.status === 'klar' ? (pv === 'klar' ? '<span class="chip ok">Forhåndsvisning bygget</span>' : pv === 'feilet' ? '<span class="chip bad">Bygging feilet</span>' : '<span class="chip mute"><span class="spin"></span> Cloudflare bygger</span>') : '';
+    const build = w.status === 'klar' ? (pv === 'klar' ? '<span class="chip ok">Forhåndsvisning bygget</span>' : pv === 'feilet' ? '<span class="chip bad">Bygging feilet</span>' : pv === 'ukjent' ? '<span class="chip mute">Åpne forhåndsvisningen for å sjekke</span>' : '<span class="chip mute"><span class="spin"></span> Cloudflare bygger</span>') : '';
     return `<li class="row"><span class="chip ${cls}">${w.status === 'arbeider' || w.status === 'publiserer' ? '<span class="spin"></span> ' : ''}${lab}</span><div><b>${esc(w.title)}</b><div class="meta"><span>${esc(w.page)}</span><span>${esc(fmt(w.created_at))}</span><span>${esc((w.created_by || '').split('@')[0])}</span></div>
       <div class="note">${esc(w.summary || w.request).slice(0, 220)}</div>${w.error ? `<div class="err">${esc(w.error)}</div>` : ''}${build}</div>
       <div class="acts">${w.status === 'klar' ? `<button class="sm" data-pv="${w.id}">Vis</button><a class="btn sm" href="${esc(w.preview_url)}" target="_blank" rel="noopener">↗</a><button class="sm pri" data-pub="${w.id}">Publiser</button><button class="sm bad" data-rej="${w.id}">Avvis</button>` : ''}${w.status === 'feilet' ? `<button class="sm" data-retry="${w.id}">Prøv igjen</button><button class="sm bad" data-rej="${w.id}">Avvis</button>` : ''}${w.status === 'publisert' ? `<a class="btn sm" href="https://insiqt.ai/${w.page.endsWith('.html') && w.page !== 'index.html' ? w.page : ''}" target="_blank" rel="noopener">Live ↗</a>` : ''}</div></li>`;
@@ -337,7 +337,7 @@ let pollT = null;
 async function poll() {
   clearTimeout(pollT);
   const busy = S.web.some(w => ['foreslatt', 'arbeider', 'publiserer'].includes(w.status));
-  const building = S.web.filter(w => w.status === 'klar' && S.preview[w.id] !== 'klar' && S.preview[w.id] !== 'feilet');
+  const building = S.web.filter(w => w.status === 'klar' && !['klar', 'feilet', 'ukjent'].includes(S.preview[w.id]));
   if (busy || building.length) {
     pollT = setTimeout(async () => {
       await loadWeb();
