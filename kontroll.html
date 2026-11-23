@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="no" data-build="1795440876">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -110,7 +110,8 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <div class="grid g4" id="kpis"></div>
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Neste steg</h3><ul class="list" id="next"></ul></div>
-      <div class="card"><h3>Nettsiden</h3><ul class="list" id="ovWeb"></ul><div style="margin-top:10px"><a class="btn sm pri" href="#nettside">Endre nettsiden</a></div></div>
+      <div><div class="card"><h3>Nettsiden</h3><ul class="list" id="ovWeb"></ul><div style="margin-top:10px"><a class="btn sm pri" href="#nettside">Endre nettsiden</a></div></div>
+      <div class="card" style="margin-top:16px"><h3>Siste møtereferater</h3><ul class="list" id="ovMeet"></ul><p class="note" style="margin:8px 0 0">Fra Google Meet-notatene i Drive (john@insiqt.ai).</p></div></div>
     </div>
   </section>
 
@@ -154,8 +155,11 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
 
   <section data-v="systemer" class="hide">
     <h2>Systemer</h2><div class="sys" id="sys"></div>
-    <h2 style="margin-top:28px">Dokumenter</h2><div class="sys" id="docs"></div>
-    <p class="note" style="margin-top:12px">Google Drive kobles inn når en Google-tilkobling for john@insiqt.ai er satt opp (se «Oppsett» øverst når det mangler).</p>
+    <div class="framebar" style="margin-top:28px;justify-content:space-between"><h2 style="margin:0">Dokumenter</h2><span class="note" id="docSync"></span></div>
+    <div class="framebar"><input type="search" id="docQ" placeholder="Søk i alle dokumenter i Drive og Notion" aria-label="Søk i dokumenter" style="flex:1;min-width:220px">
+      <select id="docF" aria-label="Filter" style="width:auto"><option value="">Alle</option><option value="drive">Google Drive</option><option value="notion">Notion</option><option value="mote">Møtereferater</option><option value="avtale">Avtaler og vilkår</option><option value="mappe">Mapper</option></select>
+      <a class="btn sm" href="https://drive.google.com/" target="_blank" rel="noopener">Google Drive ↗</a></div>
+    <div class="card"><ul class="list" id="docs"></ul></div>
   </section>
 
   <section data-v="integrasjoner" class="hide">
@@ -232,7 +236,7 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides()]); render(); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs()]); render(); poll(); }
 
 /* ---------- render ---------- */
 const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs']];
@@ -251,7 +255,7 @@ function nextSteps() {
   S.companies.filter(openCo).forEach(c => { const n = days(c.next_activity_at); if (n !== null && n <= 0) it.push([n < 0 ? 'bad' : 'warn', `${c.next_activity || 'Følg opp'}: ${c.name}`, `${CRM_LBL[c.status] || c.status} · ${rel(c.next_activity_at)}`, `index.html?kunde=${c.id}`]); });
   S.web.filter(w => w.status === 'klar').forEach(w => it.push(['warn', `Se gjennom nettsideendring: ${w.title}`, 'Forhåndsvisning klar', '#nettside']));
   S.web.filter(w => w.status === 'feilet').forEach(w => it.push(['bad', `Nettsideendring feilet: ${w.title}`, (w.error || '').slice(0, 90), '#nettside']));
-  S.offers.filter(o => ['sent', 'viewed'].includes(o.status) && days(o.sent_at) <= -7).forEach(o => it.push(['warn', `Følg opp tilbud: ${o.company_name || ''}`, `Sendt ${rel(o.sent_at)}`, o.company_id ? `index.html?kunde=${o.company_id}` : 'index.html']));
+  S.offers.filter(o => ['sent', 'viewed'].includes(o.status) && days(o.sent_at) <= -7 && !(o.company_id && S.companies.some(c => c.id === o.company_id && openCo(c) && days(c.next_activity_at) <= 0))).forEach(o => it.push(['warn', `Følg opp tilbud: ${o.company_name || ''}`, `Sendt ${rel(o.sent_at)}`, o.company_id ? `index.html?kunde=${o.company_id}` : 'index.html']));
   S.bugs.filter(b => !['Løst', 'Rejected', 'Tasks backlog'].includes(b.Status) && (String(b.Prioritet).startsWith('P1') || b.Alvorlighet === 'Blokkerer')).forEach(b => it.push(['bad', b.Name, `Bug · ${b.Prioritet || b.Alvorlighet}`, b.url]));
   S.tasks.filter(t => !['Done', 'Canceled'].includes(t.Status) && t.Dates && days(t.Dates) < 0).forEach(t => it.push(['bad', t['Project name'], `Oppgave forfalt ${rel(t.Dates)}`, t.url]));
   return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
@@ -298,7 +302,24 @@ function renderPipe() {
 const SYSTEMS = [['Insiqt-plattformen', 'https://ca-insiqt-web-prod.ashyisland-4121c7a0.norwayeast.azurecontainerapps.io/oversikt', 'Produksjon på Azure. Krever innlogging.'], ['app.insiqt.ai', 'https://app.insiqt.ai/login', 'Innloggingen nettsiden lenker til.'], ['Nettsiden insiqt.ai', 'https://insiqt.ai/', 'Cloudflare Pages fra GitHub.'], ['CRM', 'index.html', 'Pipeline, kundekort, ringeliste.'], ['Kart', 'kart.html', 'Leads og ringeliste på kart.'], ['Salgsverktøyet', 'https://insiqt-salg.vercel.app/', 'Tilbud og lønnsomhetsanalyse.'], ['Presentasjon', 'https://insiqt-presentasjon.vercel.app/', 'Salgspresentasjonen.'], ['Kode for nettsiden', 'https://github.com/transparabl/insiqt-ai-website', 'GitHub-repo (frontend/).']];
 const DOCS = [['Notion – Company Insiqt.ai', 'https://app.notion.com/p/396088745714803ca495ec23507f9811', 'Forsiden med driftsbilde.'], ['Notion – Software', 'https://app.notion.com/p/39608874571480769ec0c83afa14fb84', 'Teknisk dokumentasjon og Bug Tracker.'], ['Integrasjoner', 'https://app.notion.com/p/42108874571481b686aaec50e12fae29', 'Prioritert 1–100 med oppsettsteg.'], ['Gjøremål', 'https://app.notion.com/p/04108874571482a9807181adfce574d3', 'Alle oppgaver.'], ['Team Meetings', 'https://app.notion.com/p/6a208874571482bc88fb8157c27dc91d', 'Møter og referater.'], ['Kunder og avtalestatus', 'https://app.notion.com/p/19837448f97b4c99aaca6d81799895ec', 'Piloter og signerte avtaler.'], ['E-postmaler', 'https://app.notion.com/p/421088745714816f91b2e0c5691bbe91', 'Tilbud, oppfølging, onboarding.'], ['Oppsett og tilganger', 'https://app.notion.com/p/42108874571481faa3f1e02fe7f4e692', 'Hvordan alt henger sammen.'], ['Google Drive', 'https://drive.google.com/', 'Åpner Drive. Innebygd liste kommer når Google er koblet.']];
 const card = ([n, u, d]) => `<a class="card" href="${u}" ${u.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}><b>${esc(n)}${u.startsWith('http') ? ' ↗' : ''}</b><small>${esc(d)}</small></a>`;
-function renderSystems() { $('#sys').innerHTML = SYSTEMS.map(card).join(''); $('#docs').innerHTML = DOCS.map(card).join(''); }
+const DKIND = { mappe: 'Mappe', doc: 'Dokument', pdf: 'PDF', ark: 'Regneark', bilde: 'Bilde', mote: 'Møtereferat', side: 'Notion-side', database: 'Notion-database', avtale: 'Avtaleutkast', 'e-postmal': 'E-postmal' };
+async function loadDocs() {
+  const [d, l] = await Promise.all([sb.from('documents').select('*').order('modified_at', { ascending: false, nullsFirst: false }), sb.from('sync_log').select('*')]);
+  if (d.error) S.err.docs = d.error.message; else { S.docs = d.data; delete S.err.docs; }
+  S.sync = l.data || [];
+}
+function renderDocs() {
+  const q = ($('#docQ').value || '').trim().toLowerCase(), f = $('#docF').value;
+  const L = (S.docs || []).filter(x => (!f || x.source === f || x.kind === f) && (!q || (x.title + ' ' + (x.path || '')).toLowerCase().includes(q)))
+    .sort((a, b) => (a.kind === 'mappe') - (b.kind === 'mappe') || String(b.modified_at || '').localeCompare(String(a.modified_at || '')));
+  $('#docs').innerHTML = (S.err.docs ? `<li class="err">${esc(S.err.docs)}</li>` : '') + (L.length ? L.slice(0, 150).map(x => `<li class="row"><span class="chip ${x.source === 'drive' ? '' : 'mute'}">${esc(DKIND[x.kind] || x.kind || '')}</span><div><b>${esc(x.title)}</b><div class="meta"><span>${esc(x.path || '')}</span>${x.modified_at ? `<span>Endret ${esc(fmt(x.modified_at))}</span>` : ''}</div></div><div class="acts"><a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Åpne ↗</a></div></li>`).join('') : '<li class="empty">Ingen treff.</li>');
+  const sy = Object.fromEntries((S.sync || []).map(r => [r.source, r]));
+  $('#docSync').textContent = sy.drive ? `Drive og Notion sist hentet ${fmt(sy.drive.synced_at)}` : '';
+  const M = (S.docs || []).filter(x => x.kind === 'mote').slice(0, 4);
+  $('#ovMeet').innerHTML = M.length ? M.map(x => `<li class="row"><span class="chip mute">Møte</span><div><b>${esc(x.title.replace(/ - Notes by Gemini$/, '').replace(/^INSIQT AI \| /, ''))}</b></div><div class="acts"><a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Åpne ↗</a></div></li>`).join('') : '<li class="empty">Ingen møtereferater funnet.</li>';
+}
+function renderSystems() { $('#sys').innerHTML = SYSTEMS.map(card).join(''); renderDocs(); }
+$('#docQ').addEventListener('input', renderDocs); $('#docF').addEventListener('change', renderDocs);
 const BRAND = { colors: [['Primær', '#080F1E'], ['Sekundær', '#0D1829'], ['Flate', '#111E33'], ['Aksent', '#2563EB'], ['Aksent hover', '#1D4ED8'], ['Highlight', '#06B6D4'], ['Suksess', '#10B981'], ['Advarsel', '#F59E0B'], ['Fare', '#EF4444'], ['Tekst lys', '#F1F5F9'], ['Tekst sekundær', '#7E95B5'], ['Tekst dempet', '#3D5275']] };
 async function renderBrand() {
   $('#logos').innerHTML = `<div style="display:flex;gap:12px;flex-wrap:wrap"><div style="background:#080F1E;padding:14px 18px;border-radius:8px"><span class="logo" style="color:#F1F5F9">Insiqt<span>.ai</span></span></div><div style="background:#fff;border:1px solid var(--line);padding:14px 18px;border-radius:8px"><span class="logo">Insiqt<span>.ai</span></span></div><img alt="Symbol" src="${document.querySelector('link[rel=icon]').href}" style="height:52px;width:52px"></div>`;
@@ -462,6 +483,10 @@ function route() { const [h, sub] = location.hash.slice(1).split('/'); const v =
 window.addEventListener('hashchange', route);
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
 boot();
+/* Oppdater siden automatisk når en ny versjon er publisert */
+const BUILD = document.documentElement.dataset.build;
+async function checkVersion() { try { const t = await (await fetch(location.pathname, { cache: 'no-store' })).text(); const m = t.match(/data-build="([^"]+)"/); if (m && BUILD && m[1] !== BUILD) { if (document.querySelector('.ov.on') || document.activeElement?.matches('input,textarea')) { toast('Ny versjon av kontrollsenteret – last inn siden på nytt'); } else location.reload(); } } catch (_) { } }
+setInterval(checkVersion, 5 * 60 * 1000); document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
 </script>
 </body>
 </html>
