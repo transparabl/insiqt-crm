@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795488527">
+<html lang="no" data-build="1795488790">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -605,6 +605,47 @@ function rankHTML() {
 document.addEventListener('click', e => { const t = e.target.closest('[data-igview]'); if (!t) return; IG.view = t.dataset.igview; const first = IG.guides.filter(g => (IG.view === 'kontroll') === (g.grp === 'kontroll')).sort((a, b) => (a.sort || 99) - (b.sort || 99))[0]; if (first) location.hash = '#integrasjoner/' + first.slug; else renderIG(); });
 document.addEventListener('input', e => { if (e.target.id === 'rkQ') { IG.rf.q = e.target.value; const pos = e.target.selectionStart; renderIG(); const el = $('#rkQ'); el.focus(); el.setSelectionRange(pos, pos); } });
 document.addEventListener('change', e => { if (e.target.id === 'rkTier') { IG.rf.tier = e.target.value; renderIG(); } if (e.target.id === 'rkNote') { IG.rf.note = e.target.checked; renderIG(); } });
+
+/* ---------- tillegg fra styrende dokumenter (docs, kundeløype, avtaler) ---------- */
+const docsHTML = g => { const D = (g.extra || {}).docs || []; return D.length ? `<div class="note" style="margin-top:10px"><b>Dokumenter:</b> ${D.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join(' · ')}</div>` : ''; };
+IG.tri = { eksisterende: null, abonnement: null, rolle: null, pakke: null };
+const TRIQ = [['eksisterende', 'Bruker dere allerede et system som henter data fra Scania?', 'Avdekker om det finnes en client fra før – og hvem konkurrenten er.', [['ja', 'Ja'], ['nei', 'Nei'], ['vetikke', 'Vet ikke']]],
+  ['abonnement', 'Har dere et Data Access-abonnement hos Scania?', 'Tjenesten som åpner API-et. Kjøpes bare via forhandler.', [['ja', 'Ja'], ['nei', 'Nei'], ['vetikke', 'Vet ikke']]],
+  ['rolle', 'Kan du logge inn på developer.scania.com?', 'Tester om kontoen har Developer-rollen. La kunden prøve der og da.', [['ja', 'Ja'], ['nei', 'Nei'], ['vetikke', 'Vet ikke']]],
+  ['pakke', 'Hvilken Data Access-pakke har dere?', 'Bare Performance dekker både kjøretid og posisjon/forbruk.', [['performance', 'Performance'], ['location', 'Location'], ['service', 'Service Planning'], ['driving', 'Driving Time'], ['vetikke', 'Vet ikke']]]];
+function triClass() { const { abonnement: ab, rolle: ro, pakke: pa } = IG.tri; if (!ab) return null; if (ab === 'nei') return 'B'; if (ab === 'vetikke') return 'UKJENT'; if (!ro) return null; if (ro !== 'ja') return 'A3'; if (!pa) return null; if (pa === 'performance') return 'A1'; if (pa === 'vetikke') return 'UKJENT'; return 'A2'; }
+function triageHTML(g) {
+  const T = ((g.extra || {}).triage || {}).paths; if (!T) return '';
+  const dim = k => (k === 'rolle' && IG.tri.abonnement !== 'ja') || (k === 'pakke' && !(IG.tri.abonnement === 'ja' && IG.tri.rolle === 'ja'));
+  const code = triClass(), p = code && T[code];
+  const whoC = { Kunden: '', Forhandler: 'warn', Insiqt: 'ok' };
+  return `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Kundeløype – spør kunden i møtet</h3>${Object.values(IG.tri).some(Boolean) ? '<button class="sm" data-trireset>Nullstill</button>' : ''}</div>
+  <p class="note">Fire spørsmål plasserer kunden i én av løypene A1, A2, A3 eller B. «Vet ikke» er et gyldig svar.</p>
+  ${TRIQ.map(([k, q, hint, opts], i) => `<div style="padding:10px 0;border-top:1px solid var(--line);${dim(k) ? 'opacity:.4;pointer-events:none' : ''}"><b>${i + 1}. ${esc(q)}</b><div class="note">${esc(hint)}</div><div class="acts" style="justify-content:flex-start;margin-top:6px">${opts.map(([v, l]) => `<button class="sm ${IG.tri[k] === v ? 'pri' : ''}" data-tri="${k}|${v}">${esc(l)}</button>`).join('')}</div></div>`).join('')}
+  ${p ? `<div style="border-top:2px solid var(--line);margin-top:6px;padding-top:12px"><div class="framebar" style="margin:0"><span class="chip ${p.level}">TYPE ${esc(code === 'UKJENT' ? '?' : code)}</span><b style="font-size:17px">${esc(p.name)}</b></div><p class="note">${esc(p.why)}</p>
+    <div class="meta" style="font-size:13px"><span><b>Tid:</b> ${esc(p.time)}</span><span><b>Scania-kostnad:</b> ${esc(p.cost)}</span><span><b>Steg:</b> ${p.steps.length}</span></div>
+    <ol class="steps" style="margin-top:10px">${p.steps.map(([t, w, n]) => `<li><div class="stxt">${esc(t)} <span class="chip ${whoC[w] || ''}">${esc(w)}</span>${n ? `<div class="note">${esc(n)}</div>` : ''}</div></li>`).join('')}</ol>
+    ${IG.tri.eksisterende === 'ja' ? '<p class="platbox"><b>Kunden har allerede et system på Scania-dataene.</b> Opprett alltid en ny, egen client for Insiqt – gjenbruk aldri nøklene til den andre leverandøren. Noter hvem leverandøren er: det er den du konkurrerer mot.</p>' : ''}
+    <p class="platbox warn">${esc(p.say)}</p>
+    <h3 style="margin-top:14px">Melding du kan sende kunden</h3><pre style="white-space:pre-wrap;background:#F8FAFC;border:1px solid var(--line);border-radius:8px;padding:12px;font:13px/1.5 ui-monospace,Menlo,monospace" id="triMsg">${esc(p.msg)}</pre><button class="sm pri" data-tricopy>📋 Kopier meldingen</button></div>` : ''}</div>`;
+}
+const tbl = (head, rows) => `<div style="overflow-x:auto"><table class="rk"><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+function extraHTML(g) {
+  const X = g.extra || {}; const parts = [];
+  if (X.packages) parts.push(['Hva Data Access-pakkene dekker', tbl(['Pakke', 'Dekker', 'Nok for Insiqt?'], X.packages) + '<p class="note">Pris per pakke per kjøretøy er ikke offentlig – må hentes fra Norsk Scania (22 06 45 00). Abonnementet er per kjøretøy, så en kunde kan ha 5 av 7 biler dekket.</p>']);
+  if (X.states) parts.push(['Tilstander plattformen må vise per kunde', `<div class="acts" style="justify-content:flex-start">${X.states.map(s => `<span class="chip mute">${esc(s)}</span>`).join('')}</div><p class="note">«Delvis dekning» er normalt, ikke en feil.</p>`]);
+  if (X.agreements) parts.push(['Avtaler som kreves – og med hvem', tbl(['Mellom', 'Hva', 'Påkrevd?', 'Status'], X.agreements) + '<p class="note">Ikke før Scania på underleverandørlisten – Scania er kundens egen leverandør, oppstrøms for Insiqt. Gjelder så lenge Scania ikke krever en egen leverandøravtale i svaret sitt. Ikke juridisk gjennomgått.</p>']);
+  if (X.dpa) parts.push(['Hva DPA-en med kunden må dekke om Scania-data', tbl(['Punkt', 'Hva som må stå'], X.dpa)]);
+  if (X.customer_duties) parts.push(['Kundens egne plikter (salgsargument: Insiqt leverer malene)', `<ul>${X.customer_duties.map(d => `<li>${esc(d)}</li>`).join('')}</ul>`]);
+  if (X.questions) parts.push(['Åpne spørsmål til Scania', `<ol>${X.questions.map(q => `<li>${esc(q)}</li>`).join('')}</ol><p class="note">Send til developer@scania.com. Prisspørsmålet går til Norsk Scania.</p>`]);
+  return parts.length ? `<div class="card" style="margin-top:16px"><h3>Fra «Scania-integrasjon – oppsett og avtaler» (22.11.2026)</h3>${parts.map(([h, b], i) => `<details ${i === 0 ? '' : ''} style="border-top:1px solid var(--line);padding:10px 0"><summary style="cursor:pointer;font-weight:600">${esc(h)}</summary><div style="margin-top:8px">${b}</div></details>`).join('')}</div>` : '';
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.tri) { const [k, v] = t.dataset.tri.split('|'); IG.tri[k] = IG.tri[k] === v ? null : v; renderIG(); }
+  if (t.dataset.trireset !== undefined) { Object.keys(IG.tri).forEach(k => IG.tri[k] = null); renderIG(); }
+  if (t.dataset.tricopy !== undefined) { const txt = ($('#triMsg') || {}).textContent || ''; navigator.clipboard.writeText(txt).then(() => toast('Meldingen er kopiert'), () => toast('Marker teksten og kopier manuelt')); }
+});
 function stepsHTML(g, sec, company) {
   const L = (g.steps || {})[sec] || []; if (!L.length) return '';
   const done = doneSet(g.slug, sec, company);
@@ -620,7 +661,8 @@ function keyHTML(g) {
     <div class="framebar" style="margin:8px 0 0"><button type="button" class="pri" data-kpaste="${g.secret_name}">📋 Lim inn fra utklippstavlen og test</button><span class="note">Kopier nøkkelen først, så trykk her.</span></div>
     <p class="note" style="margin:6px 0 0">Nøkkelen sendes kryptert til serveren, testes mot tjenesten og lagres bare hvis den virker. Den vises aldri igjen her, og ligger ikke i Notion.</p><div class="note" data-kmsg="${g.secret_name}"></div></div>`;
 }
-function guideHTML(g) {
+function guideHTML(g) { return guideHTMLBase(g) + extraHTML(g); }
+function guideHTMLBase(g) {
   const n = live(g); const [lab, cls] = guideState(g); const loom = g.loom_url || (n && n['Loom-veiledning']) || '';
   const hasKunde = ((g.steps || {}).kunde || []).length; const pr = igProgress(g);
   const companies = S.companies.slice().sort((a, b) => a.name.localeCompare(b.name, 'nb'));
@@ -635,7 +677,9 @@ function guideHTML(g) {
   ${g.verified ? `<p class="note"><i>${esc(g.verified)}</i></p>` : ''}
   <div class="acts" style="justify-content:flex-start">${g.notion_url ? `<a class="btn sm" href="${esc(g.notion_url)}" target="_blank" rel="noopener">Notion ↗</a>` : ''}${g.docs_url ? `<a class="btn sm ${g.category === 'Dokument' ? 'pri' : ''}" href="${esc(g.docs_url)}" target="_blank" rel="noopener">${g.category === 'Dokument' ? 'Åpne dokumentet (Drive) ↗' : 'Leverandørens dokumentasjon ↗'}</a>` : ''}${loom ? `<a class="btn sm pri" href="${esc(loom)}" target="_blank" rel="noopener">▶ Loom-veiledning</a>` : ''}</div>
   ${g.secret_name ? keyHTML(g) : ''}
+  ${docsHTML(g)}
   </div>
+  ${triageHTML(g)}
   ${pr ? `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">${g.category === 'Dokument' ? 'Åpne punkter' : g.grp === 'kontroll' ? 'Steg for steg' : 'Insiqt gjør én gang'}</h3><span class="note">${pr[0]} av ${pr[1]} ferdig</span></div><div class="bar"><i style="width:${Math.round(pr[0] / pr[1] * 100)}%"></i></div>${stepsHTML(g, 'insiqt', '')}</div>` : ''}
   ${hasKunde ? `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Per kunde</h3><select id="igCompany" style="width:auto;max-width:100%"><option value="">Velg kunde fra CRM-et …</option>${companies.map(c => `<option value="${c.id}" ${c.id === IG.company ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
     ${IG.company ? `<p class="note">${cdone} av ${hasKunde} steg ferdig for denne kunden.</p>${stepsHTML(g, 'kunde', IG.company)}` : `<p class="note">Velg en kunde for å krysse av stegene for akkurat den kunden. Stegene er:</p><ol class="note">${g.steps.kunde.map(st => `<li>${esc(st.t)}</li>`).join('')}</ol>`}</div>` : ''}
