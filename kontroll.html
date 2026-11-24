@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795494554">
+<html lang="no" data-build="1795495116">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -134,7 +134,7 @@ h4{font-size:14px}
 .swatch i{display:block;height:36px}.swatch span{display:block;padding:6px 9px;font-size:12px;font-weight:500}
 .ov{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding:7vh 12px;z-index:60;overflow:auto}
 .ov.on{display:flex}.modal{background:#fff;border-radius:14px;width:min(560px,100%);padding:24px;box-shadow:0 24px 60px rgba(15,23,42,.25)}
-.modal h3{font-size:20px}
+.modal h3{font-size:20px}.modal.wide{width:min(900px,100%)}
 .foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--night);color:#fff;padding:11px 18px;border-radius:10px;z-index:70;display:none;max-width:90vw;box-shadow:0 12px 32px rgba(15,23,42,.3);font-size:14px}.toast.on{display:block}
 details>summary{cursor:pointer}
@@ -205,7 +205,7 @@ details>summary{cursor:pointer}
   <a class="brand" href="#oversikt"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1E2A44"/><rect x="14" y="7" width="4" height="4" rx="2" fill="#2563EB"/><rect x="14" y="13" width="4" height="12" rx="2" fill="#2563EB"/><rect x="10" y="13" width="4" height="2" rx="1" fill="#2563EB" opacity=".5"/><rect x="18" y="23" width="4" height="2" rx="1" fill="#2563EB" opacity=".5"/></svg><div><b>Insiqt<span>.ai</span></b><small>Kontrollsenter</small></div></a>
   <nav id="nav">
     <div class="grp"><span>I dag</span><a href="#oversikt">Oversikt</a><a href="#ai">AI-assistent</a></div>
-    <div class="grp"><span>Kunder</span><a href="#piloter">Pilotstatus</a><a href="#pipeline">Pipeline</a><a href="#okonomi">Økonomi og kunder</a><a href="#signering">Signering</a></div>
+    <div class="grp"><span>Kunder</span><a href="#piloter">Pilotstatus</a><a href="#pipeline">Pipeline</a><a href="#okonomi">Økonomi og kunder</a><a href="#signering">Signering</a><a href="#kunnskap">Kunnskapsbase</a></div>
     <div class="grp"><span>Styret</span><a href="#styre">Styremappe</a></div>
     <div class="grp"><span>Arbeid</span><a href="#oppgaver">Oppgaver og bugs</a><a href="#moter">Møter</a><a href="#dokumenter">Dokumenter</a></div>
     <div class="grp"><span>Produkt</span><a href="#integrasjoner">Integrasjoner</a><a href="#nettside">Nettside</a><a href="#branding">Branding</a></div>
@@ -272,6 +272,29 @@ details>summary{cursor:pointer}
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Siste varsler</h3><ul class="list" id="pushLog"></ul></div>
       <div class="card"><h3>Enhetene dine</h3><ul class="list" id="pushSubs"></ul></div>
+    </div>
+  </section>
+
+  <section data-v="kunnskap" class="hide">
+    <p class="note" style="margin:-4px 0 14px;max-width:75ch">Korte Loom-videoer for kunder og sjåfører. Del lenken til en video når en kunde står fast, eller send meldingen med lenke og forklaring. Teksten til kunden er den samme som i Onboarding.</p>
+    <div class="grid g4" id="kbKpi"></div>
+    <div class="framebar" style="margin-top:16px"><input type="search" id="kbQ" placeholder="Søk i artiklene" aria-label="Søk i kunnskapsbasen" style="flex:1;min-width:200px">
+      <select id="kbAud" aria-label="Målgruppe"><option value="">Alle målgrupper</option><option value="kunde">Kunder</option><option value="sjafor">Sjåfører</option></select>
+      <select id="kbSt" aria-label="Status"><option value="">Alle statuser</option><option value="klar">Har video</option><option value="mangler_video">Klar til innspilling</option><option value="venter">Venter på produktet</option><option value="utdatert">Utdatert</option></select>
+      <button class="pri" data-kbnew>+ Ny artikkel</button></div>
+    <div class="grid gside" style="margin-top:4px">
+      <div id="kbList"></div>
+      <div>
+        <div class="card"><h3>Spill inn neste</h3><p class="note" style="margin-top:-4px">Artikler der produktet er klart, men videoen mangler. I samme rekkefølge som kunden møter dem.</p><ul class="list" id="kbNext"></ul></div>
+        <div class="card" style="margin-top:16px"><h3>Slik spiller du inn</h3>
+          <ol style="margin:0;padding-left:20px;line-height:1.6">
+            <li>Bruk Loom-utvidelsen i Chrome. Velg skjerm og kamera, eller bare skjerm.</li>
+            <li>Følg punktene i «Hva videoen skal vise». Hold deg under tre minutter.</li>
+            <li>Bruk demokontoen, ikke ekte kundedata. Lenken deles med andre kunder.</li>
+            <li>Sett deling til «Anyone with the link», så kunden slipper å logge inn i Loom.</li>
+            <li>Kopier lenken, åpne artikkelen her og lim den inn under Rediger.</li>
+          </ol></div>
+      </div>
     </div>
   </section>
 
@@ -473,7 +496,7 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA(), loadAI()]); await loadPilotData(); await pushCurrent(); render(); if (S.status.pocket && (!AI.pocketSync || Date.now() - new Date(AI.pocketSync.synced_at).getTime() > 3 * 36e5)) pocketSync(true); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA(), loadAI(), loadKB()]); await loadPilotData(); await pushCurrent(); render(); if (S.status.pocket && (!AI.pocketSync || Date.now() - new Date(AI.pocketSync.synced_at).getTime() > 3 * 36e5)) pocketSync(true); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
 
 /* ---------- render ---------- */
 const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs'], ['POCKET_API_KEY', 'kontroll-pocket', 'Pocket', 'møteopptak']];
@@ -499,7 +522,7 @@ function nextSteps() {
   (typeof D !== 'undefined' ? incUrgent() : []).forEach(i => { const [, t] = incClock(i); it.push(['bad', `Personvernavvik: ${i.title}`, t, '#drift']); });
   return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
 }
-function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); renderDrift(); renderEco(); renderAI(); renderPilots(); renderOvRoad(); renderSign(); renderStyre(); renderPush(); renderNavBadges(); }
+function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); renderDrift(); renderEco(); renderAI(); renderPilots(); renderOvRoad(); renderSign(); renderStyre(); renderPush(); renderNavBadges(); renderKB(); }
 function renderOverview() {
   const due = S.companies.filter(c => openCo(c) && days(c.next_activity_at) < 0).length;
   const klar = S.web.filter(w => w.status === 'klar').length;
@@ -646,7 +669,7 @@ async function poll() {
 }
 
 /* ---------- modal ---------- */
-function modal(html) { $('#modal').innerHTML = html; $('#ov').classList.add('on'); }
+function modal(html, wide) { $('#modal').classList.toggle('wide', !!wide); $('#modal').innerHTML = html; $('#ov').classList.add('on'); }
 function closeModal() { $('#ov').classList.remove('on'); }
 $('#ov').addEventListener('click', e => { if (e.target.id === 'ov' || e.target.dataset.close !== undefined) closeModal(); });
 function formModal(title, fields, onSubmit) {
@@ -866,7 +889,7 @@ function obHTML() {
 function obCustomerText() {
   const ok = IG.ob.filter(s => s.readiness !== 'mangler'), later = IG.ob.filter(s => s.readiness === 'mangler');
   let n = 0;
-  return `Slik kommer du i gang med Insiqt\n\n` + [...new Set(ok.map(s => s.phase))].map(p => `${p.replace(/^Fase \d+ · /, '').toUpperCase()}\n` + ok.filter(s => s.phase === p).map(s => `${++n}. ${s.title}\n${s.customer_text}${s.needs ? `\nDu trenger: ${s.needs}` : ''}\nTid: ${s.duration}`).join('\n\n')).join('\n\n') +
+  return `Slik kommer du i gang med Insiqt\n\n` + [...new Set(ok.map(s => s.phase))].map(p => `${p.replace(/^Fase \d+ · /, '').toUpperCase()}\n` + ok.filter(s => s.phase === p).map(s => `${++n}. ${s.title}\n${s.customer_text}${s.needs ? `\nDu trenger: ${s.needs}` : ''}\nTid: ${s.duration}${typeof kbFor === 'function' && kbFor(s.key) ? `\nVideo: ${kbFor(s.key).loom_url}` : ''}`).join('\n\n')).join('\n\n') +
     (later.length ? `\n\nKOMMER SENERE\nDisse koblingene er under arbeid, og vi gir beskjed når de er klare: ${later.map(s => s.title.replace(/^Koble til /, '')).join(', ')}.` : '') + `\n\nSpørsmål underveis? Kontakt oss, så tar vi det sammen.\nInsiqt.AI AS`;
 }
 document.addEventListener('change', async e => {
@@ -935,7 +958,7 @@ document.addEventListener('change', async e => {
 });
 document.addEventListener('submit', async e => {
   const f = e.target;
-  if (f.id === 'loomForm') { e.preventDefault(); const u = $('#loomUrl').value.trim(); if (u && !/^https:\/\/(www\.)?loom\.com\//.test(u)) { toast('Lenken må være en loom.com-lenke'); return; } const { error } = await sb.from('integration_guides').update({ loom_url: u || null, updated_at: new Date().toISOString() }).eq('slug', IG.sel); toast(error ? error.message : u ? 'Loom-lenken er lagret' : 'Loom-lenken er fjernet'); await loadGuides(); renderIG(); return; }
+  if (f.id === 'loomForm') { e.preventDefault(); const u = $('#loomUrl').value.trim(); if (u && !/^https:\/\/(www\.)?loom\.com\//.test(u)) { toast('Lenken må være en loom.com-lenke'); return; } const { error } = await sb.from('integration_guides').update({ loom_url: u || null, updated_at: new Date().toISOString() }).eq('slug', IG.sel); if (!error && typeof KB !== 'undefined' && KB.items.some(a => a.slug === IG.sel)) { await sb.from('kb_articles').update({ loom_url: u || null, status: u ? 'klar' : 'mangler_video', updated_by: S.status.user || '', updated_at: new Date().toISOString() }).eq('slug', IG.sel); await loadKB(); } toast(error ? error.message : u ? 'Loom-lenken er lagret' : 'Loom-lenken er fjernet'); await loadGuides(); renderIG(); return; }
   if (!f.dataset.kform) return; e.preventDefault();
   const name = f.dataset.kform, inp = f.querySelector('input'), btn = f.querySelector('button'), msg = document.querySelector(`[data-kmsg="${name}"]`);
   if (!inp.value.trim()) return; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Tester';
@@ -1491,7 +1514,82 @@ document.addEventListener('click', async e => {
   if (t.id === 'styrePrint') window.print();
 });
 
-const VIEWS = ['oversikt', 'ai', 'piloter', 'pipeline', 'okonomi', 'signering', 'styre', 'oppgaver', 'moter', 'dokumenter', 'integrasjoner', 'nettside', 'branding', 'drift', 'varsler', 'systemer'];
+
+/* ---------- kunnskapsbase (Loom) ---------- */
+const KB = { items: [] };
+const KBST = { klar: ['ok', 'Har video'], mangler_video: ['warn', 'Klar til innspilling'], venter: ['mute', 'Venter på produktet'], utdatert: ['bad', 'Utdatert'] };
+const KBAUD = { kunde: 'Kunder', sjafor: 'Sjåfører', begge: 'Kunder og sjåfører' };
+const KBCAT = ['Kom i gang', 'Avtaler og personvern', 'Koble til systemene dine', 'Bruke Insiqt', 'Sjåførappen', 'Feilsøking'];
+const loomId = u => (String(u || '').match(/loom\.com\/(?:share|embed)\/([a-f0-9]{32})/i) || [])[1] || '';
+async function loadKB() { const r = await sb.from('kb_articles').select('*').order('sort'); if (!r.error) KB.items = r.data; }
+const kbFor = key => KB.items.find(a => a.onboarding_key === key && a.loom_url && a.status === 'klar');
+function renderKB() {
+  if (!$('#kbList')) return;
+  const it = KB.items, n = s => it.filter(a => a.status === s).length;
+  $('#kbKpi').innerHTML = `<div class="card kpi ok"><b>${n('klar')}<span style="display:inline;font-size:22px;color:var(--mute)"> / ${it.length}</span></b><span>artikler har video</span></div><div class="card kpi warn"><b>${n('mangler_video')}</b><span>klare til innspilling</span></div><div class="card kpi"><b>${n('venter')}</b><span>venter på at produktet eller avtalen blir klar</span></div><div class="card kpi ${n('utdatert') ? 'bad' : ''}"><b>${n('utdatert')}</b><span>utdaterte videoer</span></div>`;
+  const q = lc($('#kbQ').value), au = $('#kbAud').value, st = $('#kbSt').value;
+  const list = it.filter(a => (!q || lc(a.title + ' ' + (a.summary || '') + ' ' + (a.body || '')).includes(q)) && (!au || a.audience === au || a.audience === 'begge') && (!st || a.status === st));
+  const cats = [...KBCAT, ...new Set(list.map(a => a.category).filter(c => !KBCAT.includes(c)))].filter(c => list.some(a => a.category === c));
+  $('#kbList').innerHTML = cats.map(c => `<div class="card" style="margin-bottom:16px"><h3>${esc(c)}</h3><ul class="list">${list.filter(a => a.category === c).map(a => { const [cl, t] = KBST[a.status]; return `<li class="row"><span class="chip ${cl}">${t}</span><div><button class="ghost" data-kbopen="${a.id}" style="padding:0;min-height:0;font-size:15px;font-weight:600;text-align:left;white-space:normal">${esc(a.title)}</button><div class="note">${esc(a.summary || '')}</div><div class="meta"><span>${esc(KBAUD[a.audience])}</span>${a.duration ? `<span>${esc(a.duration)}</span>` : ''}${a.owner ? `<span>Spilles inn av ${esc(a.owner)}</span>` : ''}</div></div><div class="acts">${a.loom_url ? `<button class="sm" data-kbcopy="${a.id}">Kopier lenke</button>` : ''}<button class="sm ${a.loom_url ? 'pri' : ''}" data-kbopen="${a.id}">${a.loom_url ? 'Spill av' : 'Åpne'}</button></div></li>`; }).join('')}</ul></div>`).join('') || '<div class="card"><p class="empty">Ingen artikler passer søket.</p></div>';
+  $('#kbNext').innerHTML = it.filter(a => a.status === 'mangler_video').slice(0, 6).map(a => `<li class="row"><span class="chip warn">${esc(a.owner || 'Ingen')}</span><div><b>${esc(a.title)}</b>${a.waiting_for ? `<div class="note">${esc(a.waiting_for)}</div>` : ''}</div><div class="acts"><button class="sm" data-kbopen="${a.id}">Manus</button></div></li>`).join('') || '<li class="empty">Ingen artikler venter på innspilling.</li>';
+}
+const kbMsg = a => `Hei!\n\nHer er en kort video${a.duration ? ` (${a.duration})` : ''} om «${a.title}»:\n${a.loom_url}\n\n${a.summary ? a.summary + '\n\n' : ''}Si fra hvis noe er uklart, så tar vi det sammen.\n\nHilsen ${(S.status.user || '').startsWith('ove') ? 'Ove' : 'John'}\nInsiqt`;
+function kbOpen(id) {
+  const a = KB.items.find(x => x.id === id); if (!a) return; const vid = loomId(a.loom_url), [cl, t] = KBST[a.status];
+  const step = a.onboarding_key && IG.ob.find(s => s.key === a.onboarding_key), g = a.guide_slug && IG.guides.find(x => x.slug === a.guide_slug);
+  modal(`<div class="framebar" style="justify-content:space-between;align-items:flex-start;margin:0 0 10px"><div><h3 style="margin:0">${esc(a.title)}</h3><div class="meta"><span class="chip ${cl}">${t}</span><span>${esc(KBAUD[a.audience])}</span><span>${esc(a.category)}</span>${a.duration ? `<span>${esc(a.duration)}</span>` : ''}</div></div><button class="sm ghost" data-close aria-label="Lukk">Lukk</button></div>
+    ${vid ? `<div style="position:relative;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#0F172A"><iframe src="https://www.loom.com/embed/${vid}" title="${esc(a.title)}" allow="fullscreen" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>
+      <div class="acts" style="justify-content:flex-start;margin-top:10px"><button class="pri" data-kbcopy="${a.id}">Kopier lenke til videoen</button><button data-kbmsg="${a.id}">Kopier melding til kunden</button><a class="btn" href="${esc(a.loom_url)}" target="_blank" rel="noopener">Åpne i Loom ↗</a></div>`
+    : `<div class="platbox ${a.status === 'venter' ? '' : 'warn'}" style="margin-top:0"><b>${a.status === 'venter' ? 'Kan ikke spilles inn ennå.' : 'Ingen video ennå.'}</b> ${esc(a.waiting_for || 'Spill inn videoen og lim inn Loom-lenken under Rediger.')}</div>`}
+    <div class="grid g2" style="margin-top:14px;gap:20px">
+      <div><h4 style="margin:0 0 6px">Tekst til kunden</h4><div style="font-size:14px">${md(a.body || a.summary || '')}</div></div>
+      <div><h4 style="margin:0 0 6px">Hva videoen skal vise</h4><div style="font-size:14px">${a.script ? md(a.script) : '<p class="note">Ikke skrevet ennå.</p>'}</div>
+        ${vid && a.waiting_for ? `<h4 style="margin:12px 0 6px">Merk</h4><p class="note">${esc(a.waiting_for)}</p>` : ''}
+        <div class="meta" style="margin-top:12px">${step ? `<span>Onboarding: ${esc(step.title)}</span>` : ''}${g ? `<span>Integrasjon: ${esc(g.name)}</span>` : ''}${a.owner ? `<span>Ansvarlig: ${esc(a.owner)}</span>` : ''}<span>Endret ${esc(fmt(a.updated_at))}</span></div></div>
+    </div>
+    <div class="foot"><button data-kbedit="${a.id}">Rediger</button></div>`, true);
+}
+function kbEdit(id) {
+  const a = KB.items.find(x => x.id === id) || { audience: 'kunde', category: 'Kom i gang', status: 'mangler_video', owner: 'John' };
+  const opt = (arr, v) => arr.map(([k, t]) => `<option value="${esc(k)}" ${k === v ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  modal(`<h3>${a.id ? 'Rediger artikkel' : 'Ny artikkel'}</h3><form id="kbf">
+    <label for="k_t">Tittel</label><input id="k_t" required value="${esc(a.title || '')}" placeholder="F.eks. Koble til Scania">
+    <div class="grid g2" style="gap:0 12px"><div><label for="k_a">Målgruppe</label><select id="k_a">${opt(Object.entries(KBAUD), a.audience)}</select></div><div><label for="k_c">Kategori</label><select id="k_c">${opt([...new Set([...KBCAT, a.category])].map(c => [c, c]), a.category)}</select></div></div>
+    <label for="k_l">Loom-lenke</label><input id="k_l" type="url" value="${esc(a.loom_url || '')}" placeholder="https://www.loom.com/share/…">
+    <div class="grid g2" style="gap:0 12px"><div><label for="k_d">Varighet</label><input id="k_d" value="${esc(a.duration || '')}" placeholder="F.eks. 2 min"></div><div><label for="k_s">Status</label><select id="k_s">${opt(Object.entries(KBST).map(([k, [, t]]) => [k, t]), a.status)}</select></div></div>
+    <label for="k_sum">Kort sammendrag (vises på kortet og i meldingen til kunden)</label><input id="k_sum" value="${esc(a.summary || '')}">
+    <label for="k_b">Tekst til kunden</label><textarea id="k_b" style="min-height:120px">${esc(a.body || '')}</textarea>
+    <label for="k_sc">Hva videoen skal vise (internt)</label><textarea id="k_sc" style="min-height:90px">${esc(a.script || '')}</textarea>
+    <label for="k_w">Venter på / merk (internt)</label><input id="k_w" value="${esc(a.waiting_for || '')}">
+    <div class="grid g2" style="gap:0 12px"><div><label for="k_o">Spilles inn av</label><select id="k_o">${opt([['John', 'John'], ['Ove', 'Ove'], ['Raman', 'Raman'], ['', 'Ingen']], a.owner || '')}</select></div><div><label for="k_ob">Onboarding-steg</label><select id="k_ob"><option value="">Ingen</option>${IG.ob.map(s => `<option value="${esc(s.key)}" ${s.key === a.onboarding_key ? 'selected' : ''}>${esc(s.title)}</option>`).join('')}</select></div></div>
+    <p class="note">Er artikkelen koblet til et onboarding-steg, kommer videolenken med i oppstartsteksten til kunden under Integrasjoner → Onboarding.</p>
+    <div class="foot"><button type="button" data-close>Avbryt</button><button class="pri">Lagre</button></div><div class="err" id="kErr"></div></form>`, true);
+  $('#k_l').addEventListener('input', () => { if (loomId($('#k_l').value) && $('#k_s').value !== 'utdatert') $('#k_s').value = 'klar'; });
+  $('#kbf').addEventListener('submit', async e => {
+    e.preventDefault(); const b = $('#kbf .pri'); b.disabled = true;
+    try {
+      const url = $('#k_l').value.trim(); if (url && !loomId(url)) throw new Error('Lim inn en Loom-lenke som ser slik ut: https://www.loom.com/share/…');
+      const st = $('#k_s').value; if (st === 'klar' && !url) throw new Error('Status «Har video» krever en Loom-lenke.');
+      const title = $('#k_t').value.trim(), slug = a.slug || (title.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/æ/g, 'ae').replace(/ø/g, 'o').replace(/å/g, 'a').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4));
+      const v = { title, slug, audience: $('#k_a').value, category: $('#k_c').value, loom_url: url ? `https://www.loom.com/share/${loomId(url)}` : null, duration: $('#k_d').value.trim() || null, status: st, summary: $('#k_sum').value.trim() || null, body: $('#k_b').value.trim() || null, script: $('#k_sc').value.trim() || null, waiting_for: $('#k_w').value.trim() || null, owner: $('#k_o').value || null, onboarding_key: $('#k_ob').value || null, updated_by: S.status.user || '', updated_at: new Date().toISOString() };
+      const r = a.id ? await sb.from('kb_articles').update(v).eq('id', a.id) : await sb.from('kb_articles').insert({ ...v, sort: 900 });
+      if (r.error) throw r.error;
+      const gs = a.guide_slug; if (gs && v.loom_url && (a.slug === gs || KB.items.filter(x => x.guide_slug === gs).length === 1)) await sb.from('integration_guides').update({ loom_url: v.loom_url, updated_at: new Date().toISOString() }).eq('slug', gs);
+      await loadKB(); closeModal(); renderKB(); toast(v.loom_url && !a.loom_url ? 'Videoen er lagt inn' : 'Artikkelen er lagret');
+    } catch (err) { b.disabled = false; $('#kErr').textContent = err.message; }
+  });
+}
+['kbQ', 'kbAud', 'kbSt'].forEach(id => $('#' + id).addEventListener('input', renderKB));
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.kbopen) kbOpen(t.dataset.kbopen);
+  if (t.dataset.kbedit) kbEdit(t.dataset.kbedit);
+  if (t.dataset.kbnew !== undefined) kbEdit(null);
+  if (t.dataset.kbcopy) { const a = KB.items.find(x => x.id === t.dataset.kbcopy); navigator.clipboard.writeText(a.loom_url).then(() => toast('Lenken er kopiert')); }
+  if (t.dataset.kbmsg) { const a = KB.items.find(x => x.id === t.dataset.kbmsg); navigator.clipboard.writeText(kbMsg(a)).then(() => toast('Meldingen er kopiert')); }
+});
+
+const VIEWS = ['oversikt', 'ai', 'piloter', 'pipeline', 'okonomi', 'signering', 'kunnskap', 'styre', 'oppgaver', 'moter', 'dokumenter', 'integrasjoner', 'nettside', 'branding', 'drift', 'varsler', 'systemer'];
 function route() {
   const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt';
   if (v === 'drift' && S.status.user) runUptime(false);
