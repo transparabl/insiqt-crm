@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795483025">
+<html lang="no" data-build="1795488527">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,6 +41,9 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
 .iglist a[href^="#"]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:14px}
 .iglist a[href^="#"]:hover{background:#F1F5F9}.iglist a[href^="#"].on{background:#EEF2FF}
 .iglist a[href^="#"] small{grid-column:1/-1;color:var(--mute);font-size:12px}
+.igseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#F1F5F9;border-radius:10px;padding:4px;margin:0 0 6px}.igseg button{border:none;background:transparent;min-height:44px;flex-direction:column;gap:0;line-height:1.2;font-size:13px}.igseg button small{font-weight:500;color:var(--mute);font-size:11px}.igseg button.on{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+.platbox{border-left:3px solid var(--accent);background:#F8FAFF;padding:8px 12px;border-radius:6px;margin:10px 0}.platbox.ok{border-color:var(--ok);background:#F0FDF4}.platbox.warn{border-color:var(--warn);background:#FFFBEB}
+.rk{width:100%;border-collapse:collapse;font-size:13px}.rk th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--mute);padding:6px;border-bottom:1px solid var(--line)}.rk td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}.rk td.n{font-weight:700;color:var(--mute);width:32px}.rk .cm{color:#B45309;font-size:12px;margin-top:4px}
 .steps{list-style:none;margin:0;padding:0;counter-reset:st}
 .steps li{display:grid;grid-template-columns:28px 26px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
 .steps li:last-child{border-bottom:0}
@@ -542,11 +545,12 @@ function assetForm(a) {
 document.addEventListener('click', e => { const t = e.target.closest('button'); if (!t) return; if (t.id === 'assetNew') assetForm(); if (t.dataset.asset) assetForm((S.assets || []).find(x => x.id === t.dataset.asset)); });
 
 /* ---------- integrasjoner ---------- */
-const IG = { guides: [], prog: [], notion: {}, sel: null, company: '', err: null };
+const IG = { guides: [], prog: [], notion: {}, sel: null, company: '', err: null, view: 'plattform', rank: [], rf: { tier: '', q: '', note: false } };
 const pid = u => (String(u || '').match(/[0-9a-f]{32}/) || [''])[0];
 async function loadGuides() {
   const [g, p] = await Promise.all([sb.from('integration_guides').select('*').order('sort'), sb.from('integration_progress').select('*')]);
   if (g.error) IG.err = g.error.message; else { IG.guides = g.data; IG.err = null; }
+  const rk = await sb.from('integration_ranking').select('*').order('rank'); if (!rk.error) IG.rank = rk.data;
   if (!p.error) IG.prog = p.data;
   if (S.status.notion) { try { const r = await api('notion.list', { db: 'integ' }); IG.notion = Object.fromEntries(r.rows.map(x => [String(x.id).replace(/-/g, ''), x])); } catch (_) { } }
 }
@@ -557,20 +561,50 @@ function guideState(g) {
   const k = keyOf(g); const n = live(g);
   if (k) return k.set ? (k.test_ok === false ? ['Feiler', 'bad'] : ['Tilkoblet', 'ok']) : ['Ikke koblet', 'warn'];
   const st = (n && n.Status) || g.status || '';
-  return [st, /^(Live|Tilkoblet)/.test(st) ? 'ok' : /Blokkert|Ikke bygget/.test(st) ? 'bad' : /Lovet|Planlagt|Under arbeid|Testes|Delvis/.test(st) ? 'warn' : 'mute'];
+  return [st, /midlertidig|omstridt/i.test(st) ? 'warn' : /^(Live|Tilkoblet)/.test(st) ? 'ok' : /^(Prioritert|Åpne punkter)/.test(st) ? '' : /Blokkert|Ikke bygget/.test(st) ? 'bad' : /Lovet|Planlagt|Under arbeid|Testes|Delvis/.test(st) ? 'warn' : 'mute'];
 }
 function igProgress(g) { const st = g.steps || {}; const n = (st.insiqt || []).length; if (!n) return null; const k = keyOf(g); if (k && k.set && k.test_ok !== false) return [n, n]; return [doneSet(g.slug, 'insiqt', '').size, n]; }
 function renderIG() {
   if (!$('#igList')) return;
-  const sel = IG.sel && IG.guides.find(g => g.slug === IG.sel) || IG.guides[0];
+  const isRank = IG.sel === 'rangering';
+  const selG = !isRank && IG.sel && IG.guides.find(g => g.slug === IG.sel);
+  if (selG) IG.view = selG.grp === 'kontroll' ? 'kontroll' : 'plattform';
+  if (isRank) IG.view = 'plattform';
+  const inView = g => (IG.view === 'kontroll') === (g.grp === 'kontroll');
+  const sel = isRank ? null : (selG && inView(selG) ? selG : IG.guides.filter(inView).sort((a, b) => (a.sort || 99) - (b.sort || 99))[0]);
   const PH = ['Nå', 'Neste fase', 'Når plattformen vokser', 'Lengre sikt'];
-  const item = g => { const [lab, cls] = guideState(g); const pr = igProgress(g); const n = live(g); const loom = g.loom_url || (n && n['Loom-veiledning']); return `<a href="#integrasjoner/${g.slug}" class="${sel && sel.slug === g.slug ? 'on' : ''}"><span>${esc(g.name)}</span><span class="chip ${cls}">${esc(lab)}</span><small>${pr ? `${pr[0]}/${pr[1]} steg` : ''}${g.priority ? ` · prioritet ${(n && n.Prioritet) || g.priority}` : ''}${loom ? ' · Loom ✓' : ''}</small></a>`; };
-  const prod = IG.guides.filter(g => g.grp === 'produkt');
-  $('#igList').innerHTML = (IG.err ? `<p class="err">${esc(IG.err)}</p>` : '') + `<h4>Kontrollsenteret</h4>` + IG.guides.filter(g => g.grp === 'kontroll').map(item).join('') +
-    PH.map(ph => { const L = prod.filter(g => ((live(g) || {}).Fase || g.phase) === ph).sort((a, b) => (b.priority || 0) - (a.priority || 0)); return L.length ? `<h4>Produkt · ${ph}</h4>` + L.map(item).join('') : ''; }).join('') +
+  const item = g => { const [lab, cls] = guideState(g); const pr = igProgress(g); const n = live(g); const loom = g.loom_url || (n && n['Loom-veiledning']); return `<a href="#integrasjoner/${g.slug}" class="${sel && sel.slug === g.slug ? 'on' : ''}"><span>${esc(g.name)}</span><span class="chip ${cls}">${esc(lab)}</span><small>${pr ? `${pr[0]}/${pr[1]} steg` : ''}${g.priority && g.category !== 'Dokument' ? ` · prioritet ${(n && n.Prioritet) || g.priority}` : ''}${loom ? ' · Loom ✓' : ''}</small></a>`; };
+  const plat = IG.guides.filter(g => g.grp !== 'kontroll'), ctl = IG.guides.filter(g => g.grp === 'kontroll');
+  const liveN = plat.filter(g => /^Live/.test(g.platform_status || '')).length;
+  const seg = `<div class="igseg" role="tablist"><button role="tab" data-igview="plattform" class="${IG.view === 'plattform' ? 'on' : ''}">Plattformen<small>kundenes integrasjoner · ${liveN} live i plattformen</small></button><button role="tab" data-igview="kontroll" class="${IG.view === 'kontroll' ? 'on' : ''}">Kontrollsenteret<small>våre interne verktøy · ${ctl.length}</small></button></div>`;
+  const byPhase = (L, prefix) => PH.map(ph => { const X = L.filter(g => ((live(g) || {}).Fase || g.phase) === ph).sort((a, b) => (b.priority || 0) - (a.priority || 0)); return X.length ? `<h4>${prefix}${ph}</h4>` + X.map(item).join('') : ''; }).join('');
+  let body;
+  if (IG.view === 'kontroll') {
+    body = `<p class="note" style="margin:8px">Verktøy Insiqt bruker selv for å drive selskapet. Ikke noe kunden ser.</p>` + byPhase(ctl, '');
+  } else {
+    const docs = plat.filter(g => g.category === 'Dokument'), rest = plat.filter(g => g.category !== 'Dokument');
+    body = `<p class="note" style="margin:8px">Integrasjoner i Insiqt-plattformen som kundene kobler til. «I plattformen» viser hva som faktisk var synlig ved sjekk 24.11.2026.</p><h4>Styrende dokumenter</h4>` + docs.map(item).join('') +
+      `<a href="#integrasjoner/rangering" class="${isRank ? 'on' : ''}"><span>Rangering: 100 integrasjoner</span><span class="chip">${IG.rank.filter(r => r.scope === 'plattform').length}</span><small>Nivå 1–5 etter avkastning per utviklingsuke · ${IG.rank.filter(r => r.comment).length} med merknad</small></a>` + byPhase(rest, '');
+  }
+  $('#igList').innerHTML = (IG.err ? `<p class="err">${esc(IG.err)}</p>` : '') + seg + body +
     `<p class="note" style="margin:12px 8px 4px">Prioritet og status hentes fra <a href="https://app.notion.com/p/42108874571481b686aaec50e12fae29" target="_blank" rel="noopener">Integrasjoner i Notion</a>${S.status.notion ? '' : ' når Notion er koblet til'}.</p>`;
-  $('#igDetail').innerHTML = sel ? guideHTML(sel) : '<div class="card empty">Ingen guider lastet.</div>';
+  $('#igDetail').innerHTML = isRank ? rankHTML() : sel ? guideHTML(sel) : '<div class="card empty">Ingen guider lastet.</div>';
 }
+const TIER = { 1: 'Nivå 1 · Nå', 2: 'Nivå 2 · Etter første kunde', 3: 'Nivå 3 · Skalering', 4: 'Nivå 4 · Bredde', 5: 'Nivå 5 · Marginalt' };
+const EFF = { S: 'Liten', M: 'Middels', L: 'Stor' };
+function rankHTML() {
+  const f = IG.rf, q = f.q.trim().toLowerCase();
+  const L = IG.rank.filter(r => (!f.tier || String(r.tier) === f.tier) && (!f.note || r.comment) && (!q || [r.name, r.category, r.why, r.comment].join(' ').toLowerCase().includes(q)));
+  const gName = s => (IG.guides.find(g => g.slug === s) || {}).name;
+  const ps = r => r.platform_status ? `<span class="chip ${/^Live/.test(r.platform_status) ? 'ok' : /Kode finnes|Tilkoblingssiden/.test(r.platform_status) ? 'warn' : /Kontrollsenteret/.test(r.platform_status) ? 'mute' : 'mute'}" title="${esc(r.platform_status)}">${/^Live/.test(r.platform_status) ? 'Live' : /Kode finnes|Tilkoblingssiden/.test(r.platform_status) ? 'Kode, ikke koblet' : /Kontrollsenteret/.test(r.platform_status) ? 'Kontrollsenter' : /Ikke synlig/.test(r.platform_status) ? 'Ikke synlig' : 'Finnes ikke'}</span>` : '';
+  return `<div class="card"><div class="framebar" style="justify-content:space-between"><h2 style="margin:0">100 integrasjoner, rangert</h2><span class="note">Kilde: Insiqt-100-integrasjoner-rangert.html (nov. 2026)</span></div>
+  <p class="note">Rangert etter forventet økonomisk avkastning per utviklingsuke. Merknadene (oransje) er avvik mot «Gjennomgang av integrasjoner og produktfokus» og mot det som faktisk vises i plattformen 24.11.2026. Nr. 97–99 er interne verktøy og hører til kontrollsenteret.</p>
+  <div class="framebar"><select id="rkTier" aria-label="Nivå" style="max-width:240px"><option value="">Alle nivåer</option>${Object.entries(TIER).map(([k, v]) => `<option value="${k}" ${f.tier === k ? 'selected' : ''}>${v}</option>`).join('')}</select><input id="rkQ" placeholder="Søk" value="${esc(f.q)}" style="max-width:220px"><label style="display:flex;gap:6px;align-items:center;margin:0;font-weight:500"><input type="checkbox" id="rkNote" style="width:auto" ${f.note ? 'checked' : ''}> Bare med merknad</label><span class="note">${L.length} vist</span></div>
+  <div style="overflow-x:auto"><table class="rk"><thead><tr><th>#</th><th>Integrasjon</th><th>Nivå</th><th>Innsats</th><th>Betaler</th><th>Kunden må</th><th>I plattformen</th></tr></thead><tbody>${L.map(r => `<tr><td class="n">${r.rank}</td><td><b>${esc(r.name)}</b>${r.subtitle ? ` <span class="note">${esc(r.subtitle)}</span>` : ''} <span class="chip mute">${esc(r.category || '')}</span><div class="note">${esc(r.why || '')}</div>${r.comment ? `<div class="cm">⚠ ${esc(r.comment)}</div>` : ''}${r.guide_slug ? `<div style="margin-top:4px"><a href="#integrasjoner/${esc(r.guide_slug)}">Guide: ${esc(gName(r.guide_slug) || r.guide_slug)} →</a></div>` : ''}</td><td>${r.tier}</td><td>${esc(EFF[r.effort] || r.effort || '')}</td><td>${esc(r.payer || '')}</td><td>${esc(r.customer_work || '')}</td><td>${ps(r)}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+document.addEventListener('click', e => { const t = e.target.closest('[data-igview]'); if (!t) return; IG.view = t.dataset.igview; const first = IG.guides.filter(g => (IG.view === 'kontroll') === (g.grp === 'kontroll')).sort((a, b) => (a.sort || 99) - (b.sort || 99))[0]; if (first) location.hash = '#integrasjoner/' + first.slug; else renderIG(); });
+document.addEventListener('input', e => { if (e.target.id === 'rkQ') { IG.rf.q = e.target.value; const pos = e.target.selectionStart; renderIG(); const el = $('#rkQ'); el.focus(); el.setSelectionRange(pos, pos); } });
+document.addEventListener('change', e => { if (e.target.id === 'rkTier') { IG.rf.tier = e.target.value; renderIG(); } if (e.target.id === 'rkNote') { IG.rf.note = e.target.checked; renderIG(); } });
 function stepsHTML(g, sec, company) {
   const L = (g.steps || {})[sec] || []; if (!L.length) return '';
   const done = doneSet(g.slug, sec, company);
@@ -596,11 +630,13 @@ function guideHTML(g) {
   ${g.access ? `<p class="note"><b>Tilgang:</b> ${esc(g.access)}</p>` : ''}
   ${(n && n.Blokkering) || g.blocker ? `<p class="err"><b>Blokkert:</b> ${esc((n && n.Blokkering) || g.blocker)}</p>` : ''}
   ${n && n['Neste handling'] ? `<p class="note"><b>Neste handling (Notion):</b> ${esc(n['Neste handling'])}</p>` : ''}
+  ${g.platform_status ? `<div class="platbox ${/^Live – /.test(g.platform_status) ? 'ok' : /^Live|Tilkoblingssiden|Kode/.test(g.platform_status) ? 'warn' : ''}"><b>I plattformen</b>${g.platform_checked_at ? ` <span class="note">(sjekket ${esc(fmtD(g.platform_checked_at))})</span>` : ''}<br>${esc(g.platform_status)}</div>` : ''}
+  ${(() => { const R = IG.rank.filter(r => r.guide_slug === g.slug); return R.length ? `<div class="note" style="margin:8px 0"><b>I rangeringen:</b> ${R.map(r => `#${r.rank} ${esc(r.name)} (nivå ${r.tier})`).join(' · ')} <a href="#integrasjoner/rangering">Se alle 100 →</a>${R.filter(r => r.comment).map(r => `<div class="cm" style="color:#B45309;margin-top:4px">⚠ #${r.rank}: ${esc(r.comment)}</div>`).join('')}</div>` : ''; })()}
   ${g.verified ? `<p class="note"><i>${esc(g.verified)}</i></p>` : ''}
-  <div class="acts" style="justify-content:flex-start">${g.notion_url ? `<a class="btn sm" href="${esc(g.notion_url)}" target="_blank" rel="noopener">Notion ↗</a>` : ''}${g.docs_url ? `<a class="btn sm" href="${esc(g.docs_url)}" target="_blank" rel="noopener">Leverandørens dokumentasjon ↗</a>` : ''}${loom ? `<a class="btn sm pri" href="${esc(loom)}" target="_blank" rel="noopener">▶ Loom-veiledning</a>` : ''}</div>
+  <div class="acts" style="justify-content:flex-start">${g.notion_url ? `<a class="btn sm" href="${esc(g.notion_url)}" target="_blank" rel="noopener">Notion ↗</a>` : ''}${g.docs_url ? `<a class="btn sm ${g.category === 'Dokument' ? 'pri' : ''}" href="${esc(g.docs_url)}" target="_blank" rel="noopener">${g.category === 'Dokument' ? 'Åpne dokumentet (Drive) ↗' : 'Leverandørens dokumentasjon ↗'}</a>` : ''}${loom ? `<a class="btn sm pri" href="${esc(loom)}" target="_blank" rel="noopener">▶ Loom-veiledning</a>` : ''}</div>
   ${g.secret_name ? keyHTML(g) : ''}
   </div>
-  ${pr ? `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">${g.grp === 'kontroll' ? 'Steg for steg' : 'Insiqt gjør én gang'}</h3><span class="note">${pr[0]} av ${pr[1]} ferdig</span></div><div class="bar"><i style="width:${Math.round(pr[0] / pr[1] * 100)}%"></i></div>${stepsHTML(g, 'insiqt', '')}</div>` : ''}
+  ${pr ? `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">${g.category === 'Dokument' ? 'Åpne punkter' : g.grp === 'kontroll' ? 'Steg for steg' : 'Insiqt gjør én gang'}</h3><span class="note">${pr[0]} av ${pr[1]} ferdig</span></div><div class="bar"><i style="width:${Math.round(pr[0] / pr[1] * 100)}%"></i></div>${stepsHTML(g, 'insiqt', '')}</div>` : ''}
   ${hasKunde ? `<div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Per kunde</h3><select id="igCompany" style="width:auto;max-width:100%"><option value="">Velg kunde fra CRM-et …</option>${companies.map(c => `<option value="${c.id}" ${c.id === IG.company ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
     ${IG.company ? `<p class="note">${cdone} av ${hasKunde} steg ferdig for denne kunden.</p>${stepsHTML(g, 'kunde', IG.company)}` : `<p class="note">Velg en kunde for å krysse av stegene for akkurat den kunden. Stegene er:</p><ol class="note">${g.steps.kunde.map(st => `<li>${esc(st.t)}</li>`).join('')}</ol>`}</div>` : ''}
   ${((g.steps || {}).test || []).length ? `<div class="card" style="margin-top:16px"><h3>Test og ferdig-kriterier</h3><p class="note">Integrasjonen regnes ikke som ferdig før alt her er krysset av.</p>${stepsHTML(g, 'test', '')}</div>` : ''}
