@@ -442,7 +442,7 @@ ${ctx}`;
 // ---------- AI (Claude) ----------
 // Standardfakta. Kan overstyres uten ny deploy med raden AI_FACTS i kontroll_config.
 let FACTS = `Faste fakta om Insiqt.AI AS (org.nr. 920 298 796):
-- Null betalende kunder og null inntekt. Tre piloter som ikke betaler: O Myren Transport, Oslo Minibuss AS, Sverre Lien Transport (erstattet Bjørnars Transport i november 2026). Ingen har signert pilotavtale eller DPA.
+- Null betalende kunder og null inntekt. Tre piloter som ikke betaler: O Myren Transport, Oslo Minibuss AS, Sverre Lien Transport. Ingen har signert pilotavtale eller DPA.
 - NOR Logistikk er Ove Olsens eget selskap: nærstående part, verken kunde eller pilot. Transparabl Ltd er Johns selskap: også nærstående.
 - Personer: John Kalvadet (daglig leder), Ove Olsen (styreleder), Raman Bhatia (utvikler, utenfor EØS).
 - Plattformen kjører på Microsoft Azure, Norway East. Live integrasjoner: Duett og Scania (Scania midlertidig via pilotkundens innlogging). Timesystemet heter IDHA.

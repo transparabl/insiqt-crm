@@ -188,7 +188,7 @@ p("lonn", "Lønn (Duett Lønn først)", "421088745714814ea558d780101332df", cate
   purpose="Avstemmer betalte timer mot registrert arbeidstid (som 209 mot 133:19 i Oslo Minibuss-rapporten).",
   blocker="Lønnssystem ikke valgt. Ukjent om Duett Lønn har API.",
   steps={"insiqt": [
-    S("Kartlegg hvilke lønnssystemer pilotene bruker (O Myren, Oslo Minibuss, Bjørnars).", "John"),
+    S("Kartlegg hvilke lønnssystemer pilotene bruker (O Myren, Oslo Minibuss, Sverre Lien).", "John"),
     S("Avklar om Duett Lønn kan hentes via samme leverandør.", "Raman"),
     S("Velg første lønnssystem og før beslutningen i Beslutningsloggen.", "John"),
   ], "kunde": [S("Ikke kjent før lønnssystem er valgt.", "Kunde")],
