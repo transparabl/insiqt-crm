@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795479517">
+<html lang="no" data-build="1795480678">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -402,9 +402,9 @@ function guideState(g) {
   const k = keyOf(g); const n = live(g);
   if (k) return k.set ? (k.test_ok === false ? ['Feiler', 'bad'] : ['Tilkoblet', 'ok']) : ['Ikke koblet', 'warn'];
   const st = (n && n.Status) || g.status || '';
-  return [st, st.startsWith('Live') ? 'ok' : /Blokkert|Ikke bygget/.test(st) ? 'bad' : /Lovet|Planlagt|Under arbeid|Testes|Delvis/.test(st) ? 'warn' : 'mute'];
+  return [st, /^(Live|Tilkoblet)/.test(st) ? 'ok' : /Blokkert|Ikke bygget/.test(st) ? 'bad' : /Lovet|Planlagt|Under arbeid|Testes|Delvis/.test(st) ? 'warn' : 'mute'];
 }
-function igProgress(g) { const st = g.steps || {}; const n = (st.insiqt || []).length; return n ? [doneSet(g.slug, 'insiqt', '').size, n] : null; }
+function igProgress(g) { const st = g.steps || {}; const n = (st.insiqt || []).length; if (!n) return null; const k = keyOf(g); if (k && k.set && k.test_ok !== false) return [n, n]; return [doneSet(g.slug, 'insiqt', '').size, n]; }
 function renderIG() {
   if (!$('#igList')) return;
   const sel = IG.sel && IG.guides.find(g => g.slug === IG.sel) || IG.guides[0];
