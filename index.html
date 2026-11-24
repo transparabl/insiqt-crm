@@ -29,6 +29,21 @@
       </div>
       <button type="submit" class="btn block" id="loginBtn">Logg inn</button>
       <div class="error-msg" id="loginError"></div>
+      <button type="button" class="link-btn" id="forgotBtn">Glemt passord?</button>
+      <div class="ok-msg" id="forgotMsg" role="status"></div>
+    </form>
+    <form id="newPassForm" style="display:none">
+      <p class="sub" style="margin-top:-12px">Velg et nytt passord for <b id="newPassEmail"></b>. Bruk minst 10 tegn, og lagre det i Proton Pass.</p>
+      <div class="field">
+        <label for="newPass1">Nytt passord</label>
+        <input type="password" id="newPass1" required minlength="10" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="newPass2">Gjenta passordet</label>
+        <input type="password" id="newPass2" required minlength="10" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn block" id="newPassBtn">Lagre passord og logg inn</button>
+      <div class="error-msg" id="newPassError"></div>
     </form>
   </div>
 </div>

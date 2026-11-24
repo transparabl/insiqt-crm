@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795495116">
+<html lang="no" data-build="1795515466">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -195,8 +195,8 @@ details>summary{cursor:pointer}
     <p class="note">Kontrollsenter. Logg inn med CRM-brukeren din.</p>
     <label for="lEmail">E-post</label><input id="lEmail" type="email" required autocomplete="username">
     <label for="lPass">Passord</label><input id="lPass" type="password" required autocomplete="current-password">
-    <div class="foot"><button class="pri" id="lBtn">Logg inn</button></div>
-    <div class="err" id="lErr"></div>
+    <div class="foot" style="justify-content:space-between"><button type="button" class="ghost sm" id="lForgot">Glemt passord?</button><button class="pri" id="lBtn">Logg inn</button></div>
+    <div class="err" id="lErr"></div><p class="platbox ok hide" id="lOk" role="status"></p>
   </form>
 </div>
 
@@ -472,6 +472,15 @@ async function boot() {
   $('#who').textContent = session.user.email;
   route(); loadAll();
 }
+$('#lForgot').addEventListener('click', async () => {
+  const email = $('#lEmail').value.trim(); $('#lErr').textContent = '';
+  if (!email) { $('#lErr').textContent = 'Skriv inn e-postadressen din først, og trykk så «Glemt passord?».'; $('#lEmail').focus(); return; }
+  $('#lForgot').disabled = true;
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/index.html` });
+  $('#lForgot').disabled = false;
+  if (error) { $('#lErr').textContent = /rate|seconds/i.test(error.message) ? 'Det er sendt en lenke nylig. Vent litt og prøv igjen.' : 'Klarte ikke å sende lenken: ' + error.message; return; }
+  $('#lOk').textContent = `Hvis ${email} har en bruker, kommer det en e-post med en lenke for å velge nytt passord. Sjekk også søppelposten.`; $('#lOk').classList.remove('hide');
+});
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault(); $('#lBtn').disabled = true; $('#lErr').textContent = '';
   const { error } = await sb.auth.signInWithPassword({ email: $('#lEmail').value.trim(), password: $('#lPass').value });

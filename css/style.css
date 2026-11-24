@@ -919,3 +919,8 @@ table.wiki-table thead th { text-transform: none; letter-spacing: 0; font-size: 
 }
 @media (max-width: 560px) { .dashboard { grid-template-columns: 1fr 1fr; } .stat-card .n { font-size: 32px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* glemt passord */
+.link-btn { display: block; margin: 14px auto 0; background: none; border: 0; color: var(--accent); font: 600 14px Inter, sans-serif; cursor: pointer; padding: 6px; }
+.link-btn:hover { text-decoration: underline; }
+.ok-msg { display: none; margin-top: 10px; font-size: 13px; line-height: 1.5; background: var(--okw); border-left: 3px solid var(--success); border-radius: 0 8px 8px 0; padding: 10px 12px; }
