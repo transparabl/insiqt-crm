@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795481764">
+<html lang="no" data-build="1795481935">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -178,6 +178,9 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
 
   <section data-v="systemer" class="hide">
     <h2>Systemer</h2><div class="sys" id="sys"></div>
+    <div class="framebar" style="margin-top:28px;justify-content:space-between"><h2 style="margin:0">Kode og eierskap</h2><button class="sm pri" id="assetNew">+ Legg til</button></div>
+    <p class="note">Hvem eier koden, kontoene og rettighetene til Insiqt-programvaren og appene. Fyll inn etter hvert. Mangler rettighetshaver, er det markert rødt.</p>
+    <div class="card"><ul class="list" id="assets"></ul></div>
   </section>
 
   <section data-v="integrasjoner" class="hide">
@@ -254,7 +257,7 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal()]); render(); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets()]); render(); poll(); }
 
 /* ---------- render ---------- */
 const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs']];
@@ -317,7 +320,7 @@ function renderPipe() {
   const ost = { sent: 'Sendt', viewed: 'Åpnet', accepted: 'Akseptert', declined: 'Avslått' };
   $('#offerList').innerHTML = S.offers.map(o => `<li class="row"><span class="chip ${o.status === 'accepted' ? 'ok' : o.status === 'declined' ? 'mute' : 'warn'}">${esc(ost[o.status] || o.status)}</span><div><b>${esc(o.company_name || '')}</b><div class="meta">${o.price_month ? `<span>${(+o.price_month).toLocaleString('nb-NO')} kr/mnd</span>` : ''}${o.sent_at ? `<span>Sendt ${esc(rel(o.sent_at))}</span>` : ''}</div></div><div class="acts">${o.company_id ? `<a class="btn sm" href="index.html?kunde=${o.company_id}">Kundekort</a>` : ''}</div></li>`).join('') || '<li class="empty">Ingen tilbud.</li>';
 }
-const SYSTEMS = [['Insiqt-plattformen', 'https://ca-insiqt-web-prod.ashyisland-4121c7a0.norwayeast.azurecontainerapps.io/oversikt', 'Produksjon på Azure. Krever innlogging.'], ['app.insiqt.ai', 'https://app.insiqt.ai/login', 'Innloggingen nettsiden lenker til.'], ['Nettsiden insiqt.ai', 'https://insiqt.ai/', 'Cloudflare Pages fra GitHub.'], ['CRM', 'index.html', 'Pipeline, kundekort, ringeliste.'], ['Kart', 'kart.html', 'Leads og ringeliste på kart.'], ['Salgsverktøyet', 'https://insiqt-salg.vercel.app/', 'Tilbud og lønnsomhetsanalyse.'], ['Presentasjon', 'https://insiqt-presentasjon.vercel.app/', 'Salgspresentasjonen.'], ['Kode for nettsiden', 'https://github.com/transparabl/insiqt-ai-website', 'GitHub-repo (frontend/).']];
+const SYSTEMS = [['Insiqt-plattformen', 'https://ca-insiqt-web-prod.ashyisland-4121c7a0.norwayeast.azurecontainerapps.io/oversikt', 'Produksjon på Azure. Krever innlogging.'], ['app.insiqt.ai', 'https://app.insiqt.ai/login', 'Innloggingen nettsiden lenker til.'], ['Nettsiden insiqt.ai', 'https://insiqt.ai/', 'Cloudflare Pages fra GitHub.'], ['CRM', 'index.html', 'Pipeline, kundekort, ringeliste.'], ['Kart', 'kart.html', 'Leads og ringeliste på kart.'], ['Salgsverktøyet', 'https://insiqt-salg.vercel.app/', 'Tilbud og lønnsomhetsanalyse.'], ['Presentasjon', 'https://insiqt-presentasjon.vercel.app/', 'Salgspresentasjonen.'], ['Kode for nettsiden', 'https://github.com/transparabl/insiqt-ai-website', 'Privat repo – logg inn på GitHub som transparabl, ellers viser GitHub «404».'], ['Kode for plattformen (insiqt-mvp)', 'https://github.com/transparabl/insiqt-mvp', 'Privat repo – logg inn som transparabl. Ikke avklart om dette er produksjonskoden.']];
 const DOCS = [['Notion – Company Insiqt.ai', 'https://app.notion.com/p/396088745714803ca495ec23507f9811', 'Forsiden med driftsbilde.'], ['Notion – Software', 'https://app.notion.com/p/39608874571480769ec0c83afa14fb84', 'Teknisk dokumentasjon og Bug Tracker.'], ['Integrasjoner', 'https://app.notion.com/p/42108874571481b686aaec50e12fae29', 'Prioritert 1–100 med oppsettsteg.'], ['Gjøremål', 'https://app.notion.com/p/04108874571482a9807181adfce574d3', 'Alle oppgaver.'], ['Team Meetings', 'https://app.notion.com/p/6a208874571482bc88fb8157c27dc91d', 'Møter og referater.'], ['Kunder og avtalestatus', 'https://app.notion.com/p/19837448f97b4c99aaca6d81799895ec', 'Piloter og signerte avtaler.'], ['E-postmaler', 'https://app.notion.com/p/421088745714816f91b2e0c5691bbe91', 'Tilbud, oppfølging, onboarding.'], ['Oppsett og tilganger', 'https://app.notion.com/p/42108874571481faa3f1e02fe7f4e692', 'Hvordan alt henger sammen.'], ['Google Drive', 'https://drive.google.com/', 'Åpner Drive. Innebygd liste kommer når Google er koblet.']];
 const card = ([n, u, d]) => `<a class="card" href="${u}" ${u.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}><b>${esc(n)}${u.startsWith('http') ? ' ↗' : ''}</b><small>${esc(d)}</small></a>`;
 const DKIND = { mappe: 'Mappe', doc: 'Dokument', pdf: 'PDF', ark: 'Regneark', bilde: 'Bilde', mote: 'Møtereferat', side: 'Notion-side', database: 'Notion-database', avtale: 'Avtaleutkast', 'e-postmal': 'E-postmal' };
@@ -387,7 +390,7 @@ function renderDocs() {
   const open = new Set(['1rJeQPJ4WqTCurGvYWXAle0kANTO8JNam']);
   $('#docs').innerHTML = `<div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">📁 Min disk (john@insiqt.ai)</h3><span class="note">Sortert som i Drive: mapper først, så alfabetisk</span></div>` + roots.map(r => treeHTML(ix, r, 0, open)).join('');
 }
-function renderSystems() { $('#sys').innerHTML = SYSTEMS.map(card).join(''); renderDocs(); }
+function renderSystems() { $('#sys').innerHTML = SYSTEMS.map(card).join(''); renderAssets(); renderDocs(); }
 $('#docQ').addEventListener('input', renderDocs); $('#docF').addEventListener('change', renderDocs);
 const BRAND = { colors: [['Primær', '#080F1E'], ['Sekundær', '#0D1829'], ['Flate', '#111E33'], ['Aksent', '#2563EB'], ['Aksent hover', '#1D4ED8'], ['Highlight', '#06B6D4'], ['Suksess', '#10B981'], ['Advarsel', '#F59E0B'], ['Fare', '#EF4444'], ['Tekst lys', '#F1F5F9'], ['Tekst sekundær', '#7E95B5'], ['Tekst dempet', '#3D5275']] };
 async function renderBrand() {
@@ -480,6 +483,27 @@ function renderCal() {
   $('#calSync').textContent = sy.calendar ? `Hentet fra kalenderen ${fmt(sy.calendar.synced_at)}` : '';
   $('#ovMeet').innerHTML = err + (next.slice(0, 3).map(e => calRow(e, false)).join('') || '<li class="empty">Ingen kommende møter.</li>');
 }
+
+
+/* ---------- kode og eierskap ---------- */
+const AKIND = { nettside: 'Nettside', plattform: 'Plattform', 'app-ios': 'iOS-app', 'app-android': 'Android-app', intern: 'Internt verktøy', annet: 'Annet' };
+async function loadAssets() { const { data, error } = await sb.from('code_assets').select('*').order('sort').order('name'); if (error) S.err.assets = error.message; else { S.assets = data; delete S.err.assets; } }
+function renderAssets() {
+  if (!$('#assets')) return;
+  const L = S.assets || [];
+  $('#assets').innerHTML = (S.err.assets ? `<li class="err">${esc(S.err.assets)}</li>` : '') + (L.map(a => `<li class="row"><span class="chip ${a.legal_owner ? 'ok' : 'bad'}">${esc(AKIND[a.kind] || a.kind)}</span><div><b>${esc(a.name)}</b>
+    <div class="meta"><span>Konto/repo: ${esc(a.account_owner || 'ikke registrert')}</span><span>Rettighetshaver: <b style="color:${a.legal_owner ? 'inherit' : 'var(--bad)'}">${esc(a.legal_owner || 'ikke registrert')}</b></span>${a.status ? `<span>Status: ${esc(a.status)}</span>` : ''}</div>
+    ${a.notes ? `<div class="note">${esc(a.notes)}</div>` : ''}${a.updated_by ? `<div class="meta"><span>Sist endret av ${esc(a.updated_by.split('@')[0])} ${esc(fmt(a.updated_at))}</span></div>` : ''}</div>
+    <div class="acts">${a.code_url ? `<a class="btn sm" href="${esc(a.code_url)}" target="_blank" rel="noopener">Kode ↗</a>` : ''}${a.live_url ? `<a class="btn sm" href="${esc(a.live_url)}" target="_blank" rel="noopener">Live ↗</a>` : ''}${a.store_url ? `<a class="btn sm" href="${esc(a.store_url)}" target="_blank" rel="noopener">Butikk ↗</a>` : ''}${a.ip_doc_url ? `<a class="btn sm" href="${esc(a.ip_doc_url)}" target="_blank" rel="noopener">Avtaler ↗</a>` : ''}<button class="sm" data-asset="${a.id}">Rediger</button></div></li>`).join('') || '<li class="empty">Ingenting registrert.</li>');
+}
+function assetForm(a) {
+  a = a || { kind: 'annet' };
+  const F = [['name', 'Navn', 'text'], ['code_url', 'Lenke til koden (GitHub e.l.)', 'url'], ['live_url', 'Lenke til live-versjon', 'url'], ['store_url', 'Lenke i App Store / Google Play', 'url'], ['account_owner', 'Hvem eier kontoen/repoet (f.eks. GitHub-bruker, App Store Account Holder)', 'text'], ['legal_owner', 'Rettighetshaver (hvem eier koden juridisk)', 'text'], ['ip_doc_url', 'Lenke til avtale om rettigheter (Drive)', 'url'], ['status', 'Status', 'text']];
+  modal(`<h3>${a.id ? 'Rediger' : 'Legg til'}</h3><form id="af"><label for="a_kind">Type</label><select id="a_kind">${Object.entries(AKIND).map(([k, v]) => `<option value="${k}" ${a.kind === k ? 'selected' : ''}>${v}</option>`).join('')}</select>${F.map(([k, l, t]) => `<label for="a_${k}">${esc(l)}</label><input id="a_${k}" type="${t}" value="${esc(a[k] || '')}" ${k === 'name' ? 'required' : ''}>`).join('')}<label for="a_notes">Notat</label><textarea id="a_notes">${esc(a.notes || '')}</textarea><div class="foot"><button type="button" data-close>Avbryt</button><button class="pri">Lagre</button></div><div class="err" id="aErr"></div></form>`);
+  $('#af').addEventListener('submit', async e => { e.preventDefault(); const v = { kind: $('#a_kind').value, notes: $('#a_notes').value.trim() || null, updated_by: S.status.user || '', updated_at: new Date().toISOString() }; F.forEach(([k]) => v[k] = $('#a_' + k).value.trim() || null);
+    const r = a.id ? await sb.from('code_assets').update(v).eq('id', a.id) : await sb.from('code_assets').insert(v); if (r.error) { $('#aErr').textContent = r.error.message; return; } closeModal(); toast('Lagret'); await loadAssets(); renderAssets(); });
+}
+document.addEventListener('click', e => { const t = e.target.closest('button'); if (!t) return; if (t.id === 'assetNew') assetForm(); if (t.dataset.asset) assetForm((S.assets || []).find(x => x.id === t.dataset.asset)); });
 
 /* ---------- integrasjoner ---------- */
 const IG = { guides: [], prog: [], notion: {}, sel: null, company: '', err: null };
