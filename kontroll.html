@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795480678">
+<html lang="no" data-build="1795480804">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -102,7 +102,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
   <div style="display:flex;align-items:center"><span class="logo">Insiqt<span>.ai</span></span><span class="tag">Kontrollsenter</span></div>
   <div class="right"><span class="note" style="color:#7E95B5" id="who"></span><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart ↗</a><button class="sm" id="logout">Logg ut</button></div>
 </header>
-<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#systemer">Systemer og dokumenter</a><a href="#branding">Branding</a></nav>
+<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#systemer">Systemer og dokumenter</a><a href="#branding">Branding</a></nav>
 <main>
   <div id="setup" class="card hide" style="margin-bottom:16px;border-color:var(--warn)"></div>
 
@@ -111,7 +111,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Neste steg</h3><ul class="list" id="next"></ul></div>
       <div><div class="card"><h3>Nettsiden</h3><ul class="list" id="ovWeb"></ul><div style="margin-top:10px"><a class="btn sm pri" href="#nettside">Endre nettsiden</a></div></div>
-      <div class="card" style="margin-top:16px"><h3>Siste møtereferater</h3><ul class="list" id="ovMeet"></ul><p class="note" style="margin:8px 0 0">Fra Google Meet-notatene i Drive (john@insiqt.ai).</p></div></div>
+      <div class="card" style="margin-top:16px"><h3>Neste møter</h3><ul class="list" id="ovMeet"></ul><div style="margin-top:10px"><a class="btn sm" href="#moter">Alle møter</a></div></div></div>
     </div>
   </section>
 
@@ -140,6 +140,12 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
         <div class="card" style="margin-top:16px"><h3>Endringer</h3><ul class="list" id="webList"></ul></div>
       </div>
     </div>
+  </section>
+
+  <section data-v="moter" class="hide">
+    <div class="framebar" style="justify-content:space-between"><h2 style="margin:0">Møter</h2><span class="note" id="calSync"></span></div>
+    <div class="grid g2"><div class="card"><h3>Kommende</h3><ul class="list" id="calNext"></ul></div><div class="card"><h3>Siste 7 dager</h3><ul class="list" id="calPast"></ul></div></div>
+    <p class="note" style="margin-top:12px">Fra Google Kalender (john@insiqt.ai). Referatene fra Google Meet ligger også under Dokumenter.</p>
   </section>
 
   <section data-v="oppgaver" class="hide">
@@ -236,7 +242,7 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs()]); render(); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal()]); render(); poll(); }
 
 /* ---------- render ---------- */
 const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs']];
@@ -260,7 +266,7 @@ function nextSteps() {
   S.tasks.filter(t => !['Done', 'Canceled'].includes(t.Status) && t.Dates && days(t.Dates) < 0).forEach(t => it.push(['bad', t['Project name'], `Oppgave forfalt ${rel(t.Dates)}`, t.url]));
   return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
 }
-function render() { renderSetup(); renderOverview(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); }
+function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); }
 function renderOverview() {
   const due = S.companies.filter(c => openCo(c) && days(c.next_activity_at) < 0).length;
   const klar = S.web.filter(w => w.status === 'klar').length;
@@ -315,8 +321,6 @@ function renderDocs() {
   $('#docs').innerHTML = (S.err.docs ? `<li class="err">${esc(S.err.docs)}</li>` : '') + (L.length ? L.slice(0, 150).map(x => `<li class="row"><span class="chip ${x.source === 'drive' ? '' : 'mute'}">${esc(DKIND[x.kind] || x.kind || '')}</span><div><b>${esc(x.title)}</b><div class="meta"><span>${esc(x.path || '')}</span>${x.modified_at ? `<span>Endret ${esc(fmt(x.modified_at))}</span>` : ''}</div></div><div class="acts"><a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Åpne ↗</a></div></li>`).join('') : '<li class="empty">Ingen treff.</li>');
   const sy = Object.fromEntries((S.sync || []).map(r => [r.source, r]));
   $('#docSync').textContent = sy.drive ? `Drive og Notion sist hentet ${fmt(sy.drive.synced_at)}` : '';
-  const M = (S.docs || []).filter(x => x.kind === 'mote').slice(0, 4);
-  $('#ovMeet').innerHTML = M.length ? M.map(x => `<li class="row"><span class="chip mute">Møte</span><div><b>${esc(x.title.replace(/ - Notes by Gemini$/, '').replace(/^INSIQT AI \| /, ''))}</b></div><div class="acts"><a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Åpne ↗</a></div></li>`).join('') : '<li class="empty">Ingen møtereferater funnet.</li>';
 }
 function renderSystems() { $('#sys').innerHTML = SYSTEMS.map(card).join(''); renderDocs(); }
 $('#docQ').addEventListener('input', renderDocs); $('#docF').addEventListener('change', renderDocs);
@@ -385,6 +389,32 @@ $('#newBug').onclick = () => formModal('Ny bug eller forbedring', [{ id: 'name',
 $('#newTask').onclick = () => formModal('Ny oppgave', [{ id: 'name', label: 'Hva skal gjøres', req: 1 }, { id: 'du', label: 'Du skal …', type: 'textarea' }, { id: 'own', label: 'Ansvarlig', type: 'select', options: ['', 'John', 'Ove', 'Raman'] }, { id: 'pri', label: 'Prioritet', type: 'select', options: ['Medium', 'High', 'Low'] }, { id: 'omr', label: 'Område', type: 'select', options: ['Drift', 'Webplattform', 'App', 'Nettside', 'Integrasjon', 'Salg', 'Juridisk'] }, { id: 'due', label: 'Frist', type: 'date' }], v => api('notion.create', { db: 'task', values: v }));
 $('#up').onchange = async e => { const f = e.target.files[0]; if (!f) return; const name = f.name.replace(/[^\w.\-æøåÆØÅ ]/g, '_'); const { error } = await sb.storage.from('branding').upload(name, f, { upsert: true }); toast(error ? error.message : name + ' lastet opp'); e.target.value = ''; renderBrand(); };
 
+
+
+/* ---------- møter ---------- */
+const RSVP = { accepted: ['Ja', 'ok'], declined: ['Nei', 'bad'], tentative: ['Kanskje', 'warn'], needsAction: ['Ikke svart', 'mute'] };
+async function loadCal() {
+  const since = new Date(Date.now() - 7 * 864e5).toISOString();
+  const { data, error } = await sb.from('calendar_events').select('*').gte('starts_at', since).order('starts_at');
+  if (error) S.err.cal = error.message; else { S.cal = data; delete S.err.cal; }
+}
+function calRow(e, past) {
+  const d = new Date(e.starts_at), en = e.ends_at ? new Date(e.ends_at) : null;
+  const tid = d.toLocaleDateString('nb-NO', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + d.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }) + (en ? '–' + en.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }) : '');
+  const att = (e.attendees || []).filter(a => a.e !== 'john@insiqt.ai').map(a => `<span class="chip ${(RSVP[a.s] || ['', 'mute'])[1]}">${esc(a.e.split('@')[0])}: ${esc((RSVP[a.s] || [a.s])[0])}</span>`).join(' ');
+  const now = Date.now(), live = d.getTime() - 15 * 60000 < now && (en ? en.getTime() : d.getTime() + 36e5) > now;
+  return `<li class="row"><span class="chip ${live ? 'ok' : past ? 'mute' : ''}">${live ? 'Nå' : esc(rel(e.starts_at)) || 'I dag'}</span><div><b>${esc(e.title)}</b><div class="meta"><span>${esc(tid)}</span></div>${att ? `<div style="margin-top:4px">${att}</div>` : ''}</div><div class="acts">${!past && e.meet_url ? `<a class="btn sm pri" href="${esc(e.meet_url)}" target="_blank" rel="noopener">Bli med</a>` : ''}${e.notes_url ? `<a class="btn sm" href="${esc(e.notes_url)}" target="_blank" rel="noopener">Referat ↗</a>` : ''}${e.html_link ? `<a class="btn sm" href="${esc(e.html_link)}" target="_blank" rel="noopener">↗</a>` : ''}</div></li>`;
+}
+function renderCal() {
+  const sy = Object.fromEntries((S.sync || []).map(r => [r.source, r])); const last = sy.calendar ? new Date(sy.calendar.synced_at).getTime() - 10 * 60000 : 0;
+  const L = (S.cal || []).filter(e => e.status !== 'cancelled' && new Date(e.seen_at).getTime() >= last);
+  const now = Date.now(), end = x => x.ends_at ? new Date(x.ends_at).getTime() : new Date(x.starts_at).getTime() + 36e5;
+  const next = L.filter(e => end(e) > now), past = L.filter(e => end(e) <= now).reverse();
+  const err = S.err.cal ? `<li class="err">${esc(S.err.cal)}</li>` : '';
+  if ($('#calNext')) { $('#calNext').innerHTML = err + (next.map(e => calRow(e, false)).join('') || '<li class="empty">Ingen kommende møter.</li>'); $('#calPast').innerHTML = past.map(e => calRow(e, true)).join('') || '<li class="empty">Ingen møter siste 7 dager.</li>'; }
+  $('#calSync').textContent = sy.calendar ? `Hentet fra kalenderen ${fmt(sy.calendar.synced_at)}` : '';
+  $('#ovMeet').innerHTML = err + (next.slice(0, 3).map(e => calRow(e, false)).join('') || '<li class="empty">Ingen kommende møter.</li>');
+}
 
 /* ---------- integrasjoner ---------- */
 const IG = { guides: [], prog: [], notion: {}, sel: null, company: '', err: null };
@@ -485,7 +515,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.krm) { if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Sikker?'; return; } try { await api('secret.remove', { name: t.dataset.krm }); toast('Nøkkelen er fjernet'); } catch (err) { toast(err.message); } await loadStatus(); render(); }
 });
 
-const VIEWS = ['oversikt', 'nettside', 'oppgaver', 'pipeline', 'integrasjoner', 'systemer', 'branding'];
+const VIEWS = ['oversikt', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'systemer', 'branding'];
 function route() { const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt'; if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); } document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
 window.addEventListener('hashchange', route);
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
