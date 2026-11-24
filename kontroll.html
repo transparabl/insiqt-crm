@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795488790">
+<html lang="no" data-build="1795489200">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,7 +41,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
 .iglist a[href^="#"]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:14px}
 .iglist a[href^="#"]:hover{background:#F1F5F9}.iglist a[href^="#"].on{background:#EEF2FF}
 .iglist a[href^="#"] small{grid-column:1/-1;color:var(--mute);font-size:12px}
-.igseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#F1F5F9;border-radius:10px;padding:4px;margin:0 0 6px}.igseg button{border:none;background:transparent;min-height:44px;flex-direction:column;gap:0;line-height:1.2;font-size:13px}.igseg button small{font-weight:500;color:var(--mute);font-size:11px}.igseg button.on{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+.igseg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;background:#F1F5F9;border-radius:10px;padding:4px;margin:0 0 6px}.igseg button{border:none;background:transparent;min-height:44px;flex-direction:column;gap:0;line-height:1.2;font-size:13px}.igseg button small{font-weight:500;color:var(--mute);font-size:11px}.igseg button.on{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.12)}
 .platbox{border-left:3px solid var(--accent);background:#F8FAFF;padding:8px 12px;border-radius:6px;margin:10px 0}.platbox.ok{border-color:var(--ok);background:#F0FDF4}.platbox.warn{border-color:var(--warn);background:#FFFBEB}
 .rk{width:100%;border-collapse:collapse;font-size:13px}.rk th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--mute);padding:6px;border-bottom:1px solid var(--line)}.rk td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}.rk td.n{font-weight:700;color:var(--mute);width:32px}.rk .cm{color:#B45309;font-size:12px;margin-top:4px}
 .steps{list-style:none;margin:0;padding:0;counter-reset:st}
@@ -545,12 +545,13 @@ function assetForm(a) {
 document.addEventListener('click', e => { const t = e.target.closest('button'); if (!t) return; if (t.id === 'assetNew') assetForm(); if (t.dataset.asset) assetForm((S.assets || []).find(x => x.id === t.dataset.asset)); });
 
 /* ---------- integrasjoner ---------- */
-const IG = { guides: [], prog: [], notion: {}, sel: null, company: '', err: null, view: 'plattform', rank: [], rf: { tier: '', q: '', note: false } };
+const IG = { guides: [], prog: [], notion: {}, sel: null, company: '', err: null, view: 'plattform', rank: [], rf: { tier: '', q: '', note: false }, ob: [], obp: [], obCust: '' };
 const pid = u => (String(u || '').match(/[0-9a-f]{32}/) || [''])[0];
 async function loadGuides() {
   const [g, p] = await Promise.all([sb.from('integration_guides').select('*').order('sort'), sb.from('integration_progress').select('*')]);
   if (g.error) IG.err = g.error.message; else { IG.guides = g.data; IG.err = null; }
-  const rk = await sb.from('integration_ranking').select('*').order('rank'); if (!rk.error) IG.rank = rk.data;
+  const [rk, ob, obp] = await Promise.all([sb.from('integration_ranking').select('*').order('rank'), sb.from('onboarding_steps').select('*').order('sort'), sb.from('onboarding_progress').select('*')]);
+  if (!rk.error) IG.rank = rk.data; if (!ob.error) IG.ob = ob.data; if (!obp.error) IG.obp = obp.data;
   if (!p.error) IG.prog = p.data;
   if (S.status.notion) { try { const r = await api('notion.list', { db: 'integ' }); IG.notion = Object.fromEntries(r.rows.map(x => [String(x.id).replace(/-/g, ''), x])); } catch (_) { } }
 }
@@ -566,20 +567,22 @@ function guideState(g) {
 function igProgress(g) { const st = g.steps || {}; const n = (st.insiqt || []).length; if (!n) return null; const k = keyOf(g); if (k && k.set && k.test_ok !== false) return [n, n]; return [doneSet(g.slug, 'insiqt', '').size, n]; }
 function renderIG() {
   if (!$('#igList')) return;
-  const isRank = IG.sel === 'rangering';
+  const isRank = IG.sel === 'rangering', isOb = IG.sel === 'onboarding';
   const selG = !isRank && IG.sel && IG.guides.find(g => g.slug === IG.sel);
   if (selG) IG.view = selG.grp === 'kontroll' ? 'kontroll' : 'plattform';
-  if (isRank) IG.view = 'plattform';
+  if (isRank) IG.view = 'plattform'; if (isOb) IG.view = 'onboarding';
   const inView = g => (IG.view === 'kontroll') === (g.grp === 'kontroll');
-  const sel = isRank ? null : (selG && inView(selG) ? selG : IG.guides.filter(inView).sort((a, b) => (a.sort || 99) - (b.sort || 99))[0]);
+  const sel = isRank || isOb ? null : (selG && inView(selG) ? selG : IG.guides.filter(inView).sort((a, b) => (a.sort || 99) - (b.sort || 99))[0]);
   const PH = ['Nå', 'Neste fase', 'Når plattformen vokser', 'Lengre sikt'];
   const item = g => { const [lab, cls] = guideState(g); const pr = igProgress(g); const n = live(g); const loom = g.loom_url || (n && n['Loom-veiledning']); return `<a href="#integrasjoner/${g.slug}" class="${sel && sel.slug === g.slug ? 'on' : ''}"><span>${esc(g.name)}</span><span class="chip ${cls}">${esc(lab)}</span><small>${pr ? `${pr[0]}/${pr[1]} steg` : ''}${g.priority && g.category !== 'Dokument' ? ` · prioritet ${(n && n.Prioritet) || g.priority}` : ''}${loom ? ' · Loom ✓' : ''}</small></a>`; };
   const plat = IG.guides.filter(g => g.grp !== 'kontroll'), ctl = IG.guides.filter(g => g.grp === 'kontroll');
   const liveN = plat.filter(g => /^Live/.test(g.platform_status || '')).length;
-  const seg = `<div class="igseg" role="tablist"><button role="tab" data-igview="plattform" class="${IG.view === 'plattform' ? 'on' : ''}">Plattformen<small>kundenes integrasjoner · ${liveN} live i plattformen</small></button><button role="tab" data-igview="kontroll" class="${IG.view === 'kontroll' ? 'on' : ''}">Kontrollsenteret<small>våre interne verktøy · ${ctl.length}</small></button></div>`;
+  const seg = `<div class="igseg" role="tablist"><button role="tab" data-igview="plattform" class="${IG.view === 'plattform' ? 'on' : ''}">Plattformen<small>kundenes integrasjoner · ${liveN} live i plattformen</small></button><button role="tab" data-igview="kontroll" class="${IG.view === 'kontroll' ? 'on' : ''}">Kontrollsenteret<small>våre interne verktøy · ${ctl.length}</small></button><button role="tab" data-igview="onboarding" class="${IG.view === 'onboarding' ? 'on' : ''}">Onboarding<small>kunden kommer i gang · ${IG.ob.length} steg</small></button></div>`;
   const byPhase = (L, prefix) => PH.map(ph => { const X = L.filter(g => ((live(g) || {}).Fase || g.phase) === ph).sort((a, b) => (b.priority || 0) - (a.priority || 0)); return X.length ? `<h4>${prefix}${ph}</h4>` + X.map(item).join('') : ''; }).join('');
   let body;
-  if (IG.view === 'kontroll') {
+  if (IG.view === 'onboarding') {
+    body = obSideHTML();
+  } else if (IG.view === 'kontroll') {
     body = `<p class="note" style="margin:8px">Verktøy Insiqt bruker selv for å drive selskapet. Ikke noe kunden ser.</p>` + byPhase(ctl, '');
   } else {
     const docs = plat.filter(g => g.category === 'Dokument'), rest = plat.filter(g => g.category !== 'Dokument');
@@ -588,7 +591,7 @@ function renderIG() {
   }
   $('#igList').innerHTML = (IG.err ? `<p class="err">${esc(IG.err)}</p>` : '') + seg + body +
     `<p class="note" style="margin:12px 8px 4px">Prioritet og status hentes fra <a href="https://app.notion.com/p/42108874571481b686aaec50e12fae29" target="_blank" rel="noopener">Integrasjoner i Notion</a>${S.status.notion ? '' : ' når Notion er koblet til'}.</p>`;
-  $('#igDetail').innerHTML = isRank ? rankHTML() : sel ? guideHTML(sel) : '<div class="card empty">Ingen guider lastet.</div>';
+  $('#igDetail').innerHTML = isOb ? obHTML() : isRank ? rankHTML() : sel ? guideHTML(sel) : '<div class="card empty">Ingen guider lastet.</div>';
 }
 const TIER = { 1: 'Nivå 1 · Nå', 2: 'Nivå 2 · Etter første kunde', 3: 'Nivå 3 · Skalering', 4: 'Nivå 4 · Bredde', 5: 'Nivå 5 · Marginalt' };
 const EFF = { S: 'Liten', M: 'Middels', L: 'Stor' };
@@ -602,7 +605,7 @@ function rankHTML() {
   <div class="framebar"><select id="rkTier" aria-label="Nivå" style="max-width:240px"><option value="">Alle nivåer</option>${Object.entries(TIER).map(([k, v]) => `<option value="${k}" ${f.tier === k ? 'selected' : ''}>${v}</option>`).join('')}</select><input id="rkQ" placeholder="Søk" value="${esc(f.q)}" style="max-width:220px"><label style="display:flex;gap:6px;align-items:center;margin:0;font-weight:500"><input type="checkbox" id="rkNote" style="width:auto" ${f.note ? 'checked' : ''}> Bare med merknad</label><span class="note">${L.length} vist</span></div>
   <div style="overflow-x:auto"><table class="rk"><thead><tr><th>#</th><th>Integrasjon</th><th>Nivå</th><th>Innsats</th><th>Betaler</th><th>Kunden må</th><th>I plattformen</th></tr></thead><tbody>${L.map(r => `<tr><td class="n">${r.rank}</td><td><b>${esc(r.name)}</b>${r.subtitle ? ` <span class="note">${esc(r.subtitle)}</span>` : ''} <span class="chip mute">${esc(r.category || '')}</span><div class="note">${esc(r.why || '')}</div>${r.comment ? `<div class="cm">⚠ ${esc(r.comment)}</div>` : ''}${r.guide_slug ? `<div style="margin-top:4px"><a href="#integrasjoner/${esc(r.guide_slug)}">Guide: ${esc(gName(r.guide_slug) || r.guide_slug)} →</a></div>` : ''}</td><td>${r.tier}</td><td>${esc(EFF[r.effort] || r.effort || '')}</td><td>${esc(r.payer || '')}</td><td>${esc(r.customer_work || '')}</td><td>${ps(r)}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
-document.addEventListener('click', e => { const t = e.target.closest('[data-igview]'); if (!t) return; IG.view = t.dataset.igview; const first = IG.guides.filter(g => (IG.view === 'kontroll') === (g.grp === 'kontroll')).sort((a, b) => (a.sort || 99) - (b.sort || 99))[0]; if (first) location.hash = '#integrasjoner/' + first.slug; else renderIG(); });
+document.addEventListener('click', e => { const t = e.target.closest('[data-igview]'); if (!t) return; IG.view = t.dataset.igview; if (IG.view === 'onboarding') { location.hash = '#integrasjoner/onboarding'; return; } const first = IG.guides.filter(g => (IG.view === 'kontroll') === (g.grp === 'kontroll')).sort((a, b) => (a.sort || 99) - (b.sort || 99))[0]; if (first) location.hash = '#integrasjoner/' + first.slug; else renderIG(); });
 document.addEventListener('input', e => { if (e.target.id === 'rkQ') { IG.rf.q = e.target.value; const pos = e.target.selectionStart; renderIG(); const el = $('#rkQ'); el.focus(); el.setSelectionRange(pos, pos); } });
 document.addEventListener('change', e => { if (e.target.id === 'rkTier') { IG.rf.tier = e.target.value; renderIG(); } if (e.target.id === 'rkNote') { IG.rf.note = e.target.checked; renderIG(); } });
 
@@ -645,6 +648,51 @@ document.addEventListener('click', e => {
   if (t.dataset.tri) { const [k, v] = t.dataset.tri.split('|'); IG.tri[k] = IG.tri[k] === v ? null : v; renderIG(); }
   if (t.dataset.trireset !== undefined) { Object.keys(IG.tri).forEach(k => IG.tri[k] = null); renderIG(); }
   if (t.dataset.tricopy !== undefined) { const txt = ($('#triMsg') || {}).textContent || ''; navigator.clipboard.writeText(txt).then(() => toast('Meldingen er kopiert'), () => toast('Marker teksten og kopier manuelt')); }
+});
+
+/* ---------- onboarding: kundens vei fra avtale til første rapport ---------- */
+const OBR = { klar: ['Virker i dag', 'ok'], manuelt: ['Manuelt med Insiqt', ''], ukjent: ['Finnes, ikke testet', 'warn'], mangler: ['Ikke klart ennå', 'bad'] };
+const obCustomers = () => [...new Set([...(typeof PILOTS !== 'undefined' ? PILOTS : []), ...S.companies.map(c => c.name), ...IG.obp.map(x => x.customer_name)].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'nb'));
+const obDone = k => IG.obCust && IG.obp.some(x => x.customer_name === IG.obCust && x.step_key === k);
+function obSideHTML() {
+  const ph = [...new Set(IG.ob.map(s => s.phase))];
+  const n = IG.obCust ? IG.ob.filter(s => obDone(s.key)).length : 0;
+  const cnt = Object.fromEntries(Object.keys(OBR).map(k => [k, IG.ob.filter(s => s.readiness === k).length]));
+  return `<p class="note" style="margin:8px">Hele veien for kunden – fra avtale til første lønnsomhetsrapport – forklart fra kundens side. Bruk den i møtet, og send kundeversjonen etterpå.</p>
+  <div style="margin:8px"><label for="obCust" style="margin-top:0">Kunde</label><select id="obCust"><option value="">Velg kunde for å krysse av …</option>${obCustomers().map(c => `<option ${c === IG.obCust ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>${IG.obCust ? `<div class="bar" style="margin-top:8px"><i style="width:${Math.round(n / IG.ob.length * 100)}%"></i></div><p class="note">${n} av ${IG.ob.length} steg ferdig for ${esc(IG.obCust)}</p>` : ''}</div>
+  <h4>Klart for kunden?</h4><div style="margin:0 8px">${Object.entries(OBR).map(([k, [l, c]]) => `<div class="framebar" style="margin:4px 0"><span class="chip ${c}">${cnt[k]}</span><span class="note">${l}</span></div>`).join('')}</div>
+  ${ph.map(p => `<h4>${esc(p)}</h4>` + IG.ob.filter(s => s.phase === p).map(s => `<a href="#integrasjoner/onboarding" data-obgo="${s.key}"><span>${obDone(s.key) ? '✓ ' : ''}${s.sort}. ${esc(s.title)}</span><span class="chip ${OBR[s.readiness][1]}">${OBR[s.readiness][0]}</span></a>`).join('')).join('')}`;
+}
+function obHTML() {
+  const ph = [...new Set(IG.ob.map(s => s.phase))];
+  return `<div class="card"><div class="framebar" style="justify-content:space-between"><h2 style="margin:0">Onboarding – slik kommer du i gang med Insiqt</h2><button class="sm pri" data-obcopy>📋 Kopier kundeversjonen</button></div>
+  <p>Skrevet til kunden. Teksten i hvert steg kan sendes som den er. De gule og røde boksene er interne notater om hva som mangler hos oss – de kommer ikke med når du kopierer kundeversjonen.</p>
+  <p class="note">Kundeversjonen tar bare med steg som er klare eller gjøres manuelt med Insiqt. Steg merket «Ikke klart ennå» nevnes kort som «kommer senere», så vi ikke lover noe plattformen ikke kan.</p></div>
+  ${ph.map(p => `<h3 style="margin:22px 0 8px">${esc(p)}</h3>` + IG.ob.filter(s => s.phase === p).map(s => { const [rl, rc] = OBR[s.readiness]; const g = s.guide_slug && IG.guides.find(x => x.slug === s.guide_slug); return `<div class="card" id="ob-${s.key}" style="margin-top:10px">
+    <div class="framebar" style="justify-content:space-between;margin:0"><div class="framebar" style="margin:0">${IG.obCust ? `<input type="checkbox" style="width:auto" data-obstep="${s.key}" ${obDone(s.key) ? 'checked' : ''} aria-label="Ferdig for ${esc(IG.obCust)}">` : ''}<b style="font-size:16px">${s.sort}. ${esc(s.title)}</b></div><span class="chip ${rc}">${rl}</span></div>
+    <div class="meta" style="margin:6px 0 8px;font-size:13px"><span><b>Hvem:</b> ${esc(s.who || '')}</span><span><b>Tid:</b> ${esc(s.duration || '')}</span></div>
+    <p style="margin:0 0 8px">${esc(s.customer_text)}</p>
+    ${s.needs ? `<p class="note" style="margin:0"><b>Du trenger:</b> ${esc(s.needs)}</p>` : ''}
+    ${s.internal_note ? `<div class="platbox ${s.readiness === 'mangler' ? '' : 'warn'}" style="${s.readiness === 'mangler' ? 'border-color:var(--bad);background:#FEF2F2' : ''}"><b>Internt – vises ikke for kunden:</b> ${esc(s.internal_note)}</div>` : ''}
+    ${g ? `<a href="#integrasjoner/${esc(g.slug)}">Teknisk guide: ${esc(g.name)} →</a>${g.slug === 'scania' ? ' · <a href="#integrasjoner/scania">Kundeløypen (4 spørsmål) →</a>' : ''}` : ''}</div>`; }).join('')).join('')}`;
+}
+function obCustomerText() {
+  const ok = IG.ob.filter(s => s.readiness !== 'mangler'), later = IG.ob.filter(s => s.readiness === 'mangler');
+  let n = 0;
+  return `Slik kommer du i gang med Insiqt\n\n` + [...new Set(ok.map(s => s.phase))].map(p => `${p.replace(/^Fase \d+ · /, '').toUpperCase()}\n` + ok.filter(s => s.phase === p).map(s => `${++n}. ${s.title}\n${s.customer_text}${s.needs ? `\nDu trenger: ${s.needs}` : ''}\nTid: ${s.duration}`).join('\n\n')).join('\n\n') +
+    (later.length ? `\n\nKOMMER SENERE\nDisse koblingene er under arbeid, og vi gir beskjed når de er klare: ${later.map(s => s.title.replace(/^Koble til /, '')).join(', ')}.` : '') + `\n\nSpørsmål underveis? Kontakt oss, så tar vi det sammen.\nInsiqt.AI AS`;
+}
+document.addEventListener('change', async e => {
+  if (e.target.id === 'obCust') { IG.obCust = e.target.value; renderIG(); return; }
+  const k = e.target.dataset && e.target.dataset.obstep; if (!k || !IG.obCust) return;
+  e.target.disabled = true;
+  const r = e.target.checked ? await sb.from('onboarding_progress').insert({ customer_name: IG.obCust, step_key: k, done_by: S.status.user || '' }) : await sb.from('onboarding_progress').delete().eq('customer_name', IG.obCust).eq('step_key', k);
+  if (r.error) toast(r.error.message);
+  const p = await sb.from('onboarding_progress').select('*'); if (!p.error) IG.obp = p.data; renderIG();
+});
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-obgo]'); if (a) { e.preventDefault(); const el = document.getElementById('ob-' + a.dataset.obgo); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  const t = e.target.closest('[data-obcopy]'); if (t) navigator.clipboard.writeText(obCustomerText()).then(() => toast('Kundeversjonen er kopiert'), () => toast('Nettleseren slapp ikke til utklippstavlen'));
 });
 function stepsHTML(g, sec, company) {
   const L = (g.steps || {})[sec] || []; if (!L.length) return '';
