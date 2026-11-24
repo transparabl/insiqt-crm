@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795489776">
+<html lang="no" data-build="1795490541">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -113,7 +113,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
   <div style="display:flex;align-items:center"><span class="logo">Insiqt<span>.ai</span></span><span class="tag">Kontrollsenter</span></div>
   <div class="right"><span class="note" style="color:#7E95B5" id="who"></span><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart ↗</a><button class="sm" id="logout">Logg ut</button></div>
 </header>
-<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#okonomi">Økonomi og kunder</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#dokumenter">Dokumenter</a><a href="#drift">Drift</a><a href="#systemer">Systemer</a><a href="#branding">Branding</a></nav>
+<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#ai">AI-assistent</a><a href="#okonomi">Økonomi og kunder</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#dokumenter">Dokumenter</a><a href="#drift">Drift</a><a href="#systemer">Systemer</a><a href="#branding">Branding</a></nav>
 <main>
   <div id="setup" class="card hide" style="margin-bottom:16px;border-color:var(--warn)"></div>
 
@@ -125,6 +125,28 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
       <div class="card" style="margin-top:16px"><h3>Frister</h3><ul class="list" id="ovDl"></ul><div style="margin-top:10px"><a class="btn sm" href="#drift">Alle frister</a></div></div>
       <div class="card" style="margin-top:16px"><h3>Neste møter</h3><ul class="list" id="ovMeet"></ul><div style="margin-top:10px"><a class="btn sm" href="#moter">Alle møter</a></div></div></div>
     </div>
+  </section>
+
+  <section data-v="ai" class="hide">
+    <h2>AI-assistent</h2>
+    <p class="note">Bruker Claude med dataene i kontrollsenteret: frister, kostnader, integrasjoner, onboarding, kalender, Pocket-samtaler og tilbud. Den kan bare lese. Ingenting lagres, sendes eller endres uten at du trykker på en knapp.</p>
+    <div class="card"><h3>Spør kontrollsenteret</h3>
+      <div id="askLog" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
+      <form id="askForm" class="framebar" style="margin:0;align-items:flex-end"><textarea id="askQ" rows="2" placeholder="F.eks. Hva mangler før Bjørnars kan komme i gang?" style="flex:1;min-height:52px"></textarea><button class="pri" id="askBtn">Spør</button></form>
+      <div class="acts" style="justify-content:flex-start;margin-top:8px" id="askSugg"></div></div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Etter et møte</h3><p class="note">Velg en Pocket-samtale eller lim inn et referat. Du får oppsummering, oppgaver, kundebehov og et utkast til oppfølgings-e-post.</p>
+        <label for="mtConv">Samtale</label><select id="mtConv"><option value="">Lim inn referat i stedet …</option></select>
+        <label for="mtText">Referat (hvis ingen samtale er valgt)</label><textarea id="mtText" rows="4"></textarea>
+        <label for="mtCo">Kunde (valgfritt)</label><input id="mtCo" list="coList2" autocomplete="off"><datalist id="coList2"></datalist>
+        <div class="foot"><button class="pri" id="mtBtn">Lag oppfølging</button></div><div id="mtOut"></div></div>
+      <div class="card"><h3>Feilmelding fra fritekst</h3><p class="note">Skriv med egne ord hva som ikke virker. Du får en ferdig sak til Bug Tracker med engelsk tekst til Raman, og kan rette den før du lagrer.</p>
+        <label for="bgText">Hva skjedde?</label><textarea id="bgText" rows="4" placeholder="F.eks. Dagsoversikten viser bare «Forbidden» når jeg åpner den på Macen."></textarea>
+        <label for="bgLink">Lenke til siden (valgfritt)</label><input id="bgLink" type="url" placeholder="https://…">
+        <div class="foot"><button class="pri" id="bgBtn">Lag sak</button></div><div id="bgOut"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Fredagsrapport til styret</h3><button class="pri" id="wkBtn">Lag rapport for denne uka</button></div>
+      <p class="note">Inntekter, kostnader, pipeline, integrasjoner, onboarding, frister og avvik – skrevet ut fra dataene i kontrollsenteret. Rapportene lagres her.</p><div id="wkOut"></div><ul class="list" id="wkList" style="margin-top:10px"></ul></div>
   </section>
 
   <section data-v="nettside" class="hide">
@@ -158,6 +180,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <div class="framebar" style="justify-content:space-between"><h2 style="margin:0">Møter</h2><span class="note" id="calSync"></span></div>
     <div class="grid g2"><div class="card"><h3>Kommende</h3><ul class="list" id="calNext"></ul></div><div class="card"><h3>Siste 7 dager</h3><ul class="list" id="calPast"></ul></div></div>
     <p class="note" style="margin-top:12px">Fra Google Kalender (john@insiqt.ai). Referatene fra Google Meet ligger også under Dokumenter.</p>
+    <div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Samtaler fra Pocket</h3><span class="note" id="convSync"></span></div><p class="note">Oppsummeringer fra mappen «Insiqt.ai Project» i Pocket. Hele opptaket ligger i Pocket. Trykk «Lag oppfølging» for oppgaver, kundebehov og e-postutkast.</p><ul class="list" id="convList"></ul></div>
   </section>
 
   <section data-v="oppgaver" class="hide">
@@ -297,7 +320,7 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA()]); render(); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA(), loadAI()]); render(); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
 
 /* ---------- render ---------- */
 const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs']];
@@ -323,7 +346,7 @@ function nextSteps() {
   (typeof D !== 'undefined' ? incUrgent() : []).forEach(i => { const [, t] = incClock(i); it.push(['bad', `Personvernavvik: ${i.title}`, t, '#drift']); });
   return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
 }
-function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); renderDrift(); renderEco(); }
+function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); renderDrift(); renderEco(); renderAI(); }
 function renderOverview() {
   const due = S.companies.filter(c => openCo(c) && days(c.next_activity_at) < 0).length;
   const klar = S.web.filter(w => w.status === 'klar').length;
@@ -974,7 +997,95 @@ document.addEventListener('click', e => {
   if (t.dataset.logo) { const [k, w] = t.dataset.logo.split('|'); logoPNG(k, +w).catch(err => toast('Kunne ikke lage PNG: ' + err.message)); }
   if (t.dataset.bacopy) { const a = BA.find(x => x.key === t.dataset.bacopy); navigator.clipboard.writeText(a.text).then(() => toast('Teksten er kopiert')); }
 });
-const VIEWS = ['oversikt', 'okonomi', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'dokumenter', 'drift', 'systemer', 'branding'];
+
+/* ---------- AI-assistent og Pocket-samtaler ---------- */
+const AI = { conv: [], reports: [], log: [], meet: null, bug: null };
+async function loadAI() {
+  const [c, r, l] = await Promise.all([sb.from('conversations').select('*').order('recorded_at', { ascending: false }), sb.from('ai_reports').select('*').order('created_at', { ascending: false }).limit(20), sb.from('sync_log').select('*').eq('source', 'pocket')]);
+  if (!c.error) AI.conv = c.data; if (!r.error) AI.reports = r.data; AI.pocketSync = (l.data || [])[0];
+}
+function md(t) {
+  const e = esc(t || '');
+  return e.split('\n').map(l => { if (/^###\s/.test(l)) return `<h4 style="margin:12px 0 4px">${l.slice(4)}</h4>`; if (/^##\s/.test(l)) return `<h3 style="margin:14px 0 6px">${l.slice(3)}</h3>`; if (/^#\s/.test(l)) return `<h2 style="margin:6px 0 8px">${l.slice(2)}</h2>`; if (/^\s*[-*]\s+/.test(l)) return `<div style="padding-left:14px;text-indent:-10px">• ${l.replace(/^\s*[-*]\s+/, '')}</div>`; return l.trim() ? `<p style="margin:4px 0">${l}</p>` : ''; }).join('')
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\[([^\]\n]{2,60})\]/g, '<span class="chip mute" style="font-size:11px">$1</span>');
+}
+const convDate = c => new Date(c.recorded_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
+function renderConv() {
+  if (!$('#convList')) return;
+  $('#convSync').textContent = AI.pocketSync ? `Hentet ${fmt(AI.pocketSync.synced_at)} · ${AI.pocketSync.note || ''}` : '';
+  $('#convList').innerHTML = AI.conv.map(c => `<li class="row"><span class="chip mute">${esc(convDate(c))}</span><div><details><summary><b>${esc(c.title || 'Uten tittel')}</b></summary><div class="note" style="margin-top:6px">${md(c.notes)}</div></details></div><div class="acts"><button class="sm pri" data-convai="${esc(c.id)}">Lag oppfølging</button></div></li>`).join('') || '<li class="empty">Ingen samtaler hentet ennå.</li>';
+  const sel = $('#mtConv'); if (sel) { const v = sel.value; sel.innerHTML = '<option value="">Lim inn referat i stedet …</option>' + AI.conv.map(c => `<option value="${esc(c.id)}">${esc(convDate(c))} – ${esc(c.title || '')}</option>`).join(''); sel.value = v; }
+  const dl = $('#coList2'); if (dl) dl.innerHTML = (typeof obCustomers === 'function' ? obCustomers() : []).map(n => `<option value="${esc(n)}">`).join('');
+}
+const SUGG = ['Hva mangler før Bjørnars kan komme i gang?', 'Hvilke frister har vi de neste 30 dagene?', 'Hva er besluttet om Duett i møtene?', 'Hvilke integrasjoner er faktisk live?', 'Hva bør jeg ta opp med Raman denne uka?'];
+function renderAI() {
+  if (!$('#askLog')) return;
+  renderConv();
+  $('#askSugg').innerHTML = AI.log.length ? '' : SUGG.map(q => `<button class="sm" data-asksugg="${esc(q)}">${esc(q)}</button>`).join('');
+  $('#askLog').innerHTML = AI.log.map(m => m.role === 'user' ? `<div style="align-self:flex-end;background:#EEF2FF;border-radius:10px;padding:8px 12px;max-width:85%">${esc(m.content)}</div>` : `<div style="background:#F8FAFC;border:1px solid var(--line);border-radius:10px;padding:10px 14px">${m.pending ? '<span class="spin"></span> Tenker …' : m.error ? `<span class="err">${esc(m.error)}</span>` : md(m.content)}</div>`).join('');
+  $('#wkList').innerHTML = AI.reports.map(r => `<li class="row"><span class="chip">${esc(r.period || '')}</span><div><details><summary><b>Ukesrapport ${esc(r.period || '')}</b> <span class="note">${esc(fmt(r.created_at))} · ${esc((r.created_by || '').split('@')[0])}</span></summary><div style="margin-top:8px">${md(r.content)}</div></details></div><div class="acts"><button class="sm" data-wkcopy="${r.id}">Kopier</button></div></li>`).join('') || '<li class="empty">Ingen rapporter ennå.</li>';
+}
+async function ask(q) {
+  q = (q || '').trim(); if (!q) return;
+  const hist = AI.log.filter(m => !m.pending && !m.error).map(m => ({ role: m.role, content: m.content }));
+  AI.log.push({ role: 'user', content: q }, { role: 'assistant', pending: true }); renderAI(); $('#askQ').value = ''; $('#askBtn').disabled = true;
+  try { const r = await api('ai.ask', { question: q, history: hist }); AI.log[AI.log.length - 1] = { role: 'assistant', content: r.answer }; }
+  catch (e) { AI.log[AI.log.length - 1] = { role: 'assistant', error: e.message }; }
+  $('#askBtn').disabled = false; renderAI();
+}
+$('#askForm').addEventListener('submit', e => { e.preventDefault(); ask($('#askQ').value); });
+$('#askQ').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask($('#askQ').value); } });
+const PRI = { ma: 'Må ha', bor: 'Bør ha', kjekt: 'Kjekt å ha' };
+function renderMeet() {
+  const m = AI.meet; if (!m) { $('#mtOut').innerHTML = ''; return; }
+  if (m.error) { $('#mtOut').innerHTML = `<p class="err">${esc(m.error)}</p>`; return; }
+  const notion = !!S.status.notion;
+  $('#mtOut').innerHTML = `<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><h4 style="margin:0 0 4px">Oppsummering</h4><p>${esc(m.oppsummering || '')}</p>
+  ${(m.beslutninger || []).length ? `<h4 style="margin:10px 0 4px">Beslutninger</h4>${m.beslutninger.map(b => `<div>• ${esc(b)}</div>`).join('')}` : ''}
+  <h4 style="margin:12px 0 4px">Oppgaver</h4>${(m.oppgaver || []).map((o, i) => `<div class="row" style="grid-template-columns:minmax(0,1fr) auto"><div><b>${esc(o.tittel)}</b><div class="note">${esc(o.du_skal || '')}</div><div class="meta"><span>${esc(o.eier || '')}</span>${o.frist ? `<span>Frist ${esc(o.frist)}</span>` : ''}<span>${esc(o.omrade || '')}</span></div></div><div class="acts">${o.done ? '<span class="chip ok">Opprettet</span>' : `<button class="sm" data-mtask="${i}" ${notion ? '' : 'disabled title="Koble til Notion under Integrasjoner først"'}>Opprett i Notion</button>`}</div></div>`).join('') || '<p class="note">Ingen oppgaver.</p>'}
+  ${notion ? '' : '<p class="note">Notion er ikke koblet til kontrollsenteret ennå, så oppgavene kan ikke opprettes herfra. Koble til under Integrasjoner → Kontrollsenteret → Notion.</p>'}
+  <h4 style="margin:12px 0 4px">Kundebehov</h4>${(m.kundebehov || []).map((n, i) => `<div class="row" style="grid-template-columns:minmax(0,1fr) auto"><div><b>${esc(n.kunde)}:</b> ${esc(n.behov)}<div class="meta"><span>${esc(n.kategori || '')}</span><span>${esc(PRI[n.prioritet] || n.prioritet || '')}</span><span>${esc(n.dekning || '')}</span></div></div><div class="acts">${n.done ? '<span class="chip ok">Lagt til</span>' : `<button class="sm" data-mneed="${i}">Legg til i kundebehov</button>`}</div></div>`).join('') || '<p class="note">Ingen nye kundebehov.</p>'}
+  ${m.epost ? `<h4 style="margin:12px 0 4px">Utkast til oppfølgings-e-post</h4><p class="note">Til: ${esc(m.epost.til || '')} · Emne: ${esc(m.epost.emne || '')}</p><pre style="white-space:pre-wrap;background:#F8FAFC;border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.5 Inter,sans-serif">${esc(m.epost.tekst || '')}</pre><div class="acts" style="justify-content:flex-start"><button class="sm" data-mmail="copy">Kopier</button><a class="btn sm" href="mailto:?subject=${encodeURIComponent(m.epost.emne || '')}&body=${encodeURIComponent(m.epost.tekst || '')}">Åpne som utkast i e-post</a></div><p class="note">Ingenting sendes automatisk.</p>` : ''}</div>`;
+}
+$('#mtBtn').onclick = async () => {
+  const b = $('#mtBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Analyserer'; AI.meet = null; renderMeet();
+  try { AI.meet = await api('ai.meeting', { conversation_id: $('#mtConv').value || null, text: $('#mtText').value, company: $('#mtCo').value.trim() }); }
+  catch (e) { AI.meet = { error: e.message }; }
+  b.disabled = false; b.textContent = 'Lag oppfølging'; renderMeet();
+};
+const BUGF = [['name', 'Tittel', 'text'], ['type', 'Type', ['Issue', 'Improvement', 'Feature']], ['hvor', 'Hvor', ['Webplattform', 'Sjåførapp iOS', 'Sjåførapp Android', 'Nettside', 'Integrasjon', 'Eksport/rapport', 'Annet']], ['alv', 'Alvorlighet', ['Blokkerer', 'Alvorlig', 'Irriterende', 'Kosmetisk']], ['pri', 'Prioritet', ['P1 Haster', 'P2 Viktig', 'P3 Normal', 'P4 Lav']], ['did', 'Hva jeg gjorde', 'area'], ['exp', 'Hva jeg forventet', 'area'], ['got', 'Hva som skjedde', 'area'], ['en', 'English (for Raman)', 'area']];
+function renderBug() {
+  const b = AI.bug; if (!b) { $('#bgOut').innerHTML = ''; return; }
+  if (b.error) { $('#bgOut').innerHTML = `<p class="err">${esc(b.error)}</p>`; return; }
+  if (b.url) { $('#bgOut').innerHTML = `<p class="platbox ok">Lagret i Bug Tracker. <a href="${esc(b.url)}" target="_blank" rel="noopener">Åpne i Notion ↗</a></p>`; return; }
+  $('#bgOut').innerHTML = `<form id="bgForm" style="border-top:1px solid var(--line);margin-top:12px;padding-top:6px">${BUGF.map(([k, l, t]) => `<label for="bg_${k}">${esc(l)}</label>${Array.isArray(t) ? `<select id="bg_${k}">${t.map(o => `<option ${b[k] === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : t === 'area' ? `<textarea id="bg_${k}" rows="2">${esc(b[k] || '')}</textarea>` : `<input id="bg_${k}" value="${esc(b[k] || '')}">`}`).join('')}
+    ${(b.mangler || []).length ? `<p class="platbox warn"><b>Mangler for en komplett sak:</b> ${esc(b.mangler.join(', '))}</p>` : ''}
+    <div class="foot"><button type="button" class="sm" data-bgcopy>Kopier som tekst</button><button class="pri" ${S.status.notion ? '' : 'disabled title="Koble til Notion under Integrasjoner først"'}>Lagre i Bug Tracker</button></div>${S.status.notion ? '' : '<p class="note">Notion er ikke koblet til ennå – kopier saken og lim den inn i Bug Tracker, eller koble til Notion under Integrasjoner.</p>'}<div class="err" id="bgErr"></div></form>`;
+  $('#bgForm').addEventListener('submit', async e => { e.preventDefault(); const v = {}; BUGF.forEach(([k]) => v[k] = $('#bg_' + k).value); v.link = $('#bgLink').value.trim(); v.note = 'Laget fra kontrollsenteret med AI-assistenten. Sjekk at det stemmer før den sendes til Raman.';
+    try { const r = await api('notion.create', { db: 'bug', values: v }); AI.bug = { url: r.url }; renderBug(); toast('Lagret i Bug Tracker'); } catch (err) { $('#bgErr').textContent = err.message; } });
+}
+$('#bgBtn').onclick = async () => {
+  const b = $('#bgBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Skriver'; AI.bug = null; renderBug();
+  try { AI.bug = await api('ai.bug', { text: $('#bgText').value, link: $('#bgLink').value }); } catch (e) { AI.bug = { error: e.message }; }
+  b.disabled = false; b.textContent = 'Lag sak'; renderBug();
+};
+$('#wkBtn').onclick = async () => {
+  const b = $('#wkBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Skriver rapporten (ca. 30 sek)'; $('#wkOut').innerHTML = '';
+  try { const r = await api('ai.weekly'); $('#wkOut').innerHTML = `<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:6px">${md(r.content)}</div>`; await loadAI(); renderAI(); }
+  catch (e) { $('#wkOut').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+  b.disabled = false; b.textContent = 'Lag rapport for denne uka';
+};
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.asksugg) ask(t.dataset.asksugg);
+  if (t.dataset.convai) { location.hash = '#ai'; $('#mtConv').value = t.dataset.convai; $('#mtBtn').click(); setTimeout(() => $('#mtOut').scrollIntoView({ behavior: 'smooth' }), 100); }
+  if (t.dataset.mneed) { const n = AI.meet.kundebehov[+t.dataset.mneed]; t.disabled = true; const r = await sb.from('company_needs').insert({ company_name: n.kunde, need: n.behov, category: ['integrasjon', 'modul', 'funksjon', 'rapport', 'annet'].includes(n.kategori) ? n.kategori : 'annet', priority: ['ma', 'bor', 'kjekt'].includes(n.prioritet) ? n.prioritet : 'bor', coverage: ['dekket', 'delvis', 'mangler'].includes(n.dekning) ? n.dekning : 'mangler', source: 'AI fra møte', updated_by: S.status.user || '' }); if (r.error) { toast(r.error.message); t.disabled = false; return; } n.done = true; renderMeet(); toast('Lagt til i kundebehov'); if (typeof loadDrift === 'function') { await loadDrift(); renderEco(); } }
+  if (t.dataset.mtask) { const o = AI.meet.oppgaver[+t.dataset.mtask]; t.disabled = true; try { await api('notion.create', { db: 'task', values: { name: o.tittel, du: o.du_skal, own: ['John', 'Ove', 'Raman'].includes(o.eier) ? o.eier : '', due: o.frist || null, omr: o.omrade || 'Drift' } }); o.done = true; renderMeet(); toast('Opprettet i Gjøremål'); } catch (err) { toast(err.message); t.disabled = false; } }
+  if (t.dataset.mmail) navigator.clipboard.writeText(`${AI.meet.epost.emne}\n\n${AI.meet.epost.tekst}`).then(() => toast('Kopiert'));
+  if (t.dataset.bgcopy !== undefined) { const v = Object.fromEntries(BUGF.map(([k]) => [k, $('#bg_' + k).value])); navigator.clipboard.writeText(`${v.name}\nType: ${v.type} · Hvor: ${v.hvor} · ${v.alv} · ${v.pri}\n\nHva jeg gjorde: ${v.did}\nHva jeg forventet: ${v.exp}\nHva som skjedde: ${v.got}\n\nEnglish (for Raman):\n${v.en}`).then(() => toast('Kopiert')); }
+  if (t.dataset.wkcopy) { const r = AI.reports.find(x => x.id === t.dataset.wkcopy); navigator.clipboard.writeText(r.content).then(() => toast('Rapporten er kopiert')); }
+});
+const VIEWS = ['oversikt', 'ai', 'okonomi', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'dokumenter', 'drift', 'systemer', 'branding'];
 function route() { const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt'; if (v === 'drift' && S.status.user) runUptime(false); if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); } document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
 window.addEventListener('hashchange', route);
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
