@@ -1,105 +1,197 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795492146">
+<html lang="no" data-build="1795494094">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F172A">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/brand/app-icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kontrollsenter">
 <title>Insiqt kontrollsenter</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F172A'/%3E%3Crect x='14' y='7' width='4' height='4' rx='2' fill='%232563EB'/%3E%3Crect x='14' y='13' width='4' height='12' rx='2' fill='%232563EB'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F7F8FA;--card:#fff;--ink:#0F172A;--mute:#64748B;--line:rgba(15,23,42,.10);--accent:#2563EB;--accent2:#1D4ED8;--navy:#080F1E;--ok:#10B981;--warn:#F59E0B;--bad:#EF4444;--r:10px}
+:root{--night:#0F172A;--night2:#18233B;--night3:#22304D;--onnight:#CBD5E1;--onnight2:#8193AE;--bg:#EEF2F6;--card:#fff;--ink:#0F172A;--mute:#5B6B82;--line:#DCE3EC;--line2:#E8EDF3;--accent:#2563EB;--accent2:#1D4ED8;--wash:#E8EFFE;--navy:#0F172A;--ok:#0E9F5B;--okw:#E6F6EE;--warn:#E2A40B;--warnt:#8A5A00;--warnw:#FDF5E1;--bad:#D33A3A;--badw:#FCECEC;--r:12px;--side:248px;--disp:'Barlow Semi Condensed',Inter,system-ui,sans-serif}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
-a{color:var(--accent)}
-button,.btn{font:600 14px Inter,sans-serif;min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
-button.pri,.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}button.pri:hover{background:var(--accent2)}
-button.bad{background:#fff;border-color:var(--bad);color:var(--bad)}
-button.sm,.btn.sm{min-height:32px;padding:0 10px;font-size:13px}
-button:disabled{opacity:.5;cursor:default}
-:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-input,select,textarea{font:15px Inter,sans-serif;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+::selection{background:#C7D7FD}
+button,.btn{font:600 14px/1 Inter,sans-serif;min-height:38px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;transition:background .15s,border-color .15s,color .15s;white-space:nowrap}
+button:hover,.btn:hover{border-color:#B8C4D3;background:#F8FAFC}
+button.pri,.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}button.pri:hover,.btn.pri:hover{background:var(--accent2);border-color:var(--accent2)}
+button.bad,.btn.bad{background:#fff;border-color:#F0B4B4;color:var(--bad)}button.bad:hover{background:var(--badw)}
+button.ghost,.btn.ghost{background:transparent;border-color:transparent}button.ghost:hover{background:rgba(15,23,42,.05)}
+button.sm,.btn.sm{min-height:32px;padding:0 11px;font-size:13px}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid #93B4FB;outline-offset:2px}
+input,select,textarea{font:15px/1.4 Inter,sans-serif;width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--accent)}
 textarea{min-height:90px;resize:vertical}
-label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px}
-header{background:var(--navy);color:#F1F5F9;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:space-between;padding:14px max(3vw,16px)}
-.logo{font-size:20px;font-weight:800;letter-spacing:-.5px}.logo span{color:var(--accent)}
-.tag{font-size:12px;color:#7E95B5;margin-left:10px;border-left:1px solid rgba(255,255,255,.12);padding-left:10px}
-header .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-header .right a,header .right button{background:transparent;color:#cbd5e1;border-color:rgba(255,255,255,.15)}
-nav{display:flex;gap:2px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--line);padding:0 max(3vw,16px);position:sticky;top:0;z-index:5}
-nav a{flex:none;padding:12px 14px;text-decoration:none;color:var(--mute);font-weight:600;font-size:14px;border-bottom:2px solid transparent}
-nav a.on{color:var(--ink);border-color:var(--accent)}
-main{padding:20px max(3vw,16px) 60px;max-width:1500px;margin:0 auto}
-h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{font-size:16px;margin-bottom:8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
-.grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.gside{grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)}
-@media(max-width:1000px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g2,.gside{grid-template-columns:minmax(0,1fr)}}
-.ig{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:16px;align-items:start}
-@media(max-width:900px){.ig{grid-template-columns:minmax(0,1fr)}}
-.iglist{position:sticky;top:56px;max-height:calc(100vh - 80px);overflow:auto;padding:8px}
-.iglist h4{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin:14px 8px 6px}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 5px;color:#334155}
+/* ---------- skall ---------- */
+#app{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:100vh}
+#side{background:var(--night);color:var(--onnight);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 0 12px;overflow:hidden}
+#side .brand{display:flex;align-items:center;gap:10px;padding:0 20px 14px;text-decoration:none;color:#fff}
+#side .brand svg{flex:none;width:30px;height:30px}
+#side .brand b{font:700 21px/1 var(--disp);letter-spacing:.2px}#side .brand b span{color:#6E9BFF}
+#side .brand small{display:block;font:500 12px/1.3 Inter,sans-serif;color:var(--onnight2);margin-top:3px}
+#nav{flex:1;overflow-y:auto;padding:4px 12px 16px;scrollbar-width:thin;scrollbar-color:var(--night3) transparent}
+#nav .grp{position:relative;margin:0 0 6px;padding-left:4px}
+#nav .grp>span{display:block;font:600 13px/1 var(--disp);letter-spacing:.3px;color:var(--onnight2);padding:7px 10px 5px 32px}
+#nav .grp::before{content:"";position:absolute;left:18px;top:28px;bottom:14px;width:3px;background:#2A3A5C;border-radius:2px}
+#nav a{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 10px 5px 32px;margin:1px 0;border-radius:8px;color:var(--onnight);text-decoration:none;font-size:14px;font-weight:500}
+#nav a::before{content:"";position:absolute;left:9px;top:50%;width:13px;height:13px;margin-top:-6.5px;border-radius:50%;background:var(--night);border:3px solid #3D5079;box-sizing:border-box;transition:background .15s,border-color .15s}
+#nav a:hover{background:var(--night2);color:#fff}#nav a:hover::before{border-color:#6E9BFF}
+#nav a.on{background:var(--night2);color:#fff;font-weight:600}
+#nav a.on::before{background:var(--accent);border-color:#93B4FB;box-shadow:0 0 0 3px rgba(37,99,235,.28)}
+#nav a .bdg{font:600 11px/1 Inter,sans-serif;padding:3px 7px;border-radius:20px;background:var(--night3);color:var(--onnight)}
+#nav a .bdg.bad{background:#5B1F25;color:#FFC9C9}#nav a .bdg.warn{background:#4A3A10;color:#FBDD8A}
+#side .sidefoot{border-top:1px solid rgba(148,163,184,.14);padding:12px 16px 0;display:flex;flex-direction:column;gap:8px}
+#side .sidefoot .who{font-size:12px;color:var(--onnight2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#side .sidefoot .row2{display:flex;gap:6px;flex-wrap:wrap}
+#side .sidefoot a,#side .sidefoot button{background:transparent;color:var(--onnight);border-color:rgba(148,163,184,.22);min-height:30px;font-size:12px;padding:0 10px}
+#side .sidefoot a:hover,#side .sidefoot button:hover{background:var(--night2);color:#fff}
+#top{display:none}
+#mainwrap{display:flex;flex-direction:column;min-height:100vh}
+.ptitle{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:26px max(2.5vw,20px) 4px;max-width:1440px;width:100%;margin:0 auto}
+.ptitle h1{font:700 32px/1.05 var(--disp);letter-spacing:-.2px;margin:0}
+.ptitle .crumb{font-size:13px;color:var(--mute);margin:0 0 4px}
+main{padding:14px max(2.5vw,20px) 120px;max-width:1440px;width:100%;margin:0 auto;flex:1}
+section[data-v]>h2:first-child{display:none}
+section[data-v]>.framebar:first-child>h2{display:none}
+section[data-v]>h2:first-child+p.note{margin:-6px 0 16px;max-width:75ch}
+h1,h2,h3,h4{margin:0}
+h2{font:700 22px/1.2 var(--disp);margin-bottom:12px}
+h3{font:600 17px/1.3 var(--disp);letter-spacing:.1px;margin-bottom:10px}
+h4{font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+.card>h3:first-child{margin-top:-2px}
+.grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.gside{grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)}
+@media(max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.g2,.gside{grid-template-columns:minmax(0,1fr)}}
+.ig{display:grid;grid-template-columns:minmax(260px,330px) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:1000px){.ig{grid-template-columns:minmax(0,1fr)}}
+.iglist{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding:10px}
+.iglist h4{font:600 13px/1 var(--disp);letter-spacing:.3px;color:var(--mute);margin:16px 10px 6px}
 .iglist a[href^="#"]{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:14px}
-.iglist a[href^="#"]:hover{background:#F1F5F9}.iglist a[href^="#"].on{background:#EEF2FF}
+.iglist a[href^="#"]:hover{background:#F3F6FA}.iglist a[href^="#"].on{background:var(--wash)}
 .iglist a[href^="#"] small{grid-column:1/-1;color:var(--mute);font-size:12px}
-.igseg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;background:#F1F5F9;border-radius:10px;padding:4px;margin:0 0 6px}.igseg button{border:none;background:transparent;min-height:44px;flex-direction:column;gap:0;line-height:1.2;font-size:13px}.igseg button small{font-weight:500;color:var(--mute);font-size:11px}.igseg button.on{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.12)}
-.platbox{border-left:3px solid var(--accent);background:#F8FAFF;padding:8px 12px;border-radius:6px;margin:10px 0}.platbox.ok{border-color:var(--ok);background:#F0FDF4}.platbox.warn{border-color:var(--warn);background:#FFFBEB}
-.rk{width:100%;border-collapse:collapse;font-size:13px}.rk th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--mute);padding:6px;border-bottom:1px solid var(--line)}.rk td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}.rk td.n{font-weight:700;color:var(--mute);width:32px}.rk .cm{color:#B45309;font-size:12px;margin-top:4px}
+.igseg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;background:#EEF2F6;border-radius:10px;padding:4px;margin:0 0 6px}.igseg button{border:none;background:transparent;min-height:46px;flex-direction:column;gap:2px;line-height:1.2;font-size:13px}.igseg button small{font-weight:500;color:var(--mute);font-size:11px}.igseg button.on{background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.platbox{border-left:3px solid var(--accent);background:#F5F8FF;padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0}.platbox.ok{border-color:var(--ok);background:var(--okw)}.platbox.warn{border-color:var(--warn);background:var(--warnw)}.platbox.bad{border-color:var(--bad);background:var(--badw)}
+.rk,.agr{width:100%;border-collapse:collapse;font-size:14px}
+.rk th,.agr th{text-align:left;font-size:12px;font-weight:600;color:var(--mute);padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rk td,.agr td{padding:9px 8px;border-bottom:1px solid var(--line2);vertical-align:top}
+.rk tr:hover td,.agr tr:hover td{background:#FAFBFD}
+.rk td.n{font:700 15px var(--disp);color:var(--mute);width:36px}.rk .cm{color:var(--warnt);font-size:12px;margin-top:4px}
+.agr td.c{text-align:center}
 .steps{list-style:none;margin:0;padding:0;counter-reset:st}
-.steps li{display:grid;grid-template-columns:28px 26px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.steps li{display:grid;grid-template-columns:28px 26px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:11px 0;border-bottom:1px solid var(--line2)}
 .steps li:last-child{border-bottom:0}
-.steps li::before{counter-increment:st;content:counter(st);width:26px;height:26px;border-radius:50%;background:#EEF2FF;color:var(--accent);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;grid-column:2;grid-row:1}
-.steps li.done::before{background:#ECFDF5;color:#047857;content:"✓"}
+.steps li::before{counter-increment:st;content:counter(st);width:26px;height:26px;border-radius:50%;background:var(--wash);color:var(--accent);font:700 14px/1 var(--disp);display:flex;align-items:center;justify-content:center;grid-column:2;grid-row:1}
+.steps li.done::before{background:var(--okw);color:var(--ok);content:"✓"}
 .steps li.done .stxt{color:var(--mute);text-decoration:line-through}
 .steps input[type=checkbox]{width:20px;height:20px;margin:3px 0 0;grid-column:1;grid-row:1;accent-color:var(--ok)}
 .steps .stxt{grid-column:3}.steps .sact{grid-column:4}
 .steps .by{display:block;font-size:12px;color:var(--mute);text-decoration:none}
-.keybox{border:1px solid var(--line);border-radius:var(--r);padding:14px;background:#F8FAFC;margin:14px 0}
-.keybox.ok{border-color:#A7F3D0;background:#F0FDF4}.keybox.bad{border-color:#FECACA;background:#FEF2F2}
-.bar{height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok)}
+.keybox{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#F7F9FC;margin:14px 0}
+.keybox.ok{border-color:#A9DEC3;background:var(--okw)}.keybox.bad{border-color:#F0B4B4;background:var(--badw)}
+.bar{height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok);border-radius:3px}
 .tree{list-style:none;margin:0;padding:0}.tree .tree{padding-left:18px;border-left:1px solid var(--line);margin-left:9px}
-.tree details>summary{list-style:none;cursor:pointer;display:flex;gap:8px;align-items:center;padding:6px 4px;border-radius:6px}
-.tree details>summary::-webkit-details-marker{display:none}.tree details>summary:hover{background:#F1F5F9}
+.tree details>summary{list-style:none;cursor:pointer;display:flex;gap:8px;align-items:center;padding:6px 6px;border-radius:6px}
+.tree details>summary::-webkit-details-marker{display:none}.tree details>summary:hover{background:#F3F6FA}
 .tree details>summary::before{content:"▸";color:var(--mute);width:10px}.tree details[open]>summary::before{content:"▾"}
-.tree .file{display:flex;gap:8px;align-items:center;padding:5px 4px 5px 22px}.tree .file a{color:var(--ink);text-decoration:none}.tree .file a:hover{text-decoration:underline}
+.tree .file{display:flex;gap:8px;align-items:center;padding:5px 6px 5px 24px}.tree .file a{color:var(--ink);text-decoration:none}.tree .file a:hover{text-decoration:underline}
 .tree .cnt{font-size:12px;color:var(--mute)}.tree .open{margin-left:auto;font-size:12px}
-.agr{width:100%;border-collapse:collapse;font-size:14px}.agr th,.agr td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}.agr th{font-size:12px;color:var(--mute);font-weight:600}
-.agr td.c{text-align:center}
-.kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-1px}.kpi span{color:var(--mute);font-size:13px}.kpi.bad b{color:var(--bad)}
+.kpi{position:relative;padding:16px 18px 16px 22px}
+.kpi::before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:3px;border-radius:0 3px 3px 0;background:transparent}
+.kpi b{display:block;font:700 40px/1 var(--disp);letter-spacing:-.5px;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--mute);font-size:13px;line-height:1.35;display:block}
+.kpi.bad::before{background:var(--bad)}.kpi.warn::before{background:var(--warn)}.kpi.ok::before{background:var(--ok)}.kpi.info::before{background:var(--accent)}
 .list{list-style:none;margin:0;padding:0}
-.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:11px 0;border-bottom:1px solid var(--line2)}
 .row:last-child{border-bottom:0}
-@media(max-width:640px){.row{grid-template-columns:minmax(0,1fr)}}
-.meta{font-size:12px;color:var(--mute);display:flex;flex-wrap:wrap;gap:2px 10px}
-.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;background:#EEF2FF;color:var(--accent);white-space:nowrap}
-.chip.ok{background:#ECFDF5;color:#047857}.chip.warn{background:#FFFBEB;color:#B45309}.chip.bad{background:#FEF2F2;color:#B91C1C}.chip.mute{background:#F1F5F9;color:var(--mute)}
-.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:640px){.row{grid-template-columns:minmax(0,1fr)}.row .acts{justify-content:flex-start}}
+.meta{font-size:12px;color:var(--mute);display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;line-height:1;padding:5px 9px;border-radius:20px;background:var(--wash);color:var(--accent2);white-space:nowrap}
+.chip.ok{background:var(--okw);color:#0B7A46}.chip.warn{background:var(--warnw);color:var(--warnt)}.chip.bad{background:var(--badw);color:#B32626}.chip.mute{background:#EEF2F6;color:var(--mute)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .frame{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff;height:min(78vh,900px)}
 .frame iframe{width:100%;height:100%;border:0}
-.framebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.framebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .framebar select{width:auto}
-.note{font-size:13px;color:var(--mute)}
+.note{font-size:13px;color:var(--mute);line-height:1.5}
 .err{color:var(--bad);font-size:13px}
-.empty{color:var(--mute);padding:12px 0}
+.empty{color:var(--mute);padding:14px 0;font-size:14px}
 .hide{display:none!important}
 .sys{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .sys a{display:block;text-decoration:none;color:var(--ink)}.sys a:hover{border-color:var(--accent)}
 .sys small{display:block;color:var(--mute);font-size:12px;margin-top:4px}
 .swatch{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;cursor:pointer;padding:0;text-align:left;display:block;width:100%;min-height:auto}
-.swatch i{display:block;height:36px}.swatch span{display:block;padding:5px 8px;font-size:12px;font-weight:500}
-.ov{position:fixed;inset:0;background:rgba(8,15,30,.5);display:none;align-items:flex-start;justify-content:center;padding:6vh 12px;z-index:20;overflow:auto}
-.ov.on{display:flex}.modal{background:#fff;border-radius:12px;width:min(560px,100%);padding:22px}
+.swatch i{display:block;height:36px}.swatch span{display:block;padding:6px 9px;font-size:12px;font-weight:500}
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding:7vh 12px;z-index:60;overflow:auto}
+.ov.on{display:flex}.modal{background:#fff;border-radius:14px;width:min(560px,100%);padding:24px;box-shadow:0 24px 60px rgba(15,23,42,.25)}
+.modal h3{font-size:20px}
 .foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
-.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 16px;border-radius:8px;z-index:30;display:none;max-width:90vw}.toast.on{display:block}
-#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy)}
-#login .card{width:min(380px,92vw)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--night);color:#fff;padding:11px 18px;border-radius:10px;z-index:70;display:none;max-width:90vw;box-shadow:0 12px 32px rgba(15,23,42,.3);font-size:14px}.toast.on{display:block}
+details>summary{cursor:pointer}
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--night);padding:20px}
+#login .card{width:min(400px,100%);padding:28px;border:0;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+#login .logo{display:flex;align-items:center;gap:10px;font:700 26px/1 var(--disp);margin-bottom:8px}#login .logo span{color:var(--accent)}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px}@keyframes s{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+#setup{border-left:3px solid var(--warn)}
+/* ---------- linjekart (pilotstatus) ---------- */
+.line{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));margin:14px 0 6px;position:relative}
+.line .stop{position:relative;text-align:center;font-size:12px;color:var(--mute);padding-top:24px;line-height:1.3}
+.line .stop::before{content:"";position:absolute;top:8px;left:0;right:0;height:3px;background:var(--line)}
+.line .stop:first-child::before{left:50%}.line .stop:last-child::before{right:50%}
+.line .stop::after{content:"";position:absolute;top:2px;left:50%;width:15px;height:15px;margin-left:-7.5px;border-radius:50%;background:#fff;border:3px solid #C3CEDB;box-sizing:border-box}
+.line .stop.done{color:var(--ink)}.line .stop.done::before{background:var(--ok)}.line .stop.done::after{background:var(--ok);border-color:var(--ok)}
+.line .stop.now{color:var(--ink);font-weight:600}.line .stop.now::after{border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.18)}
+.line .stop.block::after{border-color:var(--bad)}
+/* ---------- Jarvis ---------- */
+#jarvis{position:fixed;left:calc(var(--side) + max(2.5vw,20px));right:max(2.5vw,20px);bottom:16px;z-index:40;max-width:880px;margin:0 auto}
+@media(min-width:1500px){#jarvis{left:calc(var(--side) + (100vw - var(--side) - 880px)/2);right:auto;width:880px}}
+#jarvis form{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px 6px 6px 14px;box-shadow:0 10px 30px rgba(15,23,42,.14)}
+#jarvis form:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.15),0 10px 30px rgba(15,23,42,.14)}
+#jarvis .jlbl{font:700 15px/1 var(--disp);color:var(--accent);letter-spacing:.3px;flex:none}
+#jarvis input{border:0;box-shadow:none;padding:8px 6px;font-size:15px;background:transparent}
+#jarvis input:focus{box-shadow:none}
+#jarvis .mic{width:38px;padding:0;border-radius:10px}
+#jarvis .mic.rec{background:var(--badw);border-color:#F0B4B4;color:var(--bad)}
+#jpanel{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 48px rgba(15,23,42,.18);margin-bottom:8px;max-height:min(60vh,560px);overflow:auto;padding:14px 16px}
+#jpanel .jhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+#jpanel .jmsg{margin:8px 0}#jpanel .jmsg.me{text-align:right}#jpanel .jmsg.me span{display:inline-block;background:var(--wash);border-radius:10px;padding:7px 12px;max-width:85%;text-align:left}
+.jact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:10px 12px;margin:8px 0;background:#FAFBFF}
+.jact.done{border-left-color:var(--ok);background:var(--okw)}.jact b{font-size:14px}.jact .note{margin-top:2px}
+/* ---------- mobil ---------- */
+@media(max-width:900px){
+  #app{grid-template-columns:minmax(0,1fr)}
+  #side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:80;transform:translateX(-102%);transition:transform .22s ease;padding-top:max(18px,env(safe-area-inset-top))}
+  body.navopen #side{transform:none;box-shadow:0 0 0 100vmax rgba(15,23,42,.45)}
+  #top{display:flex;position:sticky;top:0;z-index:30;align-items:center;gap:10px;background:var(--night);color:#fff;padding:max(10px,env(safe-area-inset-top)) 14px 10px}
+  #top button{background:transparent;border-color:rgba(148,163,184,.3);color:#fff;min-height:36px;padding:0 10px}
+  #top b{font:700 18px/1 var(--disp);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ptitle{padding-top:18px}.ptitle h1{font-size:26px}
+  main{padding-bottom:140px}
+  #jarvis{left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom))}
+  #jarvis .jlbl{display:none}
+  .card{padding:16px}
+  .toast{bottom:90px}
+}
+@media(max-width:560px){.g4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.g3{grid-template-columns:minmax(0,1fr)}.kpi b{font-size:32px}.line .stop{font-size:11px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* ---------- utskrift (styremappe) ---------- */
+@media print{#side,#top,#jarvis,.ptitle,.noprint,.toast{display:none!important}#app{display:block}body{background:#fff}main{padding:0;max-width:none}.card{border:0;padding:0;margin:0 0 14px}section[data-v]:not([data-v="styre"]){display:none!important}}
 </style>
 </head>
 <body>
 <div id="login" class="hide">
   <form class="card" id="loginForm">
-    <div class="logo" style="color:var(--ink)">Insiqt<span>.ai</span></div>
+    <div class="logo"><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0F172A"/><rect x="14" y="7" width="4" height="4" rx="2" fill="#2563EB"/><rect x="14" y="13" width="4" height="12" rx="2" fill="#2563EB"/></svg>Insiqt<span>.ai</span></div>
     <p class="note">Kontrollsenter. Logg inn med CRM-brukeren din.</p>
     <label for="lEmail">E-post</label><input id="lEmail" type="email" required autocomplete="username">
     <label for="lPass">Passord</label><input id="lPass" type="password" required autocomplete="current-password">
@@ -109,21 +201,77 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
 </div>
 
 <div id="app" class="hide">
-<header>
-  <div style="display:flex;align-items:center"><span class="logo">Insiqt<span>.ai</span></span><span class="tag">Kontrollsenter</span></div>
-  <div class="right"><span class="note" style="color:#7E95B5" id="who"></span><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart ↗</a><button class="sm" id="logout">Logg ut</button></div>
-</header>
-<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#ai">AI-assistent</a><a href="#okonomi">Økonomi og kunder</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#dokumenter">Dokumenter</a><a href="#drift">Drift</a><a href="#systemer">Systemer</a><a href="#branding">Branding</a></nav>
+<aside id="side" aria-label="Hovedmeny">
+  <a class="brand" href="#oversikt"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1E2A44"/><rect x="14" y="7" width="4" height="4" rx="2" fill="#2563EB"/><rect x="14" y="13" width="4" height="12" rx="2" fill="#2563EB"/><rect x="10" y="13" width="4" height="2" rx="1" fill="#2563EB" opacity=".5"/><rect x="18" y="23" width="4" height="2" rx="1" fill="#2563EB" opacity=".5"/></svg><div><b>Insiqt<span>.ai</span></b><small>Kontrollsenter</small></div></a>
+  <nav id="nav">
+    <div class="grp"><span>I dag</span><a href="#oversikt">Oversikt</a><a href="#ai">AI-assistent</a></div>
+    <div class="grp"><span>Kunder</span><a href="#piloter">Pilotstatus</a><a href="#pipeline">Pipeline</a><a href="#okonomi">Økonomi og kunder</a><a href="#signering">Signering</a></div>
+    <div class="grp"><span>Styret</span><a href="#styre">Styremappe</a></div>
+    <div class="grp"><span>Arbeid</span><a href="#oppgaver">Oppgaver og bugs</a><a href="#moter">Møter</a><a href="#dokumenter">Dokumenter</a></div>
+    <div class="grp"><span>Produkt</span><a href="#integrasjoner">Integrasjoner</a><a href="#nettside">Nettside</a><a href="#branding">Branding</a></div>
+    <div class="grp"><span>Drift</span><a href="#drift">Drift</a><a href="#varsler">Varsler</a><a href="#systemer">Systemer</a></div>
+  </nav>
+  <div class="sidefoot"><span class="who" id="who"></span><div class="row2"><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart</a><button class="sm" id="logout">Logg ut</button></div></div>
+</aside>
+<div id="mainwrap">
+<div id="top"><button id="menuBtn" aria-label="Åpne menyen" aria-expanded="false">Meny</button><b id="topTitle">Insiqt kontrollsenter</b></div>
+<div class="ptitle"><div><p class="crumb" id="pCrumb">I dag</p><h1 id="pTitle">Oversikt</h1></div><div class="acts" id="pActs"></div></div>
 <main>
   <div id="setup" class="card hide" style="margin-bottom:16px;border-color:var(--warn)"></div>
 
   <section data-v="oversikt">
+    <div class="card" id="ovRoad" style="margin-bottom:16px"></div>
     <div class="grid g4" id="kpis"></div>
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Neste steg</h3><ul class="list" id="next"></ul></div>
       <div><div class="card"><h3>Nettsiden</h3><ul class="list" id="ovWeb"></ul><div style="margin-top:10px"><a class="btn sm pri" href="#nettside">Endre nettsiden</a></div></div>
       <div class="card" style="margin-top:16px"><h3>Frister</h3><ul class="list" id="ovDl"></ul><div style="margin-top:10px"><a class="btn sm" href="#drift">Alle frister</a></div></div>
       <div class="card" style="margin-top:16px"><h3>Neste møter</h3><ul class="list" id="ovMeet"></ul><div style="margin-top:10px"><a class="btn sm" href="#moter">Alle møter</a></div></div></div>
+    </div>
+  </section>
+
+  <section data-v="piloter" class="hide">
+    <p class="note" style="margin:-4px 0 16px;max-width:75ch">Hva som står mellom hver pilot og første faktura. Avtalene leses fra Signering og Notion «Kunder og avtalestatus», onboardingen fra Integrasjoner, og tilgangsfeilen fra Bug Tracker.</p>
+    <div id="pilots" class="grid"></div>
+  </section>
+
+  <section data-v="signering" class="hide">
+    <div class="platbox warn" style="margin:0 0 16px"><b>Avtalene er utkast og ikke juridisk gjennomgått.</b> Få pilotavtalen og databehandleravtalen gjennomgått før de sendes til en kunde. Databehandleravtalen må også utvides med Scania-data, nøkkelhåndtering og underleverandører.</div>
+    <div class="card"><div class="framebar" style="justify-content:space-between;margin:0 0 8px"><h3 style="margin:0">Avtaler per kunde</h3><button class="sm pri" data-signew="">+ Registrer avtale</button></div>
+      <div style="overflow-x:auto"><table class="agr" id="sigMatrix"></table></div>
+      <p class="note" style="margin-top:8px">Trykk på en avtale for å endre status, laste opp signert PDF eller se historikken. Signert status oppdaterer også avkrysningen i Notion når du ber om det.</p></div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Siste hendelser</h3><ul class="list" id="sigList"></ul></div>
+      <div class="card"><h3>Signering med BankID</h3>
+        <p>Ikke koblet. For å sende avtalene rett herfra og få dem signert med BankID trengs en signeringsleverandør med API, for eksempel Signicat, Criipto, Scrive, Penneo eller Verified.</p>
+        <p class="note">Velg leverandør og lag en avtale med dem. Når du har API-nøkkelen, kobler jeg den på her: «Send til signering» sender avtalen til kunden, og statusen oppdateres av seg selv når de har signert. Til da registrerer du signerte avtaler manuelt med PDF.</p>
+        <div class="platbox" style="margin-bottom:0">Det som avgjør valget: pris per signatur, om kunden kan signere uten egen konto, og om leverandøren lagrer dokumentene i EØS.</div></div>
+    </div>
+  </section>
+
+  <section data-v="styre" class="hide">
+    <div class="framebar noprint" style="justify-content:space-between"><p class="note" style="margin:0;max-width:70ch">Alt til styremøtet på ett sted. Tallene hentes fra CRM, kostnadsregisteret og Signering. Testdata og nærstående parter er holdt utenfor.</p><div class="acts"><a class="btn sm" href="#ai">Lag ny fredagsrapport</a><button class="sm pri" id="styrePrint">Skriv ut eller lagre som PDF</button></div></div>
+    <div class="grid g4" id="styreKpi"></div>
+    <div class="grid gside" style="margin-top:16px">
+      <div class="card"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Siste fredagsrapport</h3><span class="note" id="styreRepMeta"></span></div><div id="styreRep"></div></div>
+      <div>
+        <div class="card"><h3>Risiko og åpne saker</h3><ul class="list" id="styreRisk"></ul></div>
+        <div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Beslutningslogg</h3><a class="btn sm noprint" href="https://app.notion.com/p/396088745714803ca495ec23507f9811" target="_blank" rel="noopener">Notion ↗</a></div><ul class="list" id="styreDec"></ul></div>
+        <div class="card" style="margin-top:16px"><h3>Frister neste 60 dager</h3><ul class="list" id="styreDl"></ul></div>
+      </div>
+    </div>
+    <div class="card noprint" style="margin-top:16px"><h3>Tidligere rapporter</h3><ul class="list" id="styreOld"></ul></div>
+  </section>
+
+  <section data-v="varsler" class="hide">
+    <p class="note" style="margin:-4px 0 16px;max-width:75ch">Kontrollsenteret sjekker hvert 15. minutt, også når det er lukket: frister, personvernavvik, nedetid, avtaler som venter på signatur og nye Pocket-samtaler. Varslene går bare til enheter du har slått dem på for.</p>
+    <div class="grid g2">
+      <div class="card"><h3>Denne enheten</h3><div id="pushDev"></div></div>
+      <div class="card"><h3>Hva du vil varsles om</h3><div id="pushPrefs"></div></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Siste varsler</h3><ul class="list" id="pushLog"></ul></div>
+      <div class="card"><h3>Enhetene dine</h3><ul class="list" id="pushSubs"></ul></div>
     </div>
   </section>
 
@@ -261,6 +409,11 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
       <div id="ba"></div></div>
   </section>
 </main>
+<div id="jarvis" class="noprint">
+  <div id="jpanel" class="hide" role="log" aria-live="polite"><div class="jhead"><h3 style="margin:0">Jarvis</h3><div class="acts"><button class="sm ghost" id="jClear">Tøm</button><button class="sm ghost" id="jClose" aria-label="Lukk Jarvis">Lukk</button></div></div><div id="jlog"></div></div>
+  <form id="jform" autocomplete="off"><span class="jlbl">Jarvis</span><input id="jin" placeholder="Si eller skriv hva du vil, f.eks. «lag en oppgave til Ove om å ringe Myren fredag»" aria-label="Snakk til Jarvis"><button type="button" class="mic" id="jmic" aria-label="Snakk" title="Snakk">🎙</button><button class="pri" id="jsend">Send</button></form>
+</div>
+</div>
 </div>
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast" role="status"></div>
@@ -320,7 +473,7 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA(), loadAI()]); render(); if (S.status.pocket && (!AI.pocketSync || Date.now() - new Date(AI.pocketSync.synced_at).getTime() > 3 * 36e5)) pocketSync(true); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA(), loadAI()]); await loadPilotData(); await pushCurrent(); render(); if (S.status.pocket && (!AI.pocketSync || Date.now() - new Date(AI.pocketSync.synced_at).getTime() > 3 * 36e5)) pocketSync(true); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
 
 /* ---------- render ---------- */
 const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs'], ['POCKET_API_KEY', 'kontroll-pocket', 'Pocket', 'møteopptak']];
@@ -346,7 +499,7 @@ function nextSteps() {
   (typeof D !== 'undefined' ? incUrgent() : []).forEach(i => { const [, t] = incClock(i); it.push(['bad', `Personvernavvik: ${i.title}`, t, '#drift']); });
   return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
 }
-function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); renderDrift(); renderEco(); renderAI(); }
+function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); renderDrift(); renderEco(); renderAI(); renderPilots(); renderOvRoad(); renderSign(); renderStyre(); renderPush(); renderNavBadges(); }
 function renderOverview() {
   const due = S.companies.filter(c => openCo(c) && days(c.next_activity_at) < 0).length;
   const klar = S.web.filter(w => w.status === 'klar').length;
@@ -1096,8 +1249,263 @@ document.addEventListener('click', async e => {
   if (t.dataset.bgcopy !== undefined) { const v = Object.fromEntries(BUGF.map(([k]) => [k, $('#bg_' + k).value])); navigator.clipboard.writeText(`${v.name}\nType: ${v.type} · Hvor: ${v.hvor} · ${v.alv} · ${v.pri}\n\nHva jeg gjorde: ${v.did}\nHva jeg forventet: ${v.exp}\nHva som skjedde: ${v.got}\n\nEnglish (for Raman):\n${v.en}`).then(() => toast('Kopiert')); }
   if (t.dataset.wkcopy) { const r = AI.reports.find(x => x.id === t.dataset.wkcopy); navigator.clipboard.writeText(r.content).then(() => toast('Rapporten er kopiert')); }
 });
-const VIEWS = ['oversikt', 'ai', 'okonomi', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'dokumenter', 'drift', 'systemer', 'branding'];
-function route() { const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt'; if (v === 'drift' && S.status.user) runUptime(false); if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); } document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
+
+/* ---------- pilotstatus, signering, styremappe, varsler ---------- */
+const P = { cust: [], sig: [], dec: [], subs: [], log: [], urls: {} };
+const SDOCS = [['pilotavtale', 'Pilotavtale', 'Pilotavtale signert'], ['dpa', 'Databehandleravtale', 'DPA signert'], ['kundeavtale', 'Kundeavtale', 'Kundeavtale signert'], ['sla', 'SLA', 'SLA vedlagt']];
+const SDOCNAME = Object.fromEntries(SDOCS.map(d => [d[0], d[1]]));
+const SIGST = { utkast: ['mute', 'Utkast'], klar: ['', 'Klar til sending'], sendt: ['warn', 'Sendt'], signert: ['ok', 'Signert'], avvist: ['bad', 'Avvist'] };
+const lc = s => String(s || '').trim().toLowerCase();
+async function loadPilotData() {
+  const [g, l, u] = await Promise.all([sb.from('signatures').select('*').order('updated_at', { ascending: false }), sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(25), sb.from('push_subscriptions').select('*')]);
+  if (!g.error) P.sig = g.data; if (!l.error) P.log = l.data; if (!u.error) P.subs = u.data;
+  if (S.status.notion) { try { const [c, d] = await Promise.all([api('notion.list', { db: 'cust' }), api('notion.list', { db: 'dec' })]); P.cust = c.rows || []; P.dec = (d.rows || []).sort((a, b) => new Date(b.created) - new Date(a.created)); } catch (e) { S.err.pilot = e.message; } }
+}
+function pilotList() {
+  const m = new Map();
+  S.companies.filter(c => lc(c.lead_source) === 'pilot' || PILOTS.includes(c.name)).forEach(c => m.set(lc(c.name), { name: c.name, co: c }));
+  P.cust.filter(r => /pilot/i.test(r.Type || '')).forEach(r => { const k = lc(r.Kunde); m.set(k, { ...(m.get(k) || { name: r.Kunde }), cust: r }); });
+  PILOTS.forEach(n => { if (!m.has(lc(n))) m.set(lc(n), { name: n }); });
+  return [...m.values()].sort((a, b) => a.name.localeCompare(b.name, 'nb'));
+}
+const sigFor = (name, doc) => P.sig.find(s => lc(s.company_name) === lc(name) && s.doc_type === doc);
+function docState(p, doc) {
+  const s = sigFor(p.name, doc), prop = (SDOCS.find(d => d[0] === doc) || [])[2];
+  if ((s && s.status === 'signert') || (p.cust && p.cust[prop] === true)) return 'signert';
+  return s ? s.status : 'mangler';
+}
+const accessOpen = () => {
+  const b = S.bugs.find(x => /tilgang|access|permission|author/i.test(x.Name || '') && !['Løst', 'Rejected'].includes(x.Status));
+  if (b) return b; const st = IG.ob.find(s => s.key === 'brukere'); return st && st.readiness !== 'klar' ? { Name: st.title, fromOb: true } : null;
+};
+function pilotInfo(p) {
+  const pa = docState(p, 'pilotavtale'), dpa = docState(p, 'dpa'), ka = docState(p, 'kundeavtale');
+  const total = IG.ob.length, done = IG.obp.filter(x => lc(x.customer_name) === lc(p.name)).length;
+  const acc = accessOpen(), paying = ka === 'signert' && Number(p.co?.mrr || 0) > 0;
+  const obDone = total && done >= total;
+  const stops = [['Pilotavtale', pa === 'signert'], ['Databehandleravtale', dpa === 'signert'], ['Tilgangsstyring', !acc], ['Onboarding', obDone], ['Betalende', paying]];
+  const first = stops.findIndex(s => !s[1]);
+  const block = [];
+  if (pa !== 'signert') block.push(pa === 'sendt' ? 'Pilotavtalen er sendt, men ikke signert' : 'Pilotavtalen er ikke signert');
+  if (dpa !== 'signert') block.push('Databehandleravtale mangler – vi behandler sjåførdata uten avtale');
+  if (acc) block.push(acc.fromOb ? 'Tilgangsstyringen i plattformen virker ikke ennå' : `Tilgangsfeilen i plattformen er ikke rettet (${acc.Prioritet || 'åpen'})`);
+  const missing = IG.ob.filter(s => s.readiness === 'mangler' && !IG.obp.some(x => lc(x.customer_name) === lc(p.name) && x.step_key === s.key));
+  if (missing.length) block.push(`Mangler i produktet: ${missing.slice(0, 3).map(s => s.title.replace(/^Koble til /, '')).join(', ')}${missing.length > 3 ? ` og ${missing.length - 3} til` : ''}`);
+  if (p.cust && !p.cust.Kontaktperson) block.push('Kontaktperson er ikke registrert');
+  if (!p.cust && !p.co?.assigned_to) block.push('Ingen ansvarlig og ingen detaljer registrert');
+  if (ka !== 'signert') block.push('Pris og kundeavtale er ikke avklart');
+  return { pa, dpa, ka, total, done, stops, first: first < 0 ? stops.length : first, block, next: p.cust?.['Neste steg'] || p.co?.next_activity || '' };
+}
+const lineHTML = (stops, first) => `<div class="line" style="--n:${stops.length}" role="list">${stops.map(([t, ok], i) => `<div class="stop ${ok ? 'done' : i === first ? 'now' : ''}" role="listitem" aria-label="${esc(t)}: ${ok ? 'ferdig' : 'ikke ferdig'}">${esc(t)}</div>`).join('')}</div>`;
+function renderPilots() {
+  const box = $('#pilots'); if (!box) return; const list = pilotList();
+  box.innerHTML = (S.err.pilot ? `<p class="err">Notion: ${esc(S.err.pilot)}</p>` : '') + list.map(p => {
+    const f = pilotInfo(p), own = p.co?.assigned_to ? p.co.assigned_to.split('@')[0] : '';
+    return `<article class="card"><div class="framebar" style="justify-content:space-between;align-items:flex-start;margin:0"><div><h3 style="margin:0;font-size:22px">${esc(p.name)}</h3><div class="meta"><span>${esc(p.co?.industry || p.cust?.Segment || 'Segment ikke registrert')}</span><span>${own ? 'Ansvarlig: ' + esc(own[0].toUpperCase() + own.slice(1)) : 'Ingen ansvarlig'}</span><span>Pilot – betaler ikke</span></div></div>
+      <div class="acts"><button class="sm" data-signew="${esc(p.name)}">Registrer avtale</button><button class="sm" data-obopen="${esc(p.name)}">Onboarding</button>${p.co ? `<a class="btn sm" href="index.html?kunde=${p.co.id}">CRM</a>` : ''}${p.cust?.url ? `<a class="btn sm" href="${esc(p.cust.url)}" target="_blank" rel="noopener">Notion ↗</a>` : ''}</div></div>
+      ${lineHTML(f.stops, f.first)}
+      <div class="grid g2" style="margin-top:14px;gap:20px"><div><h4 style="margin:0 0 6px">Står i veien</h4>${f.block.length ? `<ul style="margin:0;padding-left:18px">${f.block.map(b => `<li style="margin:3px 0">${esc(b)}</li>`).join('')}</ul>` : '<p class="note">Ingenting registrert.</p>'}</div>
+      <div><h4 style="margin:0 0 6px">Neste steg</h4><p style="margin:0 0 10px">${esc(f.next || 'Ikke satt.')}</p><div class="meta"><span>Onboarding ${f.done} av ${f.total} steg</span><span>Pilotavtale: ${esc((SIGST[f.pa] || ['', 'Mangler'])[1])}</span><span>DPA: ${esc((SIGST[f.dpa] || ['', 'Mangler'])[1])}</span></div></div></div></article>`;
+  }).join('');
+}
+function renderOvRoad() {
+  const box = $('#ovRoad'); if (!box) return; const list = pilotList();
+  const any = list.some(p => pilotInfo(p).stops[4][1]);
+  box.innerHTML = `<div class="framebar" style="justify-content:space-between;margin:0"><div><h3 style="margin:0">${any ? 'Betalende kunder' : 'Veien til første betalende kunde'}</h3><p class="note" style="margin:2px 0 0">${list.length} piloter. Ingen av dem betaler ennå.</p></div><a class="btn sm" href="#piloter">Pilotstatus</a></div>
+    <div class="grid g3" style="margin-top:6px;gap:8px 24px">${list.map(p => { const f = pilotInfo(p); return `<div><b>${esc(p.name)}</b>${lineHTML(f.stops.map(([t, ok]) => [t === 'Databehandleravtale' ? 'DPA' : t === 'Tilgangsstyring' ? 'Tilgang' : t, ok]), f.first)}<p class="note" style="margin:4px 0 0">${esc(f.block[0] || 'Ingenting i veien.')}</p></div>`; }).join('')}</div>`;
+}
+/* signering */
+function sigCompanies() { return [...new Set([...pilotList().map(p => p.name), ...S.companies.filter(c => ['won', 'onboarding', 'aktiv_kunde'].includes(c.status)).map(c => c.name), ...P.sig.map(s => s.company_name)])].sort((a, b) => a.localeCompare(b, 'nb')); }
+function renderSign() {
+  if (!$('#sigMatrix')) return; const cos = sigCompanies();
+  $('#sigMatrix').innerHTML = `<thead><tr><th>Kunde</th>${SDOCS.map(d => `<th>${d[1]}</th>`).join('')}</tr></thead><tbody>${cos.map(n => { const p = pilotList().find(x => lc(x.name) === lc(n)) || { name: n }; return `<tr><td><b>${esc(n)}</b></td>${SDOCS.map(([k]) => { const st = docState(p, k), s = sigFor(n, k), [c, t] = SIGST[st] || ['bad', 'Mangler']; return `<td><button class="sm ghost" style="padding:0 4px" data-sigedit="${esc(n)}|${k}" aria-label="${esc(SDOCNAME[k])} for ${esc(n)}: ${esc(t)}"><span class="chip ${c}">${esc(t)}</span></button>${s?.signed_at ? `<div class="note">${esc(fmtD(s.signed_at))}</div>` : s?.sent_at && st === 'sendt' ? `<div class="note">sendt ${esc(rel(s.sent_at))}</div>` : ''}</td>`; }).join('')}</tr>`; }).join('')}</tbody>`;
+  $('#sigList').innerHTML = P.sig.slice(0, 12).map(s => { const [c, t] = SIGST[s.status]; return `<li class="row"><span class="chip ${c}">${t}</span><div><b>${esc(SDOCNAME[s.doc_type] || s.doc_type)} – ${esc(s.company_name)}</b><div class="meta"><span>${s.signer_name ? 'Signerer: ' + esc(s.signer_name) : 'Signerer ikke registrert'}</span><span>Endret ${esc(fmt(s.updated_at))} av ${esc((s.updated_by || s.created_by || '').split('@')[0])}</span></div></div><div class="acts">${s.file_path ? `<button class="sm" data-sigfile="${s.id}">PDF</button>` : ''}<button class="sm" data-sigedit="${esc(s.company_name)}|${s.doc_type}">Endre</button></div></li>`; }).join('') || '<li class="empty">Ingen avtaler registrert ennå. Trykk på en avtale i tabellen for å starte.</li>';
+}
+function sigForm(company, doc) {
+  const s = (company && doc) ? sigFor(company, doc) : null, cust = P.cust.find(r => lc(r.Kunde) === lc(company));
+  modal(`<h3>${s ? 'Endre avtale' : 'Registrer avtale'}</h3><form id="sf">
+    <label for="s_co">Kunde</label><input id="s_co" list="sCoList" required value="${esc(company || '')}"><datalist id="sCoList">${sigCompanies().map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+    <label for="s_doc">Avtale</label><select id="s_doc">${SDOCS.map(([k, t]) => `<option value="${k}" ${k === (doc || 'pilotavtale') ? 'selected' : ''}>${t}</option>`).join('')}<option value="annet" ${doc === 'annet' ? 'selected' : ''}>Annet</option></select>
+    <label for="s_st">Status</label><select id="s_st">${Object.entries(SIGST).map(([k, [, t]]) => `<option value="${k}" ${k === (s?.status || 'utkast') ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    <div class="grid g2" style="gap:0 12px"><div><label for="s_sn">Signerer hos kunden</label><input id="s_sn" value="${esc(s?.signer_name || '')}" placeholder="Navn"></div><div><label for="s_se">E-post</label><input id="s_se" type="email" value="${esc(s?.signer_email || '')}"></div>
+    <div><label for="s_sent">Sendt</label><input id="s_sent" type="date" value="${esc((s?.sent_at || '').slice(0, 10))}"></div><div><label for="s_signed">Signert</label><input id="s_signed" type="date" value="${esc((s?.signed_at || '').slice(0, 10))}"></div></div>
+    <label for="s_file">Signert PDF (valgfritt)</label><input id="s_file" type="file" accept="application/pdf">${s?.file_path ? `<p class="note">Lagret: ${esc(s.file_path.split('/').pop())}</p>` : ''}
+    <label for="s_note">Notat</label><textarea id="s_note" style="min-height:60px">${esc(s?.notes || '')}</textarea>
+    ${S.status.notion ? `<label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="s_notion" ${cust ? 'checked' : 'disabled'}> Oppdater avkrysningen i Notion «Kunder og avtalestatus»${cust ? '' : ' (kunden finnes ikke der)'}</label>` : ''}
+    <div class="foot"><button type="button" data-close>Avbryt</button><button class="pri">Lagre</button></div><div class="err" id="sErr"></div></form>`);
+  $('#sf').addEventListener('submit', async e => {
+    e.preventDefault(); const b = $('#sf .pri'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Lagrer';
+    try {
+      const co = $('#s_co').value.trim(), dt = $('#s_doc').value, st = $('#s_st').value, cid = (S.companies.find(c => lc(c.name) === lc(co)) || {}).id || null;
+      const v = { company_name: co, company_id: cid, doc_type: dt, status: st, signer_name: $('#s_sn').value.trim() || null, signer_email: $('#s_se').value.trim() || null, sent_at: $('#s_sent').value || (st === 'sendt' && !s?.sent_at ? new Date().toISOString() : s?.sent_at || null), signed_at: $('#s_signed').value || (st === 'signert' && !s?.signed_at ? new Date().toISOString() : s?.signed_at || null), notes: $('#s_note').value.trim() || null, updated_by: S.status.user || '', updated_at: new Date().toISOString() };
+      const f = $('#s_file').files[0];
+      if (f) { if (f.size > 20e6) throw new Error('Filen er større enn 20 MB.'); const path = `${co.replace(/[^\wæøåÆØÅ -]/g, '').trim()}/${dt}-${Date.now()}.pdf`; const up = await sb.storage.from('avtaler').upload(path, f, { contentType: 'application/pdf' }); if (up.error) throw up.error; v.file_path = path; }
+      const r = s ? await sb.from('signatures').update(v).eq('id', s.id) : await sb.from('signatures').insert({ ...v, created_by: S.status.user || '' });
+      if (r.error) throw r.error;
+      const ck = $('#s_notion'), c2 = P.cust.find(x => lc(x.Kunde) === lc(co));
+      if (ck && ck.checked && c2 && ['pilotavtale', 'dpa', 'kundeavtale', 'sla'].includes(dt)) await api('notion.custflag', { id: c2.id, doc: dt, value: st === 'signert' });
+      closeModal(); toast(st === 'signert' ? `${SDOCNAME[dt] || 'Avtalen'} er registrert som signert` : 'Avtalen er lagret'); await loadPilotData(); render();
+    } catch (err) { b.disabled = false; b.textContent = 'Lagre'; $('#sErr').textContent = err.message; }
+  });
+}
+/* styremappe */
+function renderStyre() {
+  if (!$('#styreKpi')) return;
+  const list = pilotList(), infos = list.map(pilotInfo), signedPA = infos.filter(f => f.pa === 'signert').length;
+  const paying = S.companies.filter(c => Number(c.mrr || 0) > 0 && !PILOTS.includes(c.name)), mrr = paying.reduce((a, c) => a + Number(c.mrr || 0), 0);
+  const subs = (D.subscriptions || []).filter(x => x.active !== false), monthly = subs.reduce((a, x) => a + (x.amount == null ? 0 : x.period === 'ar' ? x.amount / 12 : ['maned', 'forbruk'].includes(x.period) ? Number(x.amount) : 0), 0), noAmt = subs.filter(x => x.amount == null).length;
+  const nok = n => Math.round(n).toLocaleString('nb-NO') + ' kr';
+  $('#styreKpi').innerHTML = `<div class="card kpi ${paying.length ? 'ok' : 'bad'}"><b>${paying.length}</b><span>betalende kunder</span></div><div class="card kpi"><b>${nok(mrr)}</b><span>månedlig gjentakende inntekt</span></div><div class="card kpi ${signedPA < list.length ? 'warn' : 'ok'}"><b>${list.length}</b><span>piloter, ${signedPA} med signert pilotavtale</span></div><div class="card kpi ${noAmt ? 'warn' : ''}"><b>${nok(monthly)}</b><span>registrerte kostnader per måned${noAmt ? `, ${noAmt} uten beløp` : ''}</span></div>`;
+  const rep = AI.reports.find(r => r.kind === 'ukesrapport' || !r.kind) || AI.reports[0];
+  $('#styreRep').innerHTML = rep ? md(rep.content) : '<p class="empty">Ingen fredagsrapport ennå. Lag den under AI-assistent.</p>';
+  $('#styreRepMeta').textContent = rep ? `${rep.period || ''} · laget ${fmt(rep.created_at)}` : '';
+  const risk = [];
+  incOpen().forEach(i => { const [c, t] = incClock(i); risk.push([c, `Personvernavvik: ${i.title}`, t]); });
+  S.bugs.filter(b => String(b.Prioritet).startsWith('P1') && !['Løst', 'Rejected'].includes(b.Status)).forEach(b => risk.push(['bad', b.Name, 'P1 i Bug Tracker']));
+  infos.forEach((f, i) => { if (f.dpa !== 'signert') risk.push(['bad', `Ingen databehandleravtale med ${list[i].name}`, 'Vi behandler sjåførdata uten avtale']); });
+  (D.deadlines || []).filter(d => !d.done_at && d.due_date && days(d.due_date) < 0).forEach(d => risk.push(['bad', d.title, `Frist forfalt ${rel(d.due_date)}`]));
+  (D.accounts || []).filter(a => /transparabl|personlig/i.test(a.registered_to || '')).forEach(a => risk.push(['warn', `${a.system} er registrert utenfor Insiqt.AI AS`, a.registered_to]));
+  $('#styreRisk').innerHTML = risk.map(([c, t, w]) => `<li class="row"><span class="chip ${c}">${c === 'bad' ? 'Høy' : 'Middels'}</span><div><b>${esc(t)}</b><div class="meta"><span>${esc(w || '')}</span></div></div><div></div></li>`).join('') || '<li class="empty">Ingen åpne risikoer registrert.</li>';
+  $('#styreDec').innerHTML = S.status.notion ? (P.dec.slice(0, 8).map(d => `<li class="row"><span class="chip mute">${esc(fmtD(d.created))}</span><div><b>${esc(d.Name || d.Beslutning || d.Tittel || 'Uten tittel')}</b></div><div class="acts noprint">${d.url ? `<a class="btn sm" href="${esc(d.url)}" target="_blank" rel="noopener">Åpne</a>` : ''}</div></li>`).join('') || '<li class="empty">Ingen beslutninger registrert.</li>') : '<li class="empty">Koble til Notion under Integrasjoner for å vise beslutningsloggen.</li>';
+  $('#styreDl').innerHTML = (D.deadlines || []).filter(d => !d.done_at && d.due_date && days(d.due_date) <= 60).map(d => { const [c, t] = dlChip(d); return `<li class="row"><span class="chip ${c}">${t}</span><div><b>${esc(d.title)}</b><div class="meta"><span>${esc(fmtD(d.due_date))}</span><span>${esc(d.owner || '')}</span></div></div><div></div></li>`; }).join('') || '<li class="empty">Ingen frister de neste 60 dagene.</li>';
+  $('#styreOld').innerHTML = AI.reports.slice(1, 10).map(r => `<li class="row"><span class="chip mute">${esc(r.period || '')}</span><div><details><summary><b>Ukesrapport ${esc(r.period || '')}</b> <span class="note">${esc(fmt(r.created_at))}</span></summary><div style="margin-top:8px">${md(r.content)}</div></details></div><div></div></li>`).join('') || '<li class="empty">Ingen tidligere rapporter.</li>';
+}
+/* varsler */
+const PUSH_KINDS = [['frister', 'Frister', 'Når en frist er 14, 7 og 1 dag unna, og når den er forfalt'], ['avvik', 'Personvernavvik', 'Nedtelling mot 72-timersfristen'], ['nede', 'Nedetid', 'Når plattformen, nettsiden eller CRM-et slutter å svare, og når de er oppe igjen'], ['signering', 'Signering', 'Når en sendt avtale ikke er signert etter 7 og 14 dager'], ['pocket', 'Nye Pocket-samtaler', 'Når en ny samtale er hentet fra Pocket']];
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const pushOK = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+let PUSH = { endpoint: null, busy: false };
+async function pushCurrent() { if (!pushOK()) return null; try { const r = await navigator.serviceWorker.getRegistration('/'); const s = r && await r.pushManager.getSubscription(); PUSH.endpoint = s ? s.endpoint : null; } catch (_) { PUSH.endpoint = null; } return PUSH.endpoint; }
+const b64uToBytes = b => { const s = atob((b + '==='.slice((b.length + 3) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(s, c => c.charCodeAt(0)); };
+async function pushEnable() {
+  PUSH.busy = true; renderPush();
+  try {
+    const perm = await Notification.requestPermission(); if (perm !== 'granted') throw new Error(perm === 'denied' ? 'Varsler er blokkert for denne siden. Slå dem på i nettleserens innstillinger og prøv igjen.' : 'Du må tillate varsler for å slå dem på.');
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' }); await navigator.serviceWorker.ready;
+    const { publicKey } = await api('push.config');
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToBytes(publicKey) });
+    const j = sub.toJSON(), dev = `${isIOS() ? 'iPhone/iPad' : /Android/.test(navigator.userAgent) ? 'Android' : /Mac/.test(navigator.platform) ? 'Mac' : 'PC'} · ${/Edg\//.test(navigator.userAgent) ? 'Edge' : /Chrome\//.test(navigator.userAgent) ? 'Chrome' : /Safari\//.test(navigator.userAgent) ? 'Safari' : /Firefox\//.test(navigator.userAgent) ? 'Firefox' : 'nettleser'}`;
+    const r = await sb.from('push_subscriptions').upsert({ user_email: S.status.user, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth, device: dev }, { onConflict: 'endpoint' });
+    if (r.error) throw r.error; PUSH.endpoint = j.endpoint; toast('Varsler er slått på for denne enheten');
+  } catch (e) { toast(e.message || String(e)); }
+  PUSH.busy = false; await loadPilotData(); renderPush();
+}
+async function pushDisable(id) {
+  const s = P.subs.find(x => x.id === id); if (!s) return;
+  if (s.endpoint === PUSH.endpoint) { try { const r = await navigator.serviceWorker.getRegistration('/'); const sub = r && await r.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (_) { } PUSH.endpoint = null; }
+  await sb.from('push_subscriptions').delete().eq('id', id); toast('Varsler er slått av for enheten'); await loadPilotData(); renderPush();
+}
+function renderPush() {
+  if (!$('#pushDev')) return; const mine = P.subs.find(s => s.endpoint === PUSH.endpoint);
+  let dev;
+  if (!pushOK()) dev = isIOS() && !standalone() ? `<p>På iPhone og iPad virker varsler bare når kontrollsenteret er lagt på hjemskjermen.</p><ol class="note" style="padding-left:18px"><li>Åpne kontrollsenteret i Safari.</li><li>Trykk Del-knappen og velg «Legg til på Hjem-skjerm».</li><li>Åpne kontrollsenteret fra ikonet på hjemskjermen og kom tilbake hit.</li></ol>` : '<p>Denne nettleseren støtter ikke push-varsler. Bruk Chrome, Edge eller Safari.</p>';
+  else if (mine) dev = `<p class="platbox ok" style="margin-top:0">Varsler er slått på for denne enheten (${esc(mine.device || '')}).</p><div class="acts" style="justify-content:flex-start"><button class="pri" data-pushtest>Send testvarsel</button><button data-pushoff="${mine.id}">Slå av for denne enheten</button></div>${mine.last_error ? `<p class="err">Siste feil: ${esc(mine.last_error)}</p>` : ''}`;
+  else dev = `<p>Varsler er ikke slått på for denne enheten.</p><button class="pri" data-pushon ${PUSH.busy ? 'disabled' : ''}>${PUSH.busy ? '<span class="spin"></span> Slår på' : 'Slå på varsler her'}</button><p class="note">Nettleseren spør om lov først.</p>`;
+  $('#pushDev').innerHTML = dev;
+  const prefs = mine?.prefs || {};
+  $('#pushPrefs').innerHTML = mine ? PUSH_KINDS.map(([k, t, d]) => `<label style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;font-weight:600;margin:10px 0"><input type="checkbox" data-pushpref="${k}" ${prefs[k] !== false ? 'checked' : ''} style="margin-top:3px"><span>${t}<span class="note" style="display:block;font-weight:400">${d}</span></span></label>`).join('') : '<p class="note">Slå på varsler for denne enheten først. Du velger hva du vil varsles om per enhet.</p>';
+  $('#pushLog').innerHTML = P.log.map(n => `<li class="row"><span class="chip ${n.kind === 'avvik' || n.kind === 'nede' ? 'bad' : n.kind === 'frister' ? 'warn' : 'mute'}">${esc((PUSH_KINDS.find(k => k[0] === n.kind) || ['', n.kind])[1])}</span><div><b>${esc(n.title)}</b><div class="meta"><span>${esc(fmt(n.created_at))}</span><span>${n.sent_to ? `sendt til ${n.sent_to} enhet${n.sent_to > 1 ? 'er' : ''}` : 'ingen enheter slått på'}</span></div></div><div>${n.url ? `<a class="btn sm" href="${esc(n.url.replace('/kontroll.html', ''))}">Åpne</a>` : ''}</div></li>`).join('') || '<li class="empty">Ingen varsler ennå.</li>';
+  $('#pushSubs').innerHTML = P.subs.map(s => `<li class="row"><span class="chip ${s.last_error ? 'bad' : 'ok'}">${s.last_error ? 'Feil' : 'Aktiv'}</span><div><b>${esc(s.device || 'Enhet')}${s.endpoint === PUSH.endpoint ? ' (denne)' : ''}</b><div class="meta"><span>Slått på ${esc(fmt(s.created_at))}</span><span>${s.last_ok_at ? 'Sist levert ' + esc(fmt(s.last_ok_at)) : 'Ikke levert ennå'}</span></div></div><div class="acts"><button class="sm" data-pushoff="${s.id}">Slå av</button></div></li>`).join('') || '<li class="empty">Ingen enheter.</li>';
+}
+document.addEventListener('change', async e => {
+  const t = e.target; if (!t.dataset.pushpref) return; const mine = P.subs.find(s => s.endpoint === PUSH.endpoint); if (!mine) return;
+  const prefs = { ...(mine.prefs || {}), [t.dataset.pushpref]: t.checked }; const r = await sb.from('push_subscriptions').update({ prefs }).eq('id', mine.id);
+  if (r.error) { toast(r.error.message); t.checked = !t.checked; return; } mine.prefs = prefs; toast('Lagret');
+});
+function renderNavBadges() {
+  const set = (v, n, cls) => { const a = document.querySelector(`#nav a[href="#${v}"]`); if (!a) return; let b = a.querySelector('.bdg'); if (!n) { if (b) b.remove(); return; } if (!b) { b = document.createElement('span'); a.appendChild(b); } b.className = 'bdg ' + (cls || ''); b.textContent = n; b.setAttribute('aria-label', `${n} trenger oppmerksomhet`); };
+  set('piloter', pilotList().filter(p => pilotInfo(p).dpa !== 'signert').length, 'bad');
+  set('drift', (D.deadlines || []).filter(d => !d.done_at && d.due_date && days(d.due_date) < 0).length + incUrgent().length, 'bad');
+  set('signering', P.sig.filter(s => s.status === 'sendt').length, 'warn');
+  set('oppgaver', S.bugs.filter(b => String(b.Prioritet).startsWith('P1') && !['Løst', 'Rejected'].includes(b.Status)).length, 'bad');
+}
+function onView(v) { if (v === 'varsler') pushCurrent().then(renderPush); }
+/* ---------- Jarvis ---------- */
+const J = { log: [], busy: false, rec: null };
+const JLABEL = { oppgave: 'Opprett oppgave i Gjøremål', bug: 'Meld bug til Raman i Bug Tracker', kundebehov: 'Legg til kundebehov', frist: 'Legg til frist', frist_ferdig: 'Huk av frist som ferdig', pocket: 'Hent nye samtaler fra Pocket', rapport: 'Lag fredagsrapporten', driftssjekk: 'Kjør driftssjekk', apne: 'Åpne fanen' };
+function jDesc(h) {
+  if (h.type === 'oppgave') return `${h.tittel}${h.eier ? ' · ' + h.eier : ''}${h.frist ? ' · frist ' + fmtD(h.frist) : ''}`;
+  if (h.type === 'bug') return `${h.name} · ${h.pri || ''}`;
+  if (h.type === 'kundebehov') return `${h.kunde}: ${h.behov}`;
+  if (h.type === 'frist') return `${h.tittel} · ${h.dato ? fmtD(h.dato) : 'uten dato'}`;
+  if (h.type === 'frist_ferdig') return h.tittel || '';
+  if (h.type === 'apne') return (document.querySelector(`#nav a[href="#${h.fane}"]`) || {}).textContent || h.fane;
+  return '';
+}
+function renderJ() {
+  $('#jpanel').classList.toggle('hide', !J.log.length);
+  $('#jlog').innerHTML = J.log.map((m, i) => m.role === 'user' ? `<div class="jmsg me"><span>${esc(m.content)}</span></div>` : m.pending ? '<div class="jmsg"><span class="spin"></span> Jarvis tenker …</div>' : m.error ? `<div class="jmsg err">${esc(m.error)}</div>` : `<div class="jmsg">${md(m.content)}${(m.acts || []).map((h, k) => `<div class="jact ${h.done ? 'done' : ''}"><div><b>${esc(JLABEL[h.type] || h.type)}</b><div class="note">${esc(jDesc(h))}</div></div><div>${h.done ? '<span class="chip ok">Utført</span>' : `<button class="sm pri" data-jdo="${i}|${k}">Utfør</button>`}</div></div>`).join('')}</div>`).join('');
+  $('#jpanel').scrollTop = $('#jpanel').scrollHeight;
+}
+async function jSend(text) {
+  text = (text || '').trim(); if (!text || J.busy) return;
+  const hist = J.log.filter(m => !m.pending && !m.error).map(m => ({ role: m.role, content: m.content }));
+  J.log.push({ role: 'user', content: text }, { role: 'assistant', pending: true }); J.busy = true; $('#jin').value = ''; renderJ();
+  try { const r = await api('jarvis', { text, history: hist }); J.log[J.log.length - 1] = { role: 'assistant', content: r.svar || 'OK.', acts: r.handlinger || [] }; }
+  catch (e) { J.log[J.log.length - 1] = { role: 'assistant', error: e.message }; }
+  J.busy = false; renderJ();
+}
+async function jDo(h) {
+  const who = S.status.user || '';
+  if (h.type === 'oppgave') await api('notion.create', { db: 'task', values: { name: h.tittel, du: h.du_skal, own: ['John', 'Ove', 'Raman'].includes(h.eier) ? h.eier : '', due: h.frist || null, omr: h.omrade || 'Drift' } });
+  else if (h.type === 'bug') await api('notion.create', { db: 'bug', values: { name: h.name, type: 'Issue', hvor: h.hvor, alv: h.alv, pri: h.pri, did: h.did, exp: h.exp, got: h.got, en: h.en, note: 'Laget med Jarvis i kontrollsenteret. Sjekk at det stemmer.' } });
+  else if (h.type === 'kundebehov') { const r = await sb.from('company_needs').insert({ company_name: h.kunde, need: h.behov, category: NEED_CAT.some(c => c[0] === h.kategori) ? h.kategori : 'annet', priority: NEED_PRI.some(c => c[0] === h.prioritet) ? h.prioritet : 'bor', coverage: NEED_COV.some(c => c[0] === h.dekning) ? h.dekning : 'mangler', source: 'Jarvis', updated_by: who }); if (r.error) throw r.error; }
+  else if (h.type === 'frist') { const r = await sb.from('deadlines').insert({ title: h.tittel, due_date: h.dato || null, category: DL_CAT.some(c => c[0] === h.kategori) ? h.kategori : 'annet', recurrence: 'ingen', owner: h.eier || null, updated_by: who }); if (r.error) throw r.error; }
+  else if (h.type === 'frist_ferdig') { if (!D.deadlines.some(d => d.id === h.id)) throw new Error('Fant ikke fristen.'); await dlDone(h.id); }
+  else if (h.type === 'pocket') { await pocketSync(false); }
+  else if (h.type === 'rapport') { location.hash = '#ai'; $('#wkBtn').click(); }
+  else if (h.type === 'driftssjekk') { location.hash = '#drift'; await runUptime(true); }
+  else if (h.type === 'apne') { location.hash = '#' + (VIEWS.includes(h.fane) ? h.fane : 'oversikt'); }
+  else throw new Error('Ukjent handling.');
+  if (['oppgave', 'bug'].includes(h.type)) { await loadNotion(); render(); }
+  if (['kundebehov', 'frist', 'frist_ferdig'].includes(h.type)) { await loadDrift(); render(); }
+}
+if (matchMedia('(max-width:700px)').matches) $('#jin').placeholder = 'Spør Jarvis eller trykk på mikrofonen';
+$('#jform').addEventListener('submit', e => { e.preventDefault(); jSend($('#jin').value); });
+$('#jClose').onclick = () => $('#jpanel').classList.add('hide');
+$('#jClear').onclick = () => { J.log = []; renderJ(); };
+$('#jin').addEventListener('focus', () => { if (J.log.length) $('#jpanel').classList.remove('hide'); });
+(() => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = $('#jmic');
+  if (!SR) { mic.classList.add('hide'); return; }
+  mic.onclick = () => {
+    if (J.rec) { J.rec.stop(); return; }
+    const r = new SR(); r.lang = 'nb-NO'; r.interimResults = true; r.continuous = false; let final = '';
+    r.onresult = ev => { let t = ''; for (const res of ev.results) { t += res[0].transcript; if (res.isFinal) final = t; } $('#jin').value = t; };
+    r.onerror = ev => { if (ev.error !== 'no-speech' && ev.error !== 'aborted') toast(ev.error === 'not-allowed' ? 'Gi nettleseren lov til å bruke mikrofonen.' : 'Talegjenkjenningen stoppet: ' + ev.error); };
+    r.onend = () => { J.rec = null; mic.classList.remove('rec'); mic.setAttribute('aria-label', 'Snakk'); if (final.trim()) jSend(final); };
+    J.rec = r; mic.classList.add('rec'); mic.setAttribute('aria-label', 'Stopp opptaket'); r.start();
+  };
+})();
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.signew !== undefined) sigForm(t.dataset.signew || '', 'pilotavtale');
+  if (t.dataset.sigedit) { const [c, d] = t.dataset.sigedit.split('|'); sigForm(c, d); }
+  if (t.dataset.sigfile) { const s = P.sig.find(x => x.id === t.dataset.sigfile); const r = await sb.storage.from('avtaler').createSignedUrl(s.file_path, 300); if (r.error) toast(r.error.message); else window.open(r.data.signedUrl, '_blank', 'noopener'); }
+  if (t.dataset.obopen) { IG.view = 'onboarding'; IG.obCust = t.dataset.obopen; location.hash = '#integrasjoner'; renderIG(); }
+  if (t.dataset.pushon !== undefined) pushEnable();
+  if (t.dataset.pushoff) pushDisable(t.dataset.pushoff);
+  if (t.dataset.pushtest !== undefined) { t.disabled = true; try { const r = await api('push.test'); toast(r.sent ? 'Testvarselet er sendt' : 'Testvarselet kom ikke fram: ' + (r.errors || []).join('; ')); } catch (err) { toast(err.message); } t.disabled = false; await loadPilotData(); renderPush(); }
+  if (t.dataset.jdo) { const [i, k] = t.dataset.jdo.split('|').map(Number), h = J.log[i].acts[k]; t.disabled = true; t.innerHTML = '<span class="spin"></span>'; try { await jDo(h); h.done = true; toast(`${JLABEL[h.type] || 'Handlingen'}: utført`); } catch (err) { toast(err.message); } renderJ(); }
+  if (t.id === 'styrePrint') window.print();
+});
+
+const VIEWS = ['oversikt', 'ai', 'piloter', 'pipeline', 'okonomi', 'signering', 'styre', 'oppgaver', 'moter', 'dokumenter', 'integrasjoner', 'nettside', 'branding', 'drift', 'varsler', 'systemer'];
+function route() {
+  const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt';
+  if (v === 'drift' && S.status.user) runUptime(false);
+  if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); }
+  document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v));
+  let label = '', grp = '';
+  document.querySelectorAll('#nav a').forEach(a => { const on = a.getAttribute('href') === '#' + v; a.classList.toggle('on', on); if (on) { a.setAttribute('aria-current', 'page'); label = a.firstChild.textContent; grp = a.closest('.grp').querySelector('span').textContent; } else a.removeAttribute('aria-current'); });
+  $('#pTitle').textContent = label; $('#pCrumb').textContent = grp; document.title = `${label} – Insiqt kontrollsenter`;
+  document.body.classList.remove('navopen'); $('#menuBtn').setAttribute('aria-expanded', 'false');
+  if (typeof onView === 'function') onView(v);
+}
+$('#menuBtn').onclick = () => { const o = document.body.classList.toggle('navopen'); $('#menuBtn').setAttribute('aria-expanded', String(o)); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('navopen')) { document.body.classList.remove('navopen'); $('#menuBtn').focus(); } });
+document.addEventListener('click', e => { if (document.body.classList.contains('navopen') && !e.target.closest('#side,#menuBtn')) document.body.classList.remove('navopen'); });
 window.addEventListener('hashchange', route);
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
 boot();

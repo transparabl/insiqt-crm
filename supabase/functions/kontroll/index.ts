@@ -10,6 +10,7 @@
 //   KONTROLL_ALLOWED   valgfri kommaseparert liste med e-poster (standard: john@insiqt.ai, ove@insiqt.ai)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import webpush from "npm:web-push@3.6.7";
 
 const REPO = "transparabl/insiqt-ai-website";
 const DIR = "frontend";
@@ -23,6 +24,7 @@ const NOTION_DS: Record<string, string> = {
   meet: "56508874-5714-830a-bfcc-07fd8c4a7e14",
   integ: "42108874-5714-8195-a72e-000b3a6108a0",
   mail: "42108874-5714-81a9-aaf3-000b981ab36f",
+  dec: "becb046b-a3b8-45ab-88f5-10ebb435def3",
 };
 const PEOPLE: Record<string, string> = { John: "396d872b-594c-8169-84e2-0002a562bf33", Ove: "399d872b-594c-8138-acda-0002468eaab3", Raman: "3b5d872b-594c-816c-a540-0002ca104f85" };
 
@@ -383,6 +385,60 @@ async function pocketSync(who: string) {
   return { added, updated, waiting, checked: mine.length, note };
 }
 
+// ---------- push-varsler ----------
+async function vapid() {
+  const { data } = await admin.from("kontroll_config").select("name,value").in("name", ["VAPID_PUBLIC", "VAPID_PRIVATE"]);
+  const m = Object.fromEntries((data || []).map((r: any) => [r.name, r.value]));
+  if (m.VAPID_PUBLIC && m.VAPID_PRIVATE) return { pub: m.VAPID_PUBLIC, priv: m.VAPID_PRIVATE };
+  const k = webpush.generateVAPIDKeys(); // lages én gang og lagres bare i databasen
+  await admin.from("kontroll_config").upsert([{ name: "VAPID_PUBLIC", value: k.publicKey }, { name: "VAPID_PRIVATE", value: k.privateKey }]);
+  return { pub: k.publicKey, priv: k.privateKey };
+}
+async function pushTo(subs: any[], msg: { title: string; body?: string; url?: string; tag?: string }) {
+  const k = await vapid(); webpush.setVapidDetails("mailto:john@insiqt.ai", k.pub, k.priv);
+  let ok = 0; const errors: string[] = [];
+  for (const s of subs) {
+    try {
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(msg), { TTL: 86400 });
+      ok++; await admin.from("push_subscriptions").update({ last_ok_at: new Date().toISOString(), last_error: null }).eq("id", s.id);
+    } catch (e: any) {
+      const code = e?.statusCode || 0; errors.push(`${code || ""} ${String(e?.body || e?.message || e).slice(0, 120)}`.trim());
+      if (code === 404 || code === 410) await admin.from("push_subscriptions").delete().eq("id", s.id);
+      else await admin.from("push_subscriptions").update({ last_error: String(e?.message || e).slice(0, 200) }).eq("id", s.id);
+    }
+  }
+  return { ok, errors };
+}
+
+// ---------- Jarvis ----------
+async function jarvis(text: string, history: any[]) {
+  const [ctx, dl] = await Promise.all([buildContext(8), admin.from("deadlines").select("id,title,due_date").is("done_at", null)]);
+  const system = `Du er Jarvis i Insiqt-kontrollsenteret. Du svarer John eller Ove kort på norsk bokmål (1–4 setninger) og foreslår handlinger når de ber om det.
+Svar KUN med gyldig JSON: {"svar":"…","handlinger":[…]}
+Mulige handlinger (bruk bare disse, og bare når brukeren ber om noe som skal gjøres):
+{"type":"oppgave","tittel":"…","du_skal":"Du skal …","eier":"John|Ove|Raman|","frist":"YYYY-MM-DD|null","omrade":"Drift|Salg|Webplattform|App|Nettside|Integrasjon|Juridisk"}
+{"type":"bug","name":"kort engelsk tittel (norsk stikkord)","hvor":"Webplattform|Sjåførapp iOS|Sjåførapp Android|Nettside|Integrasjon|Eksport/rapport|Annet","alv":"Blokkerer|Alvorlig|Irriterende|Kosmetisk","pri":"P1 Haster|P2 Viktig|P3 Normal|P4 Lav","did":"…","exp":"…","got":"…","en":"2–3 setninger på engelsk til Raman"}
+{"type":"kundebehov","kunde":"…","behov":"…","kategori":"integrasjon|modul|funksjon|rapport|annet","prioritet":"ma|bor|kjekt","dekning":"dekket|delvis|mangler"}
+{"type":"frist","tittel":"…","dato":"YYYY-MM-DD","kategori":"skatt|selskap|avtale|nokkel|forsikring|annet","eier":"John|Ove"}
+{"type":"frist_ferdig","id":"id fra fristlisten","tittel":"…"}
+{"type":"pocket"}  (hent nye Pocket-samtaler)
+{"type":"rapport"} (lag fredagsrapporten)
+{"type":"driftssjekk"}
+{"type":"apne","fane":"oversikt|ai|piloter|pipeline|okonomi|signering|styre|oppgaver|moter|dokumenter|integrasjoner|nettside|branding|drift|varsler|systemer"}
+Regler: Du kan aldri sende e-post eller meldinger, publisere nettsiden, slette noe, melde til Datatilsynet eller endre Insiqt-plattformen – si det hvis noen ber om det. Ikke finn på datoer, priser eller navn. Er noe uklart, spør i "svar" og la handlinger være tom. Brukeren må trykke «Utfør» på hver handling. ${SAFETY}
+Dagens dato: ${new Date().toISOString().slice(0, 10)} (${new Date().toLocaleDateString("nb-NO", { weekday: "long" })}).
+${FACTS}
+Åpne frister med id: ${(dl.data || []).map((x: any) => `${x.id}: ${x.title} (${x.due_date || "uten dato"})`).join("; ")}
+
+# Data
+${ctx}`;
+  const msgs = (Array.isArray(history) ? history.slice(-6) : []).filter((m: any) => ["user", "assistant"].includes(m.role) && m.content).map((m: any) => ({ role: m.role, content: trunc(m.content, 2000) }));
+  msgs.push({ role: "user", content: trunc(text, 2000) });
+  const r = await claude(system, msgs, 1200);
+  try { const j = parseJSON(r.text); return { svar: String(j.svar || ""), handlinger: Array.isArray(j.handlinger) ? j.handlinger.slice(0, 6) : [] }; }
+  catch { return { svar: r.text.slice(0, 1500), handlinger: [] }; }
+}
+
 // ---------- AI (Claude) ----------
 const FACTS = `Faste fakta om Insiqt.AI AS (org.nr. 920 298 796):
 - Null betalende kunder og null inntekt. Tre piloter som ikke betaler: O Myren Transport, Oslo Minibuss AS, Bjørnars Transport. Ingen har signert pilotavtale eller DPA.
@@ -587,6 +643,21 @@ Deno.serve(async (req) => {
       return json(await aiMeeting(text, title, String(body.company || "")));
     }
     if (a === "ai.bug") { const t = String(body.text || "").trim(); if (!t) return json({ error: "Beskriv feilen." }, 400); return json(await aiBug(t, String(body.link || ""))); }
+    if (a === "notion.custflag") {
+      need("NOTION_TOKEN", "Notion-tilgang");
+      const prop = ({ pilotavtale: "Pilotavtale signert", dpa: "DPA signert", kundeavtale: "Kundeavtale signert", sla: "SLA vedlagt" } as Record<string, string>)[body.doc];
+      if (!prop || !body.id) return json({ error: "Ugyldig avtaletype." }, 400);
+      await notion(`/pages/${body.id}`, { properties: { [prop]: { checkbox: !!body.value } } }, "PATCH");
+      return json({ ok: true });
+    }
+    if (a === "push.config") return json({ publicKey: (await vapid()).pub });
+    if (a === "push.test") {
+      const { data: subs } = await admin.from("push_subscriptions").select("*").eq("user_email", who);
+      if (!subs?.length) return json({ error: "Ingen enheter er koblet til varsler for deg ennå." }, 400);
+      const r = await pushTo(subs, { title: "Testvarsel fra Insiqt", body: "Varslene virker på denne enheten.", url: "/kontroll.html#varsler", tag: "test" });
+      return json({ sent: r.ok, total: subs.length, errors: r.errors });
+    }
+    if (a === "jarvis") { const t = String(body.text || "").trim(); if (!t) return json({ error: "Si eller skriv hva du vil." }, 400); return json(await jarvis(t, body.history || [])); }
     if (a === "pocket.sync") { need("POCKET_API_KEY", "Pocket"); return json(await pocketSync(who)); }
     if (a === "ai.weekly") { return json(await aiWeekly(who)); }
     if (a === "uptime") {
