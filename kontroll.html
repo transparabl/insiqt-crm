@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795480804">
+<html lang="no" data-build="1795481764">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,6 +53,14 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
 .keybox{border:1px solid var(--line);border-radius:var(--r);padding:14px;background:#F8FAFC;margin:14px 0}
 .keybox.ok{border-color:#A7F3D0;background:#F0FDF4}.keybox.bad{border-color:#FECACA;background:#FEF2F2}
 .bar{height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ok)}
+.tree{list-style:none;margin:0;padding:0}.tree .tree{padding-left:18px;border-left:1px solid var(--line);margin-left:9px}
+.tree details>summary{list-style:none;cursor:pointer;display:flex;gap:8px;align-items:center;padding:6px 4px;border-radius:6px}
+.tree details>summary::-webkit-details-marker{display:none}.tree details>summary:hover{background:#F1F5F9}
+.tree details>summary::before{content:"▸";color:var(--mute);width:10px}.tree details[open]>summary::before{content:"▾"}
+.tree .file{display:flex;gap:8px;align-items:center;padding:5px 4px 5px 22px}.tree .file a{color:var(--ink);text-decoration:none}.tree .file a:hover{text-decoration:underline}
+.tree .cnt{font-size:12px;color:var(--mute)}.tree .open{margin-left:auto;font-size:12px}
+.agr{width:100%;border-collapse:collapse;font-size:14px}.agr th,.agr td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}.agr th{font-size:12px;color:var(--mute);font-weight:600}
+.agr td.c{text-align:center}
 .kpi b{display:block;font-size:34px;font-weight:800;letter-spacing:-1px}.kpi span{color:var(--mute);font-size:13px}.kpi.bad b{color:var(--bad)}
 .list{list-style:none;margin:0;padding:0}
 .row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -102,7 +110,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
   <div style="display:flex;align-items:center"><span class="logo">Insiqt<span>.ai</span></span><span class="tag">Kontrollsenter</span></div>
   <div class="right"><span class="note" style="color:#7E95B5" id="who"></span><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart ↗</a><button class="sm" id="logout">Logg ut</button></div>
 </header>
-<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#systemer">Systemer og dokumenter</a><a href="#branding">Branding</a></nav>
+<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#dokumenter">Dokumenter</a><a href="#systemer">Systemer</a><a href="#branding">Branding</a></nav>
 <main>
   <div id="setup" class="card hide" style="margin-bottom:16px;border-color:var(--warn)"></div>
 
@@ -159,13 +167,17 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <div class="grid g2" style="margin-top:16px"><div class="card"><h3>Oppfølging</h3><ul class="list" id="pipeList"></ul></div><div class="card"><h3>Tilbud</h3><ul class="list" id="offerList"></ul></div></div>
   </section>
 
+  <section data-v="dokumenter" class="hide">
+    <div class="framebar" style="justify-content:space-between"><h2 style="margin:0">Dokumenter</h2><span class="note" id="docSync"></span></div>
+    <div class="framebar"><input type="search" id="docQ" placeholder="Søk i alle dokumenter i Drive og Notion" aria-label="Søk i dokumenter" style="flex:1;min-width:220px">
+      <select id="docF" aria-label="Visning" style="width:auto"><option value="">Mapper som i Google Drive</option><option value="avtaler">Bare avtaler</option><option value="mote">Møtereferater</option><option value="notion">Notion</option><option value="nye">Sist endret</option></select>
+      <a class="btn sm" href="https://drive.google.com/" target="_blank" rel="noopener">Google Drive ↗</a></div>
+    <div class="card" id="agrCard"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Avtaleoversikt</h3><span class="note">Grønn = dokument ligger i mappen · Gul = bare utkast i Notion · Rød = mangler</span></div><div id="agr"></div></div>
+    <div class="card" style="margin-top:16px"><div id="docs"></div></div>
+  </section>
+
   <section data-v="systemer" class="hide">
     <h2>Systemer</h2><div class="sys" id="sys"></div>
-    <div class="framebar" style="margin-top:28px;justify-content:space-between"><h2 style="margin:0">Dokumenter</h2><span class="note" id="docSync"></span></div>
-    <div class="framebar"><input type="search" id="docQ" placeholder="Søk i alle dokumenter i Drive og Notion" aria-label="Søk i dokumenter" style="flex:1;min-width:220px">
-      <select id="docF" aria-label="Filter" style="width:auto"><option value="">Alle</option><option value="drive">Google Drive</option><option value="notion">Notion</option><option value="mote">Møtereferater</option><option value="avtale">Avtaler og vilkår</option><option value="mappe">Mapper</option></select>
-      <a class="btn sm" href="https://drive.google.com/" target="_blank" rel="noopener">Google Drive ↗</a></div>
-    <div class="card"><ul class="list" id="docs"></ul></div>
   </section>
 
   <section data-v="integrasjoner" class="hide">
@@ -314,13 +326,66 @@ async function loadDocs() {
   if (d.error) S.err.docs = d.error.message; else { S.docs = d.data; delete S.err.docs; }
   S.sync = l.data || [];
 }
+const N = id => 'https://app.notion.com/p/' + id.replace(/-/g, '');
+/* Utkast i Notion per avtalemappe (mappe-id i Drive → Notion-side) */
+const DRAFTS = {
+  '1Z_huOhCTGKjff_TNP7N1YLDE0HiCr2K7': ['Pilotavtale (utkast v1.0)', N('40e08874-5714-812e-b269-d0a2a3cd7360')],
+  '1lhf6NF0kbEAd_upCA31G9VLb2j36lDPt': ['Abonnementsvilkår (utkast v1.0)', N('40e08874-5714-80b8-ad42-c6ad4ef691b3')],
+  '1y2xiPv9EXnyMHiUB-fsHLqg6G_s6pkW6': ['Databehandleravtale (utkast v1.0)', N('f5d08874-5714-823a-a76a-01b71af30c0d')],
+  '11lvVJy5t8XZqBcu3dmROfaMp74XGHb5_': ['Oppgave: lag SLA', N('3b708874-5714-8082-8d76-d18c791e86f9')],
+  '16-wCCK1ZYgDFGFV6vAqt2RyYIhesI4pz': ['Ordrebekreftelse (utkast v1.0)', N('40e08874-5714-81e8-8ba5-e09a50e91789')],
+  '1zcmWnWSJ0_2MLHPtwnXbHhYfDKF_ms3C': ['NDA (utkast v1.0)', N('3ed08874-5714-8020-999a-f9d47a831a6d')],
+  '1MNIG0Wy1KGhkdKBsF10q25wTBQ64nBxA': ['Samtykke referansekunde (utkast v1.0)', N('40e08874-5714-81da-b58d-d868f440f54c')],
+  '1V4O-aOzR-ggQXDP3nYn_oOzSGPKvs9Ty': ['Personvernerklæring (utkast v1.0)', N('40e08874-5714-8154-804e-c9bc6c81d429')],
+  '1M07HchJRA7JSRhf6ujcQS_DyCMuZ9g1x': ['Vilkår for sjåførappen (utkast v1.0)', N('40e08874-5714-8154-80c1-e8c25930bf4c')],
+  '1oAFP8tBiuvEizzja8iJy07IL4vF5nUW7': ['Personvernerklæring for sjåføren (utkast v1.0)', N('40e08874-5714-816e-aaad-ecd1cd38a700')],
+  '1nT2TjjdWv3aK20u8aZ7YU0kempsWGqzU': ['Veiledning kontrolltiltak (utkast v1.0)', N('40e08874-5714-81d6-b9cf-f9c05d395ff4')],
+  '1S5F8qZWnC8pG3_toGhFpIKFTknjKlSpy': ['Protokoll art. 30 (utkast v1.0)', N('40e08874-5714-8102-a896-e27715c4909c')],
+  '1AtX09l4vIOTBxi33h1yg2x4fpzQ2HDuY': ['Oppgave: lag aksjonæravtale John–Ove', N('40e08874-5714-8165-9f28-df2e62961565')],
+  '1xxug3MRHi1-dGiKLX1HmXRHOjbYqILLo': ['Oppgave: IP-overdragelse fra Raman', null],
+};
+/* Avtalegrupper: [overskrift, foreldremappe-id] – barna er avtaletypene */
+const AGR_GROUPS = [['Kundeavtaler – maler og vilkår', '1JxVYymn1boBma5Oc8HJAmVVlD-H0Q6tn'], ['Sjåførappen', '1aa3wxLG3u_n0szjRo7CgCjKNN465AKAW'], ['Personvern (DPA)', '1TF_-erxmCW88lDVBQw0ji-n_eryclqzs'], ['Selskap og eierskap', '1gf1Oil9FYuV6vbC9ILmAKjxww9khC4JA'], ['Ansatte og innleide', '1clRhftPGR_kze7ZmYhGD-K1poy4RD5rZ'], ['Immaterielle rettigheter', '11tcRd6kLIJPlYSDjOmTUa_fBq4cpm9ac'], ['Salg og partner', '1uOK1EkFf5Juke5m9tQ8i70DFu4FUOL4w']];
+const MATRIX = [['Signert per kunde', '1t829-YyL-83dvGo4avG88JOzdO6BfFBf'], ['Leverandører', '13_uuAU0YGJy4VUSElRBLbvG86iKa1OZu']];
+const cmpNb = (a, b) => a.title.localeCompare(b.title, 'nb', { numeric: true });
+function docIndex() {
+  const D = (S.docs || []).filter(x => x.source === 'drive'), byParent = {}, byId = {};
+  D.forEach(x => { byId[x.id] = x; (byParent[x.parent_id || ''] = byParent[x.parent_id || ''] || []).push(x); });
+  const files = id => (byParent[id] || []).reduce((n, c) => n + (c.kind === 'mappe' ? files(c.id) : 1), 0);
+  return { D, byParent, byId, files };
+}
+function agrStatus(ix, id) { const n = ix.files(id), dr = DRAFTS[id]; return n ? ['ok', `${n} dok.`] : dr ? ['warn', 'Bare utkast'] : ['bad', 'Mangler']; }
+function renderAgr(ix) {
+  const sec = AGR_GROUPS.map(([h, pid]) => { const kids = (ix.byParent[pid] || []).filter(x => x.kind === 'mappe').sort(cmpNb); if (!kids.length) return '';
+    return `<tr><th colspan="3" style="padding-top:14px;color:var(--ink)">${esc(h)}</th></tr>` + kids.map(k => { const [c, t] = agrStatus(ix, k.id), dr = DRAFTS[k.id];
+      return `<tr><td><a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.title)}</a></td><td><span class="chip ${c}">${t}</span></td><td>${dr ? (dr[1] ? `<a href="${esc(dr[1])}" target="_blank" rel="noopener">${esc(dr[0])} ↗</a>` : esc(dr[0])) : ''}</td></tr>`; }).join(''); }).join('');
+  const mat = MATRIX.map(([h, pid]) => { const rows = (ix.byParent[pid] || []).filter(x => x.kind === 'mappe').sort(cmpNb); if (!rows.length) return '';
+    const cols = [...new Set(rows.flatMap(r => (ix.byParent[r.id] || []).filter(x => x.kind === 'mappe').map(x => x.title)))].sort((a, b) => a.localeCompare(b, 'nb'));
+    return `<h3 style="margin-top:18px">${esc(h)}</h3><div style="overflow-x:auto"><table class="agr"><tr><th></th>${cols.map(c => `<th class="c">${esc(c)}</th>`).join('')}</tr>` + rows.map(r => `<tr><td><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a></td>${cols.map(c => { const f = (ix.byParent[r.id] || []).find(x => x.kind === 'mappe' && x.title === c); if (!f) return '<td class="c">–</td>'; const n = ix.files(f.id); return `<td class="c"><a href="${esc(f.url)}" target="_blank" rel="noopener" title="Åpne mappen i Drive"><span class="chip ${n ? 'ok' : 'bad'}">${n ? '✓ ' + n : '✕'}</span></a></td>`; }).join('')}</tr>`).join('') + '</table></div>'; }).join('');
+  $('#agr').innerHTML = `<table class="agr"><tr><th>Avtaletype</th><th>Status</th><th>Utkast i Notion</th></tr>${sec}</table>${mat}`;
+}
+function treeHTML(ix, pid, depth, openIds) {
+  const kids = (ix.byParent[pid] || []).slice().sort((a, b) => (b.kind === 'mappe') - (a.kind === 'mappe') || cmpNb(a, b));
+  return `<ul class="tree">${kids.map(k => k.kind === 'mappe'
+    ? `<li><details ${depth < 1 || openIds.has(k.id) ? 'open' : ''}><summary>📁 <b>${esc(k.title)}</b> <span class="cnt">${ix.files(k.id) || 'tom'}</span>${DRAFTS[k.id] && !ix.files(k.id) ? '<span class="chip warn">utkast i Notion</span>' : ''}<a class="open" href="${esc(k.url)}" target="_blank" rel="noopener">Drive ↗</a></summary>${treeHTML(ix, k.id, depth + 1, openIds)}</details></li>`
+    : `<li class="file">${{ doc: '📄', pdf: '📕', ark: '📊', bilde: '🖼', mote: '📝' }[k.kind] || '📄'} <a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.title)}</a><span class="cnt">${k.modified_at ? esc(fmt(k.modified_at)) : ''}</span></li>`).join('')}</ul>`;
+}
 function renderDocs() {
-  const q = ($('#docQ').value || '').trim().toLowerCase(), f = $('#docF').value;
-  const L = (S.docs || []).filter(x => (!f || x.source === f || x.kind === f) && (!q || (x.title + ' ' + (x.path || '')).toLowerCase().includes(q)))
-    .sort((a, b) => (a.kind === 'mappe') - (b.kind === 'mappe') || String(b.modified_at || '').localeCompare(String(a.modified_at || '')));
-  $('#docs').innerHTML = (S.err.docs ? `<li class="err">${esc(S.err.docs)}</li>` : '') + (L.length ? L.slice(0, 150).map(x => `<li class="row"><span class="chip ${x.source === 'drive' ? '' : 'mute'}">${esc(DKIND[x.kind] || x.kind || '')}</span><div><b>${esc(x.title)}</b><div class="meta"><span>${esc(x.path || '')}</span>${x.modified_at ? `<span>Endret ${esc(fmt(x.modified_at))}</span>` : ''}</div></div><div class="acts"><a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Åpne ↗</a></div></li>`).join('') : '<li class="empty">Ingen treff.</li>');
+  const q = ($('#docQ').value || '').trim().toLowerCase(), f = $('#docF').value, ix = docIndex();
   const sy = Object.fromEntries((S.sync || []).map(r => [r.source, r]));
   $('#docSync').textContent = sy.drive ? `Drive og Notion sist hentet ${fmt(sy.drive.synced_at)}` : '';
+  if (S.err.docs) { $('#docs').innerHTML = `<p class="err">${esc(S.err.docs)}</p>`; return; }
+  $('#agrCard').classList.toggle('hide', !!q || (f && f !== 'avtaler'));
+  renderAgr(ix);
+  const row = x => `<li class="row"><span class="chip ${x.source === 'drive' ? '' : 'mute'}">${esc(DKIND[x.kind] || x.kind || '')}</span><div><b>${esc(x.title)}</b><div class="meta"><span>${esc(x.path || '')}</span>${x.modified_at ? `<span>Endret ${esc(fmt(x.modified_at))}</span>` : ''}</div></div><div class="acts"><a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">Åpne ↗</a></div></li>`;
+  if (q) { const L = (S.docs || []).filter(x => (x.title + ' ' + (x.path || '')).toLowerCase().includes(q)).sort((a, b) => (a.kind === 'mappe') - (b.kind === 'mappe') || cmpNb(a, b)); $('#docs').innerHTML = `<h3>Treff for «${esc(q)}»</h3><ul class="list">${L.map(row).join('') || '<li class="empty">Ingen treff.</li>'}</ul>`; return; }
+  if (f === 'mote') { $('#docs').innerHTML = `<h3>Møtereferater</h3><ul class="list">${(S.docs || []).filter(x => x.kind === 'mote').map(row).join('') || '<li class="empty">Ingen.</li>'}</ul>`; return; }
+  if (f === 'notion') { const L = (S.docs || []).filter(x => x.source === 'notion').sort((a, b) => String(a.path).localeCompare(String(b.path), 'nb') || cmpNb(a, b)); $('#docs').innerHTML = `<h3>Notion</h3><ul class="list">${L.map(row).join('')}</ul>`; return; }
+  if (f === 'nye') { const L = (S.docs || []).filter(x => x.kind !== 'mappe').sort((a, b) => String(b.modified_at || '').localeCompare(String(a.modified_at || ''))); $('#docs').innerHTML = `<h3>Sist endret</h3><ul class="list">${L.slice(0, 60).map(row).join('')}</ul>`; return; }
+  if (f === 'avtaler') { $('#docs').innerHTML = `<h3>Avtaler i Notion (utkast)</h3><ul class="list">${(S.docs || []).filter(x => x.kind === 'avtale').sort(cmpNb).map(row).join('')}</ul>`; return; }
+  const roots = Object.keys(ix.byParent).filter(pid => !ix.byId[pid]);
+  const open = new Set(['1rJeQPJ4WqTCurGvYWXAle0kANTO8JNam']);
+  $('#docs').innerHTML = `<div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">📁 Min disk (john@insiqt.ai)</h3><span class="note">Sortert som i Drive: mapper først, så alfabetisk</span></div>` + roots.map(r => treeHTML(ix, r, 0, open)).join('');
 }
 function renderSystems() { $('#sys').innerHTML = SYSTEMS.map(card).join(''); renderDocs(); }
 $('#docQ').addEventListener('input', renderDocs); $('#docF').addEventListener('change', renderDocs);
@@ -515,7 +580,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.krm) { if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Sikker?'; return; } try { await api('secret.remove', { name: t.dataset.krm }); toast('Nøkkelen er fjernet'); } catch (err) { toast(err.message); } await loadStatus(); render(); }
 });
 
-const VIEWS = ['oversikt', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'systemer', 'branding'];
+const VIEWS = ['oversikt', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'dokumenter', 'systemer', 'branding'];
 function route() { const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt'; if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); } document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
 window.addEventListener('hashchange', route);
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
