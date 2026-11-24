@@ -91,7 +91,21 @@ document.querySelectorAll('.nav-item[data-view]').forEach((btn) => {
   btn.addEventListener('click', () => {
     showView(btn.dataset.view);
     refreshAll();
+    document.body.classList.remove('navopen');
+    $('#menuBtn')?.setAttribute('aria-expanded', 'false');
   });
+});
+
+// Mobilmeny: sidemenyen glir inn fra venstre
+$('#menuBtn')?.addEventListener('click', () => {
+  const open = document.body.classList.toggle('navopen');
+  $('#menuBtn').setAttribute('aria-expanded', String(open));
+});
+document.addEventListener('click', (e) => {
+  if (document.body.classList.contains('navopen') && !e.target.closest('#sidebar,#menuBtn')) document.body.classList.remove('navopen');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.body.classList.contains('navopen')) { document.body.classList.remove('navopen'); $('#menuBtn')?.focus(); }
 });
 
 initAuth();

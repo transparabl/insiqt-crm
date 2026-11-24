@@ -6,6 +6,8 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Insiqt CRM — Kart</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -139,13 +141,21 @@ padding:26px 30px;max-width:420px;text-align:center;display:none;
 #sok{width:130px}
 .rknapp{width:42px;height:42px}
 }
+/* Nytt design (nov 2026): samme farger og skrift som CRM og kontrollsenter */
+:root{--border:#DCE3EC;--text-secondary:#5B6B82;--success:#0E9F5B;--danger:#D33A3A;--warning:#E2A40B;--night:#0F172A;--disp:'Barlow Semi Condensed',Inter,system-ui,sans-serif}
+#laas{background:var(--night)}
+#laas .boks{border:0;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+#laas h1{display:flex;align-items:center;gap:10px;font:700 26px/1 var(--disp);margin-bottom:8px}
+#laas input:focus,#sok:focus{box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.pille b{font:700 16px/1 var(--disp)}
+#geo h3{font-family:var(--disp);font-size:18px}
 </style>
 </head>
 <body>
 
 <div id="laas">
   <div class="boks">
-    <h1>Insiqt CRM — Kart</h1>
+    <h1><svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0F172A"/><rect x="14" y="7" width="4" height="4" rx="2" fill="#2563EB"/><rect x="14" y="13" width="4" height="12" rx="2" fill="#2563EB"/></svg>Insiqt kart</h1>
     <p>Logg inn for å se kundene i kartet</p>
     <input type="email" id="lEpost" placeholder="E-post" autocomplete="username">
     <input type="password" id="lPassord" placeholder="Passord" autocomplete="current-password">

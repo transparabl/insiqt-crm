@@ -2,7 +2,12 @@
 <html lang="no">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F172A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F172A'/%3E%3Crect x='14' y='7' width='4' height='4' rx='2' fill='%232563EB'/%3E%3Crect x='14' y='13' width='4' height='12' rx='2' fill='%232563EB'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="/brand/app-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Insiqt CRM</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,7 +16,7 @@
 <!-- ─── Login ─── -->
 <div id="loginScreen">
   <div class="login-card">
-    <h1>Insiqt CRM</h1>
+    <h1><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0F172A"/><rect x="14" y="7" width="4" height="4" rx="2" fill="#2563EB"/><rect x="14" y="13" width="4" height="12" rx="2" fill="#2563EB"/></svg>Insiqt CRM</h1>
     <p class="sub">Logg inn for å se salgspipeline</p>
     <form id="loginForm">
       <div class="field">
@@ -30,30 +35,33 @@
 
 <!-- ─── App shell ─── -->
 <div id="app">
-  <aside id="sidebar">
+  <aside id="sidebar" aria-label="Hovedmeny">
     <div class="sidebar-top">
-      <div class="brand-mini">
-        <div class="brand-mark">I</div>
-        <div class="brand-title">Insiqt CRM</div>
-      </div>
+      <div class="brand-mini"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1E2A44"/><rect x="14" y="7" width="4" height="4" rx="2" fill="#2563EB"/><rect x="14" y="13" width="4" height="12" rx="2" fill="#2563EB"/><rect x="10" y="13" width="4" height="2" rx="1" fill="#2563EB" opacity=".5"/><rect x="18" y="23" width="4" height="2" rx="1" fill="#2563EB" opacity=".5"/></svg><div><div class="brand-title">Insiqt<span>.ai</span></div><span class="brand-sub">CRM</span></div></div>
     </div>
 
     <nav class="sidebar-nav">
-      <button class="nav-item active" id="navDashboard" data-view="dashboard">🏠 Dashboard</button>
-      <button class="nav-item" id="navPipeline" data-view="pipeline">📊 Pipeline</button>
-      <button class="nav-item" id="navSalg" data-view="salg">🏆 Salg</button>
-      <button class="nav-item" id="navOnboarding" data-view="onboarding">🚀 Onboarding</button>
-      <button class="nav-item" id="navKunder" data-view="kunder">🏢 Kunder</button>
-      <button class="nav-item" id="navRingeliste" data-view="ringeliste">📞 Ringeliste</button>
-      <a class="nav-item" href="kontroll.html">🧭 Kontrollsenter</a>
-      <a class="nav-item" href="kart.html" target="_blank" rel="noopener">🗺 Kart ↗</a>
-      <a class="nav-item" href="https://insiqt-presentasjon.vercel.app" target="_blank" rel="noopener">🎤 Presentasjon ↗</a>
-      <a class="nav-item" href="https://insiqt-salg.vercel.app" target="_blank" rel="noopener">💼 Salgsverktøy ↗</a>
+      <div class="nav-grp"><span>Salg</span>
+        <button class="nav-item active" id="navDashboard" data-view="dashboard">Dashboard</button>
+        <button class="nav-item" id="navPipeline" data-view="pipeline">Pipeline</button>
+        <button class="nav-item" id="navRingeliste" data-view="ringeliste">Ringeliste</button>
+        <button class="nav-item" id="navSalg" data-view="salg">Salg</button>
+      </div>
+      <div class="nav-grp"><span>Kunder</span>
+        <button class="nav-item" id="navOnboarding" data-view="onboarding">Onboarding</button>
+        <button class="nav-item" id="navKunder" data-view="kunder">Kunder</button>
+      </div>
+      <div class="nav-grp"><span>Verktøy</span>
+        <a class="nav-item" href="kontroll.html">Kontrollsenter</a>
+        <a class="nav-item" href="kart.html" target="_blank" rel="noopener">Kart <span class="ext">↗</span></a>
+        <a class="nav-item" href="https://insiqt-presentasjon.vercel.app" target="_blank" rel="noopener">Presentasjon <span class="ext">↗</span></a>
+        <a class="nav-item" href="https://insiqt-salg.vercel.app" target="_blank" rel="noopener">Salgsverktøy <span class="ext">↗</span></a>
+      </div>
     </nav>
 
     <div class="sidebar-bottom">
-      <a class="link-chip" href="https://cal.com/insiqt/30min" target="_blank" rel="noopener">📅 Book demo</a>
-      <a class="link-chip" href="mailto:contact@insiqt.ai">✉️ contact@insiqt.ai</a>
+      <a class="link-chip" href="https://cal.com/insiqt/30min" target="_blank" rel="noopener">Book demo ↗</a>
+      <a class="link-chip" href="mailto:contact@insiqt.ai">contact@insiqt.ai</a>
       <div class="sidebar-user">
         <span class="user-chip" id="userEmail"></span>
         <button class="btn ghost" id="logoutBtn">Logg ut</button>
@@ -62,6 +70,7 @@
   </aside>
 
   <main id="mainContent">
+    <div id="crmTop"><button id="menuBtn" aria-label="Åpne menyen" aria-expanded="false">Meny</button><b>Insiqt CRM</b></div>
     <div id="dashboardView" class="view active">
       <h1 class="view-title">Dashboard</h1>
       <div class="dashboard" id="dashStats"></div>
@@ -141,7 +150,7 @@
           <option value="konvertert">Konvertert til lead</option>
           <option value="alle">Alle</option>
         </select>
-        <button class="btn" id="startRinging">📞 Start ringerunde</button>
+        <button class="btn" id="startRinging">Start ringerunde</button>
       </div>
       <div id="ringeListe" class="list"></div>
       <div id="ringeMer" style="text-align:center;margin-top:12px"></div>

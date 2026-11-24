@@ -12,7 +12,7 @@ const ONBOARDING_STEG = [
   ['ny', 'Ny onboarding'],
   ['kontaktet', 'Kontaktet'],
   ['mote_avtalt', 'Onboarding-møte avtalt'],
-  ['oppsett', 'Integrasjoner/oppsett'],
+  ['oppsett', 'Integrasjoner og oppsett'],
   ['opplaering', 'Opplæring'],
   ['ferdig', 'Ferdig'],
 ];
