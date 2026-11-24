@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795477308">
+<html lang="no" data-build="1795479517">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -428,6 +428,7 @@ function keyHTML(g) {
   return `<div class="keybox ${cls}"><div class="framebar" style="justify-content:space-between;margin:0"><b>${k.set ? (k.test_ok === false ? '✕ Nøkkelen feiler' : '✓ Tilkoblet') : 'Lim inn nøkkelen'}</b>${k.set ? `<div class="acts"><button class="sm" data-ktest="${g.secret_name}">Test på nytt</button>${k.source === 'kontrollsenter' ? `<button class="sm bad" data-krm="${g.secret_name}">Fjern</button>` : ''}</div>` : ''}</div>
     <p class="note" style="margin:6px 0">${info}${k.test_message ? ` ${esc(k.test_message)}` : ''}</p>
     <form data-kform="${g.secret_name}" class="framebar" style="margin:8px 0 0"><input type="password" autocomplete="off" spellcheck="false" placeholder="${k.set ? 'Lim inn ny nøkkel for å bytte' : 'Lim inn nøkkelen her'}" aria-label="Nøkkel for ${esc(g.name)}" style="flex:1;min-width:220px"><button class="pri">Lagre og test</button></form>
+    <div class="framebar" style="margin:8px 0 0"><button type="button" class="pri" data-kpaste="${g.secret_name}">📋 Lim inn fra utklippstavlen og test</button><span class="note">Kopier nøkkelen først, så trykk her.</span></div>
     <p class="note" style="margin:6px 0 0">Nøkkelen sendes kryptert til serveren, testes mot tjenesten og lagres bare hvis den virker. Den vises aldri igjen her, og ligger ikke i Notion.</p><div class="note" data-kmsg="${g.secret_name}"></div></div>`;
 }
 function guideHTML(g) {
@@ -474,6 +475,12 @@ document.addEventListener('submit', async e => {
 });
 document.addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.kpaste) {
+    const name = t.dataset.kpaste, f = document.querySelector(`[data-kform="${name}"]`), msg = document.querySelector(`[data-kmsg="${name}"]`);
+    try { const v = (await navigator.clipboard.readText()).trim(); if (!v) { msg.innerHTML = '<p class="err">Utklippstavlen er tom. Trykk kopier-ikonet ved nøkkelen først.</p>'; return; } f.querySelector('input').value = v; f.requestSubmit(); }
+    catch (_) { msg.innerHTML = '<p class="err">Nettleseren slapp ikke til utklippstavlen. Klikk i feltet over, trykk Cmd+V og så «Lagre og test».</p>'; f.querySelector('input').focus(); }
+    return;
+  }
   if (t.dataset.ktest) { t.disabled = true; try { const r = await api('secret.test', { name: t.dataset.ktest }); toast(r.ok ? 'Virker' : r.message); } catch (err) { toast(err.message); } await loadStatus(); renderIG(); }
   if (t.dataset.krm) { if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Sikker?'; return; } try { await api('secret.remove', { name: t.dataset.krm }); toast('Nøkkelen er fjernet'); } catch (err) { toast(err.message); } await loadStatus(); render(); }
 });
