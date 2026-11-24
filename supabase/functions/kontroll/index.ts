@@ -440,8 +440,9 @@ ${ctx}`;
 }
 
 // ---------- AI (Claude) ----------
-const FACTS = `Faste fakta om Insiqt.AI AS (org.nr. 920 298 796):
-- Null betalende kunder og null inntekt. Tre piloter som ikke betaler: O Myren Transport, Oslo Minibuss AS, Bjørnars Transport. Ingen har signert pilotavtale eller DPA.
+// Standardfakta. Kan overstyres uten ny deploy med raden AI_FACTS i kontroll_config.
+let FACTS = `Faste fakta om Insiqt.AI AS (org.nr. 920 298 796):
+- Null betalende kunder og null inntekt. Tre piloter som ikke betaler: O Myren Transport, Oslo Minibuss AS, Sverre Lien Transport (erstattet Bjørnars Transport i november 2026). Ingen har signert pilotavtale eller DPA.
 - NOR Logistikk er Ove Olsens eget selskap: nærstående part, verken kunde eller pilot. Transparabl Ltd er Johns selskap: også nærstående.
 - Personer: John Kalvadet (daglig leder), Ove Olsen (styreleder), Raman Bhatia (utvikler, utenfor EØS).
 - Plattformen kjører på Microsoft Azure, Norway East. Live integrasjoner: Duett og Scania (Scania midlertidig via pilotkundens innlogging). Timesystemet heter IDHA.
@@ -584,6 +585,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const a = body.action as string;
     await loadSecrets();
+    try { const { data: f } = await admin.from("kontroll_config").select("value").eq("name", "AI_FACTS").maybeSingle(); if (f?.value) FACTS = f.value; } catch { /* bruk standardfakta */ }
     const need = (k: string, label: string) => { if (!env(k)) throw new Error(`${label} er ikke koblet til ennå. Se Integrasjoner i kontrollsenteret.`); };
 
     if (a === "status") return json({ github: !!env("GITHUB_TOKEN"), anthropic: !!env("ANTHROPIC_API_KEY"), notion: !!env("NOTION_TOKEN"), pocket: !!env("POCKET_API_KEY"), user: who, keys: await secretStatus() });

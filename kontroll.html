@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795515466">
+<html lang="no" data-build="1795516014">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -303,7 +303,7 @@ details>summary{cursor:pointer}
     <p class="note">Bruker Claude med dataene i kontrollsenteret: frister, kostnader, integrasjoner, onboarding, kalender, Pocket-samtaler og tilbud. Den kan bare lese. Ingenting lagres, sendes eller endres uten at du trykker på en knapp.</p>
     <div class="card"><h3>Spør kontrollsenteret</h3>
       <div id="askLog" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px"></div>
-      <form id="askForm" class="framebar" style="margin:0;align-items:flex-end"><textarea id="askQ" rows="2" placeholder="F.eks. Hva mangler før Bjørnars kan komme i gang?" style="flex:1;min-height:52px"></textarea><button class="pri" id="askBtn">Spør</button></form>
+      <form id="askForm" class="framebar" style="margin:0;align-items:flex-end"><textarea id="askQ" rows="2" placeholder="F.eks. Hva mangler før Sverre Lien kan komme i gang?" style="flex:1;min-height:52px"></textarea><button class="pri" id="askBtn">Spør</button></form>
       <div class="acts" style="justify-content:flex-start;margin-top:8px" id="askSugg"></div></div>
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Etter et møte</h3><p class="note">Velg en Pocket-samtale eller lim inn et referat. Du får oppsummering, oppgaver, kundebehov og et utkast til oppfølgings-e-post.</p>
@@ -991,7 +991,7 @@ document.addEventListener('click', async e => {
 const D = { deadlines: [], subscriptions: [], accounts: [], incidents: [], company_needs: [], eco: { offers: [], ring: [] }, up: null, upAt: 0 };
 const nok = n => n == null || isNaN(n) ? '–' : Math.round(n).toLocaleString('nb-NO') + ' kr';
 const toLocal = d => { if (!d) return ''; const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
-const PILOTS = ['O Myren Transport', 'Oslo Minibuss AS', 'Bjørnars Transport'];
+const PILOTS = ['O Myren Transport', 'Oslo Minibuss AS', 'Sverre Lien Transport'];
 const DL_CAT = [['selskap', 'Selskap'], ['skatt', 'Skatt og avgift'], ['nokkel', 'Nøkkel/token'], ['avtale', 'Avtale'], ['fornyelse', 'Fornyelse'], ['annet', 'Annet']];
 const DL_REC = [['ingen', 'Engang'], ['manedlig', 'Hver måned'], ['annenhver', 'Annenhver måned'], ['arlig', 'Hvert år']];
 const SUB_PER = [['maned', 'Per måned'], ['ar', 'Per år'], ['forbruk', 'Forbruk (anslag per måned)'], ['engang', 'Engangsbeløp']];
@@ -1211,7 +1211,7 @@ async function pocketSync(silent) {
   catch (e) { $('#convMsg').innerHTML = `<p class="err">Pocket: ${esc(e.message)}</p>`; }
   AI.syncing = false; renderAI();
 }
-const SUGG = ['Hva mangler før Bjørnars kan komme i gang?', 'Hvilke frister har vi de neste 30 dagene?', 'Hva er besluttet om Duett i møtene?', 'Hvilke integrasjoner er faktisk live?', 'Hva bør jeg ta opp med Raman denne uka?'];
+const SUGG = ['Hva mangler før Sverre Lien kan komme i gang?', 'Hvilke frister har vi de neste 30 dagene?', 'Hva er besluttet om Duett i møtene?', 'Hvilke integrasjoner er faktisk live?', 'Hva bør jeg ta opp med Raman denne uka?'];
 function renderAI() {
   if (!$('#askLog')) return;
   renderConv();
