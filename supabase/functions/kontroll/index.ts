@@ -40,6 +40,14 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+// Faste adresser for driftsstatus. Bare disse sjekkes, så funksjonen kan ikke brukes til å kalle vilkårlige adresser.
+const UPTIME: [string, string][] = [
+  ["Insiqt-plattformen (Azure)", "https://ca-insiqt-web-prod.ashyisland-4121c7a0.norwayeast.azurecontainerapps.io/"],
+  ["Nettsiden insiqt.ai", "https://insiqt.ai/"],
+  ["CRM og kontrollsenter", "https://insiqt-crm.vercel.app/"],
+  ["Salgsverktøyet", "https://insiqt-salg.vercel.app/"],
+  ["Presentasjon", "https://insiqt-presentasjon.vercel.app/"],
+];
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
 // ---------- GitHub ----------
@@ -362,6 +370,17 @@ Deno.serve(async (req) => {
       if (!["bug", "task"].includes(body.db)) return json({ error: "Ugyldig database." }, 400);
       await notion(`/pages/${body.id}`, { properties: { Status: { status: { name: body.status } } } }, "PATCH");
       return json({ ok: true });
+    }
+    if (a === "uptime") {
+      const results = await Promise.all(UPTIME.map(async ([name, url]) => {
+        const t0 = Date.now();
+        try {
+          const r = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(10000), headers: { "User-Agent": "Insiqt-kontrollsenter/1.0" } });
+          await r.body?.cancel();
+          return { name, url, ok: r.status < 500, code: r.status, ms: Date.now() - t0 };
+        } catch (e) { return { name, url, ok: false, code: 0, ms: Date.now() - t0, error: String((e as Error).message || e).slice(0, 160) }; }
+      }));
+      return json({ checked_at: new Date().toISOString(), results });
     }
     return json({ error: "Ukjent handling." }, 400);
   } catch (e) {

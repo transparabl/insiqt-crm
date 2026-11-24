@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795482346">
+<html lang="no" data-build="1795483025">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -110,7 +110,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
   <div style="display:flex;align-items:center"><span class="logo">Insiqt<span>.ai</span></span><span class="tag">Kontrollsenter</span></div>
   <div class="right"><span class="note" style="color:#7E95B5" id="who"></span><a class="btn sm" href="index.html">CRM</a><a class="btn sm" href="kart.html" target="_blank" rel="noopener">Kart ↗</a><button class="sm" id="logout">Logg ut</button></div>
 </header>
-<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#dokumenter">Dokumenter</a><a href="#systemer">Systemer</a><a href="#branding">Branding</a></nav>
+<nav id="nav"><a href="#oversikt">Oversikt</a><a href="#okonomi">Økonomi og kunder</a><a href="#nettside">Nettside</a><a href="#moter">Møter</a><a href="#oppgaver">Oppgaver og bugs</a><a href="#pipeline">Pipeline</a><a href="#integrasjoner">Integrasjoner</a><a href="#dokumenter">Dokumenter</a><a href="#drift">Drift</a><a href="#systemer">Systemer</a><a href="#branding">Branding</a></nav>
 <main>
   <div id="setup" class="card hide" style="margin-bottom:16px;border-color:var(--warn)"></div>
 
@@ -119,6 +119,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Neste steg</h3><ul class="list" id="next"></ul></div>
       <div><div class="card"><h3>Nettsiden</h3><ul class="list" id="ovWeb"></ul><div style="margin-top:10px"><a class="btn sm pri" href="#nettside">Endre nettsiden</a></div></div>
+      <div class="card" style="margin-top:16px"><h3>Frister</h3><ul class="list" id="ovDl"></ul><div style="margin-top:10px"><a class="btn sm" href="#drift">Alle frister</a></div></div>
       <div class="card" style="margin-top:16px"><h3>Neste møter</h3><ul class="list" id="ovMeet"></ul><div style="margin-top:10px"><a class="btn sm" href="#moter">Alle møter</a></div></div></div>
     </div>
   </section>
@@ -181,6 +182,38 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <div class="framebar" style="margin-top:28px;justify-content:space-between"><h2 style="margin:0">Kode og eierskap</h2><button class="sm pri" id="assetNew">+ Legg til</button></div>
     <p class="note">Hvem eier koden, kontoene og rettighetene til Insiqt-programvaren og appene. Fyll inn etter hvert. Mangler rettighetshaver, er det markert rødt.</p>
     <div class="card"><ul class="list" id="assets"></ul></div>
+  </section>
+
+  <section data-v="okonomi" class="hide">
+    <h2>Økonomi og kunder</h2>
+    <p class="note">Styretall hentet fra CRM, tilbud, ringelisten og kostnadsregisteret. Testdata og nærstående parter er holdt utenfor summene og merket.</p>
+    <div class="grid g4" id="ecoKpi"></div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Inntekter</h3><div id="ecoRev"></div></div>
+      <div class="card"><h3>Tilbud og pipeline</h3><ul class="list" id="ecoPipe"></ul></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Potensielle kunder</h3><div id="ecoLeads"></div></div>
+      <div class="card"><div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">Hva kundene trenger</h3><button class="sm pri" data-new="company_needs">+ Legg til behov</button></div><div id="ecoNeeds"></div></div>
+    </div>
+  </section>
+
+  <section data-v="drift" class="hide">
+    <h2>Drift</h2>
+    <div class="grid g4" id="drKpi"></div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">Frister og fornyelser</h3><button class="sm pri" data-new="deadlines">+ Ny frist</button></div><ul class="list" id="drDl"></ul><details style="margin-top:8px"><summary class="note">Ferdige frister</summary><ul class="list" id="drDlDone"></ul></details></div>
+      <div class="card"><div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">Driftsstatus</h3><button class="sm" id="upBtn">Sjekk nå</button></div><ul class="list" id="drUp"></ul><p class="note" id="drUpNote"></p></div>
+    </div>
+    <div class="card" style="margin-top:16px;border-color:#FCA5A5">
+      <div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">Avvikslogg for personvern</h3><button class="sm pri" data-new="incidents">+ Registrer avvik</button></div>
+      <p class="note">Ingenting sendes automatisk. Loggen viser fristen og hva som gjenstår. Melding til Datatilsynet sendes manuelt via <a href="https://www.datatilsynet.no/rettigheter-og-plikter/virksomhetenes-plikter/avvikshandtering/" target="_blank" rel="noopener">Datatilsynets avviksskjema ↗</a>, og så krysser dere av her med dato og referanse. Er Insiqt <b>databehandler</b> (data om kundens sjåfører), skal kunden varsles uten ugrunnet opphold. Det er kunden som melder til Datatilsynet. Er Insiqt <b>behandlingsansvarlig</b> (egne ansatte, leads, brukere), gjelder 72-timersfristen for Insiqt selv. Alle avvik skal dokumenteres her, også de som ikke meldes. Ikke juridisk gjennomgått.</p>
+      <ul class="list" id="drInc"></ul>
+    </div>
+    <div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">Kostnader og abonnementer</h3><button class="sm pri" data-new="subscriptions">+ Legg til</button></div><p class="note" id="drSubNote"></p><ul class="list" id="drSub"></ul></div>
+    <div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0 0 6px"><h3 style="margin:0">Tilganger og kontoer</h3><button class="sm pri" data-new="accounts">+ Legg til</button></div>
+      <p class="note">Mål for hver konto: registrert på Insiqt.AI AS, minst to administratorer, innlogging i Proton Pass, fornyelse i fristlisten, og gjennomgått minst en gang i halvåret. Ingen passord eller nøkler her.</p>
+      <ul class="list" id="drAcc"></ul></div>
   </section>
 
   <section data-v="integrasjoner" class="hide">
@@ -257,7 +290,7 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets()]); render(); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco()]); render(); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
 
 /* ---------- render ---------- */
 const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs']];
@@ -279,9 +312,11 @@ function nextSteps() {
   S.offers.filter(o => ['sent', 'viewed'].includes(o.status) && days(o.sent_at) <= -7 && !(o.company_id && S.companies.some(c => c.id === o.company_id && openCo(c) && days(c.next_activity_at) <= 0))).forEach(o => it.push(['warn', `Følg opp tilbud: ${o.company_name || ''}`, `Sendt ${rel(o.sent_at)}`, o.company_id ? `index.html?kunde=${o.company_id}` : 'index.html']));
   S.bugs.filter(b => !['Løst', 'Rejected', 'Tasks backlog'].includes(b.Status) && (String(b.Prioritet).startsWith('P1') || b.Alvorlighet === 'Blokkerer')).forEach(b => it.push(['bad', b.Name, `Bug · ${b.Prioritet || b.Alvorlighet}`, b.url]));
   S.tasks.filter(t => !['Done', 'Canceled'].includes(t.Status) && t.Dates && days(t.Dates) < 0).forEach(t => it.push(['bad', t['Project name'], `Oppgave forfalt ${rel(t.Dates)}`, t.url]));
+  (typeof D !== 'undefined' ? D.deadlines : []).filter(d => !d.done_at && d.due_date && days(d.due_date) <= 7).forEach(d => { const n = days(d.due_date); it.push([n < 0 ? 'bad' : 'warn', d.title, n < 0 ? `Frist forfalt ${rel(d.due_date)}` : `Frist ${rel(d.due_date)}`, '#drift']); });
+  (typeof D !== 'undefined' ? incUrgent() : []).forEach(i => { const [, t] = incClock(i); it.push(['bad', `Personvernavvik: ${i.title}`, t, '#drift']); });
   return it.sort((a, b) => (a[0] === 'bad' ? 0 : 1) - (b[0] === 'bad' ? 0 : 1));
 }
-function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); }
+function render() { renderSetup(); renderOverview(); renderCal(); renderWeb(); renderTasks(); renderPipe(); renderIG(); renderSystems(); renderBrand(); renderDrift(); renderEco(); }
 function renderOverview() {
   const due = S.companies.filter(c => openCo(c) && days(c.next_activity_at) < 0).length;
   const klar = S.web.filter(w => w.status === 'klar').length;
@@ -289,6 +324,7 @@ function renderOverview() {
   $('#kpis').innerHTML = `<div class="card kpi ${due ? 'bad' : ''}"><b>${due}</b><span>CRM-oppfølginger forfalt</span></div><div class="card kpi"><b>${klar}</b><span>nettsideendringer til gjennomsyn</span></div><div class="card kpi"><b>${S.status.notion ? openBugs : '–'}</b><span>åpne bugs${S.status.notion ? '' : ' (Notion ikke koblet)'}</span></div><div class="card kpi"><b>${S.ring}</b><span>urørte i ringelisten</span></div>`;
   const ns = nextSteps();
   $('#next').innerHTML = (S.err.crm ? `<li class="err">CRM: ${esc(S.err.crm)}</li>` : '') + (S.err.notion ? `<li class="err">Notion: ${esc(S.err.notion)}</li>` : '') + (ns.length ? ns.slice(0, 15).map(([lv, t, why, href]) => `<li class="row"><span class="chip ${lv}">${lv === 'bad' ? 'Haster' : 'Viktig'}</span><div><b>${esc(t)}</b><div class="meta">${esc(why)}</div></div><div class="acts"><a class="btn sm" href="${esc(href)}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>Åpne</a></div></li>`).join('') : '<li class="empty">Ingenting haster.</li>');
+  if ($('#ovDl')) $('#ovDl').innerHTML = (typeof D !== 'undefined' ? D.deadlines.filter(d => !d.done_at && d.due_date).slice(0, 4).map(d => { const [c, t] = dlChip(d); return `<li class="row"><span class="chip ${c}">${t}</span><div><b>${esc(d.title)}</b><div class="meta"><span>${esc(fmtD(d.due_date))}</span></div></div><div></div></li>`; }).join('') : '') || '<li class="empty">Ingen frister.</li>';
   $('#ovWeb').innerHTML = S.web.slice(0, 5).map(webRowShort).join('') || '<li class="empty">Ingen endringer ennå.</li>';
 }
 const webRowShort = w => `<li class="row"><span class="chip ${ST[w.status][1]}">${ST[w.status][0]}</span><div><b>${esc(w.title)}</b><div class="meta"><span>${esc(w.page)}</span><span>${esc(fmt(w.created_at))}</span></div></div><div></div></li>`;
@@ -604,8 +640,164 @@ document.addEventListener('click', async e => {
   if (t.dataset.krm) { if (!t.dataset.sure) { t.dataset.sure = 1; t.textContent = 'Sikker?'; return; } try { await api('secret.remove', { name: t.dataset.krm }); toast('Nøkkelen er fjernet'); } catch (err) { toast(err.message); } await loadStatus(); render(); }
 });
 
-const VIEWS = ['oversikt', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'dokumenter', 'systemer', 'branding'];
-function route() { const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt'; if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); } document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
+/* ---------- drift og økonomi ---------- */
+const D = { deadlines: [], subscriptions: [], accounts: [], incidents: [], company_needs: [], eco: { offers: [], ring: [] }, up: null, upAt: 0 };
+const nok = n => n == null || isNaN(n) ? '–' : Math.round(n).toLocaleString('nb-NO') + ' kr';
+const toLocal = d => { if (!d) return ''; const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
+const PILOTS = ['O Myren Transport', 'Oslo Minibuss AS', 'Bjørnars Transport'];
+const DL_CAT = [['selskap', 'Selskap'], ['skatt', 'Skatt og avgift'], ['nokkel', 'Nøkkel/token'], ['avtale', 'Avtale'], ['fornyelse', 'Fornyelse'], ['annet', 'Annet']];
+const DL_REC = [['ingen', 'Engang'], ['manedlig', 'Hver måned'], ['annenhver', 'Annenhver måned'], ['arlig', 'Hvert år']];
+const SUB_PER = [['maned', 'Per måned'], ['ar', 'Per år'], ['forbruk', 'Forbruk (anslag per måned)'], ['engang', 'Engangsbeløp']];
+const INC_ROLE = [['vurderes', 'Må vurderes'], ['behandlingsansvarlig', 'Insiqt er behandlingsansvarlig'], ['databehandler', 'Insiqt er databehandler for kunden']];
+const RISK = [['vurderes', 'Må vurderes'], ['lav', 'Lav'], ['middels', 'Middels'], ['hoy', 'Høy']];
+const YNV = [['vurderes', 'Må vurderes'], ['ja', 'Ja'], ['nei', 'Nei']];
+const NEED_CAT = [['integrasjon', 'Integrasjon'], ['modul', 'Modul'], ['funksjon', 'Funksjon'], ['rapport', 'Rapport'], ['annet', 'Annet']];
+const NEED_PRI = [['ma', 'Må ha'], ['bor', 'Bør ha'], ['kjekt', 'Kjekt å ha']];
+const NEED_COV = [['mangler', 'Mangler i produktet'], ['delvis', 'Delvis dekket'], ['dekket', 'Dekket i dag']];
+const L = arr => Object.fromEntries(arr);
+const FORMS = {
+  deadlines: { title: 'Frist', order: [['due_date', { ascending: true, nullsFirst: false }]], fields: [['title', 'Hva', 'text', null, true], ['due_date', 'Frist', 'date'], ['category', 'Type', 'select', DL_CAT], ['recurrence', 'Gjentas', 'select', DL_REC], ['owner', 'Ansvarlig', 'text'], ['link', 'Lenke (Altinn, konto e.l.)', 'url'], ['notes', 'Notat', 'textarea']] },
+  subscriptions: { title: 'Kostnad', order: [['sort', {}], ['service', {}]], fields: [['service', 'Tjeneste', 'text', null, true], ['purpose', 'Brukes til', 'text'], ['amount', 'Beløp', 'number'], ['currency', 'Valuta', 'select', [['NOK', 'NOK'], ['EUR', 'EUR'], ['USD', 'USD']]], ['period', 'Periode', 'select', SUB_PER], ['paid_by', 'Betales av', 'text'], ['account', 'Konto', 'text'], ['renews_on', 'Fornyes', 'date'], ['active', 'I bruk', 'check'], ['notes', 'Notat', 'textarea']] },
+  accounts: { title: 'Konto', order: [['sort', {}], ['system', {}]], fields: [['system', 'System', 'text', null, true], ['url', 'Adresse', 'url'], ['purpose', 'Brukes til', 'text'], ['registered_to', 'Registrert på (selskap/person)', 'text'], ['admins', 'Administratorer', 'text'], ['payment', 'Betaling', 'text'], ['renews_on', 'Fornyes', 'date'], ['two_admins', 'Minst to administratorer', 'check'], ['in_password_manager', 'Innlogging ligger i Proton Pass', 'check'], ['last_reviewed', 'Sist gjennomgått', 'date'], ['notes', 'Notat', 'textarea']] },
+  incidents: { title: 'Personvernavvik', order: [['discovered_at', { ascending: false }]], fields: [['title', 'Kort beskrivelse', 'text', null, true], ['discovered_at', 'Oppdaget (dato og klokkeslett)', 'datetime', null, true], ['description', 'Hva skjedde', 'textarea'], ['role', 'Insiqts rolle', 'select', INC_ROLE], ['data_types', 'Hvilke personopplysninger', 'text'], ['affected_count', 'Antall berørte (omtrent)', 'number'], ['customers', 'Berørte kunder', 'text'], ['risk', 'Risiko for de berørte', 'select', RISK], ['notify_required', 'Skal meldes til Datatilsynet', 'select', YNV], ['notify_reason', 'Begrunnelse for vurderingen', 'textarea'], ['notified_at', 'Meldt til Datatilsynet (fylles inn manuelt)', 'datetime'], ['notified_ref', 'Referanse fra Datatilsynet/Altinn', 'text'], ['customers_informed_at', 'Kunde varslet', 'datetime'], ['persons_informed_at', 'De berørte informert', 'datetime'], ['measures', 'Tiltak', 'textarea'], ['status', 'Status', 'select', [['apen', 'Åpen'], ['lukket', 'Lukket']]]] },
+  company_needs: { title: 'Kundebehov', order: [['company_name', {}], ['created_at', {}]], fields: [['company_name', 'Kunde', 'company', null, true], ['need', 'Behov (kort, f.eks. «Lønnsintegrasjon Tripletex»)', 'text', null, true], ['category', 'Type', 'select', NEED_CAT], ['priority', 'Prioritet for kunden', 'select', NEED_PRI], ['coverage', 'Dekker Insiqt det i dag', 'select', NEED_COV], ['source', 'Kilde (møte, demo, tilbud …)', 'text'], ['notes', 'Notat', 'textarea']] }
+};
+async function loadDrift() {
+  const tabs = Object.keys(FORMS);
+  const res = await Promise.all(tabs.map(t => { let q = sb.from(t).select('*'); FORMS[t].order.forEach(([c, o]) => q = q.order(c, o)); return q; }));
+  res.forEach((r, i) => { if (r.error) S.err[tabs[i]] = r.error.message; else { D[tabs[i]] = r.data; delete S.err[tabs[i]]; } });
+}
+async function loadEco() {
+  const [o, r] = await Promise.all([
+    sb.from('offers').select('id,ref,status,company_name,company_id,price_month,total_findings,modules,created_at,sent_at,accepted_at').order('created_at', { ascending: false }),
+    sb.from('ringeliste').select('id,company_name,place,status,phone,email,batch,company_id').limit(5000)]);
+  if (o.error) S.err.eco = o.error.message; else { D.eco.offers = o.data; delete S.err.eco; }
+  if (!r.error) D.eco.ring = r.data;
+}
+function crudForm(table, row) {
+  const cfg = FORMS[table]; row = row || {};
+  const names = [...new Set([...S.companies.map(c => c.name), ...PILOTS, ...D.eco.offers.filter(o => !offerFlag(o)).map(o => o.company_name), ...D.eco.ring.map(r => r.company_name)].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'nb'));
+  const inp = ([k, l, t, opts, req]) => {
+    const v = row[k], id = 'f_' + k, rq = req ? 'required' : '';
+    if (t === 'select') return `<label for="${id}">${esc(l)}</label><select id="${id}">${opts.map(([o, ol]) => `<option value="${o}" ${(v ?? (k === 'currency' ? 'NOK' : opts[0][0])) === o ? 'selected' : ''}>${esc(ol)}</option>`).join('')}</select>`;
+    if (t === 'textarea') return `<label for="${id}">${esc(l)}</label><textarea id="${id}">${esc(v || '')}</textarea>`;
+    if (t === 'check') return `<label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="${id}" style="width:auto" ${(v ?? (k === 'active')) ? 'checked' : ''}> ${esc(l)}</label>`;
+    if (t === 'datetime') return `<label for="${id}">${esc(l)}</label><input id="${id}" type="datetime-local" value="${esc(toLocal(v || (req && !row.id ? new Date().toISOString() : '')))}" ${rq}>`;
+    if (t === 'company') return `<label for="${id}">${esc(l)}</label><input id="${id}" list="coList" value="${esc(v || '')}" ${rq} autocomplete="off"><datalist id="coList">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+    return `<label for="${id}">${esc(l)}</label><input id="${id}" type="${t === 'number' ? 'number" step="any' : t}" value="${esc(v ?? '')}" ${rq}>`;
+  };
+  modal(`<h3>${row.id ? 'Rediger' : 'Ny'}: ${esc(cfg.title.toLowerCase())}</h3><form id="cf">${cfg.fields.map(inp).join('')}<div class="foot">${row.id ? '<button type="button" class="bad" id="cfDel">Slett</button>' : ''}<span style="flex:1"></span><button type="button" data-close>Avbryt</button><button class="pri">Lagre</button></div><div class="err" id="cfErr"></div></form>`);
+  $('#cf').addEventListener('submit', async e => {
+    e.preventDefault(); const v = { updated_by: S.status.user || '', updated_at: new Date().toISOString() };
+    cfg.fields.forEach(([k, , t]) => { const el = $('#f_' + k); if (t === 'check') v[k] = el.checked; else if (t === 'number') v[k] = el.value === '' ? null : Number(el.value); else if (t === 'datetime') v[k] = el.value ? new Date(el.value).toISOString() : null; else v[k] = el.value.trim() || null; });
+    if (table === 'company_needs') { const c = S.companies.find(c => c.name.toLowerCase() === (v.company_name || '').toLowerCase()); v.company_id = c ? c.id : null; }
+    if (table === 'incidents' && !row.id) v.reported_by = S.status.user || '';
+    const r = row.id ? await sb.from(table).update(v).eq('id', row.id) : await sb.from(table).insert(v);
+    if (r.error) { $('#cfErr').textContent = r.error.message; return; }
+    closeModal(); toast('Lagret'); await loadDrift(); renderDrift(); renderEco(); renderOverview();
+  });
+  const del = $('#cfDel'); if (del) del.onclick = async () => { if (!del.dataset.sure) { del.dataset.sure = 1; del.textContent = 'Sikker? Klikk igjen'; return; } const r = await sb.from(table).delete().eq('id', row.id); if (r.error) { $('#cfErr').textContent = r.error.message; return; } closeModal(); toast('Slettet'); await loadDrift(); renderDrift(); renderEco(); renderOverview(); };
+}
+/* frister */
+const dlOpen = () => D.deadlines.filter(d => !d.done_at);
+function dlChip(d) { const n = days(d.due_date); if (n === null) return ['mute', 'Mangler dato']; if (n < 0) return ['bad', `Forfalt ${-n} d`]; if (n <= 14) return ['warn', n === 0 ? 'I dag' : `${n} d igjen`]; if (n <= 45) return ['', `${n} d igjen`]; return ['ok', `${n} d igjen`]; }
+function nextDue(d) { const x = new Date(d.due_date + 'T12:00'); const m = { manedlig: 1, annenhver: 2, arlig: 12 }[d.recurrence]; x.setMonth(x.getMonth() + m); return x.toISOString().slice(0, 10); }
+async function dlDone(id) {
+  const d = D.deadlines.find(x => x.id === id); if (!d) return; const now = new Date().toISOString();
+  const v = d.recurrence !== 'ingen' && d.due_date ? { due_date: nextDue(d), last_done_at: now } : { done_at: now, last_done_at: now };
+  const r = await sb.from('deadlines').update({ ...v, updated_by: S.status.user || '', updated_at: now }).eq('id', id);
+  if (r.error) { toast(r.error.message); return; }
+  toast(v.due_date ? `Ferdig. Neste frist ${fmtD(v.due_date)}` : 'Markert som ferdig'); await loadDrift(); renderDrift(); renderOverview();
+}
+const dlRow = d => { const [c, t] = d.done_at ? ['ok', 'Ferdig'] : dlChip(d); return `<li class="row"><span class="chip ${c}">${t}</span><div><b>${esc(d.title)}</b><div class="meta"><span>${d.due_date ? esc(fmtD(d.due_date)) + ' ' + new Date(d.due_date + 'T00:00').getFullYear() : 'Fyll inn dato'}</span><span>${esc(L(DL_CAT)[d.category] || d.category)}</span>${d.recurrence !== 'ingen' ? `<span>${esc(L(DL_REC)[d.recurrence])}</span>` : ''}${d.owner ? `<span>${esc(d.owner)}</span>` : ''}${d.last_done_at ? `<span>Sist gjort ${esc(fmtD(d.last_done_at))}</span>` : ''}</div>${d.notes ? `<div class="note">${esc(d.notes)}</div>` : ''}</div><div class="acts">${d.link ? `<a class="btn sm" href="${esc(d.link)}" target="_blank" rel="noopener">Åpne ↗</a>` : ''}${d.done_at ? '' : `<button class="sm" data-dldone="${d.id}" ${d.due_date ? '' : 'disabled'}>Ferdig</button>`}<button class="sm" data-edit="deadlines" data-id="${d.id}">Rediger</button></div></li>`; };
+/* kostnader */
+const monthly = s => !s.active || s.amount == null ? null : s.period === 'maned' || s.period === 'forbruk' ? s.amount : s.period === 'ar' ? s.amount / 12 : 0;
+function costSum() { const act = D.subscriptions.filter(s => s.active && s.period !== 'engang'); const known = act.filter(s => s.amount != null); const byCur = {}; known.forEach(s => byCur[s.currency] = (byCur[s.currency] || 0) + monthly(s)); return { act, known, byCur, nok: byCur.NOK || 0 }; }
+const curFmt = (n, c) => c === 'NOK' ? nok(n) : `${Math.round(n).toLocaleString('nb-NO')} ${c}`;
+/* avvik */
+function incClock(i) {
+  if (i.status === 'lukket') return ['mute', 'Lukket', ''];
+  const due = new Date(new Date(i.discovered_at).getTime() + 72 * 3600e3), h = Math.round((due - Date.now()) / 3600e3);
+  if (i.role === 'databehandler') return i.customers_informed_at ? ['ok', 'Kunde varslet', `Varslet ${fmt(i.customers_informed_at)}`] : ['bad', 'Varsle kunden nå', 'Uten ugrunnet opphold. Kunden melder selv til Datatilsynet.'];
+  if (i.notify_required === 'nei') return ['ok', 'Ikke meldepliktig', 'Dokumentert her'];
+  if (i.notified_at) return ['ok', 'Meldt', `Meldt ${fmt(i.notified_at)}${i.notified_ref ? ' · ref. ' + i.notified_ref : ''}`];
+  return h > 0 ? [h <= 24 ? 'bad' : 'warn', `${h} t igjen`, `72-timersfristen går ut ${fmt(due)}. Meld manuelt og kryss av.`] : ['bad', `Frist passert for ${-h} t siden`, `Gikk ut ${fmt(due)}. Meld så snart som mulig og forklar forsinkelsen.`];
+}
+const incOpen = () => D.incidents.filter(i => i.status !== 'lukket');
+const incUrgent = () => incOpen().filter(i => ['bad', 'warn'].includes(incClock(i)[0]));
+/* driftsstatus */
+async function runUptime(force) {
+  if (!force && D.up && Date.now() - D.upAt < 5 * 60e3) return renderUptime();
+  const b = $('#upBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Sjekker';
+  try { D.up = await api('uptime'); D.upAt = Date.now(); delete S.err.up; } catch (e) { S.err.up = e.message; }
+  b.disabled = false; b.textContent = 'Sjekk nå'; renderUptime(); renderDriftKpi();
+}
+function renderUptime() {
+  if (S.err.up) { $('#drUp').innerHTML = `<li class="err">${esc(S.err.up)}</li>`; return; }
+  if (!D.up) { $('#drUp').innerHTML = '<li class="empty">Ikke sjekket ennå.</li>'; return; }
+  $('#drUp').innerHTML = D.up.results.map(r => `<li class="row"><span class="chip ${r.ok ? (r.ms > 3000 ? 'warn' : 'ok') : 'bad'}">${r.ok ? 'Oppe' : 'Nede'}</span><div><b>${esc(r.name)}</b><div class="meta"><span>${r.code ? 'HTTP ' + r.code : esc(r.error || 'Ingen svar')}</span><span>${r.ms} ms</span></div></div><div class="acts"><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Åpne ↗</a></div></li>`).join('');
+  $('#drUpNote').textContent = `Sjekket ${fmt(D.up.checked_at)} fra Supabase (Stockholm). Oppe betyr at adressen svarer uten serverfeil. Det sier ikke at alt inne i appen virker.`;
+}
+function renderDriftKpi() {
+  const od = dlOpen().filter(d => days(d.due_date) < 0).length, soon = dlOpen().filter(d => { const n = days(d.due_date); return n !== null && n >= 0 && n <= 30; }).length;
+  const c = costSum(), down = D.up ? D.up.results.filter(r => !r.ok).length : null;
+  $('#drKpi').innerHTML = `<div class="card kpi ${od ? 'bad' : ''}"><b>${od}</b><span>frister forfalt</span></div><div class="card kpi"><b>${soon}</b><span>frister neste 30 dager</span></div><div class="card kpi ${incUrgent().length ? 'bad' : ''}"><b>${incOpen().length}</b><span>åpne personvernavvik</span></div><div class="card kpi ${down ? 'bad' : ''}"><b>${down === null ? '–' : down ? down + ' nede' : 'Alt oppe'}</b><span>driftsstatus</span></div>`;
+}
+function renderDrift() {
+  if (!$('#drDl')) return;
+  renderDriftKpi();
+  const err = k => S.err[k] ? `<li class="err">${esc(S.err[k])}</li>` : '';
+  $('#drDl').innerHTML = err('deadlines') + (dlOpen().map(dlRow).join('') || '<li class="empty">Ingen åpne frister.</li>');
+  $('#drDlDone').innerHTML = D.deadlines.filter(d => d.done_at).map(dlRow).join('') || '<li class="empty">Ingen ennå.</li>';
+  $('#drInc').innerHTML = err('incidents') + (D.incidents.map(i => { const [c, t, why] = incClock(i); return `<li class="row"><span class="chip ${c}">${esc(t)}</span><div><b>${esc(i.title)}</b><div class="meta"><span>Oppdaget ${esc(fmt(i.discovered_at))}</span><span>${esc(L(INC_ROLE)[i.role])}</span><span>Risiko: ${esc(L(RISK)[i.risk])}</span>${i.affected_count != null ? `<span>${i.affected_count} berørte</span>` : ''}${i.customers ? `<span>${esc(i.customers)}</span>` : ''}</div>${why ? `<div class="note">${esc(why)}</div>` : ''}${i.measures ? `<div class="note">Tiltak: ${esc(i.measures)}</div>` : ''}</div><div class="acts"><button class="sm" data-edit="incidents" data-id="${i.id}">Oppdater</button></div></li>`; }).join('') || '<li class="empty">Ingen avvik registrert. Bra – men registrer alle, også små og de som ikke må meldes.</li>');
+  const c = costSum();
+  $('#drSubNote').innerHTML = `Registrert månedskost: <b>${Object.entries(c.byCur).map(([k, v]) => curFmt(v, k)).join(' + ') || '–'}</b> (årsbeløp delt på 12). ${c.known.length} av ${c.act.length} løpende kostnader har beløp${c.known.length < c.act.length ? '. Fyll inn resten for å få riktig sum.' : '.'}`;
+  $('#drSub').innerHTML = err('subscriptions') + D.subscriptions.map(s => `<li class="row"><span class="chip ${!s.active ? 'mute' : s.amount == null ? 'warn' : 'ok'}">${!s.active ? 'Avsluttet' : s.amount == null ? 'Fyll inn' : curFmt(s.amount, s.currency)}</span><div><b>${esc(s.service)}</b><div class="meta"><span>${esc(L(SUB_PER)[s.period])}</span>${s.purpose ? `<span>${esc(s.purpose)}</span>` : ''}<span>Betales av: ${s.paid_by ? esc(s.paid_by) : '<b style="color:var(--bad)">ikke registrert</b>'}</span>${s.renews_on ? `<span>Fornyes ${esc(fmtD(s.renews_on))}</span>` : ''}</div>${s.notes ? `<div class="note">${esc(s.notes)}</div>` : ''}</div><div class="acts"><button class="sm" data-edit="subscriptions" data-id="${s.id}">Rediger</button></div></li>`).join('');
+  $('#drAcc').innerHTML = err('accounts') + D.accounts.map(a => { const ok = a.registered_to && /insiqt/i.test(a.registered_to) && !/ikke insiqt/i.test(a.registered_to); const rev = a.last_reviewed ? days(a.last_reviewed) : null; return `<li class="row"><span class="chip ${!a.registered_to ? 'bad' : ok ? 'ok' : 'warn'}">${!a.registered_to ? 'Eier ukjent' : ok ? 'Insiqt.AI AS' : 'Ikke Insiqt'}</span><div><b>${esc(a.system)}</b><div class="meta"><span>Registrert på: ${esc(a.registered_to || 'fyll inn')}</span>${a.admins ? `<span>Admin: ${esc(a.admins)}</span>` : ''}${a.payment ? `<span>Betaling: ${esc(a.payment)}</span>` : ''}</div><div class="meta" style="margin-top:4px"><span class="chip ${a.two_admins ? 'ok' : 'mute'}">${a.two_admins ? '✓' : '✗'} To admins</span><span class="chip ${a.in_password_manager ? 'ok' : 'mute'}">${a.in_password_manager ? '✓' : '✗'} Proton Pass</span><span class="chip ${rev !== null && rev > -183 ? 'ok' : 'mute'}">${rev === null ? 'Aldri gjennomgått' : 'Gjennomgått ' + esc(fmtD(a.last_reviewed))}</span></div>${a.notes ? `<div class="note">${esc(a.notes)}</div>` : ''}</div><div class="acts">${a.url ? `<a class="btn sm" href="${esc(a.url)}" target="_blank" rel="noopener">Åpne ↗</a>` : ''}<button class="sm" data-edit="accounts" data-id="${a.id}">Rediger</button></div></li>`; }).join('');
+}
+/* økonomi */
+function offerFlag(o) { const n = String(o.company_name || ''), r = String(o.ref || ''); if (/test/i.test(r) || /testtransport/i.test(n)) return 'Testdata'; if (/nor\s*logistikk|transparabl/i.test(n)) return 'Nærstående part'; if (!n || /ukjent selskap/i.test(n)) return 'Ukjent selskap'; return ''; }
+const OST = { draft: ['Utkast', 'mute'], sent: ['Sendt', ''], viewed: ['Åpnet', 'warn'], accepted: ['Akseptert', 'ok'], declined: ['Avslått', 'mute'], expired: ['Utløpt', 'mute'] };
+function offersByRef() { const m = new Map(); [...D.eco.offers].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach(o => { const k = o.ref || o.id, p = m.get(k); const rank = s => ({ draft: 0, sent: 1, viewed: 2, declined: 3, expired: 3, accepted: 4 }[s] ?? 0); if (!p || rank(o.status) >= rank(p.status)) m.set(k, o); }); return [...m.values()]; }
+function renderEco() {
+  if (!$('#ecoKpi')) return;
+  const paying = S.companies.filter(c => ['won', 'onboarding', 'aktiv_kunde'].includes(c.status) && Number(c.mrr) > 0);
+  const mrr = paying.reduce((s, c) => s + Number(c.mrr), 0), cost = costSum();
+  const offs = offersByRef(), openReal = offs.filter(o => ['sent', 'viewed'].includes(o.status) && !offerFlag(o));
+  const pipe = openReal.reduce((s, o) => s + Number(o.price_month || 0), 0);
+  $('#ecoKpi').innerHTML = `<div class="card kpi"><b>${nok(mrr)}</b><span>MRR – faste månedsinntekter</span></div><div class="card kpi"><b>${paying.length}</b><span>betalende kunder</span></div><div class="card kpi"><b>${cost.known.length ? nok(cost.nok - mrr) : '–'}</b><span>netto brenning per måned${cost.known.length < cost.act.length ? ' (kostnader ufullstendige)' : ''}</span></div><div class="card kpi"><b>${nok(pipe)}</b><span>åpne tilbud per måned (${openReal.length} ekte)</span></div>`;
+  $('#ecoRev').innerHTML = (S.err.crm ? `<p class="err">${esc(S.err.crm)}</p>` : '') + `<div class="grid g2" style="gap:10px"><div><div class="note">MRR</div><b style="font-size:22px">${nok(mrr)}</b></div><div><div class="note">ARR (MRR × 12)</div><b style="font-size:22px">${nok(mrr * 12)}</b></div></div>
+    <ul class="list" style="margin-top:10px">${paying.map(c => `<li class="row"><span class="chip ok">${esc(CRM_LBL[c.status])}</span><div><b>${esc(c.name)}</b></div><div><b>${nok(c.mrr)}</b>/mnd</div></li>`).join('') || `<li class="empty">Ingen betalende kunder ennå. Inntekt i dag: 0 kr.</li>`}</ul>
+    <p class="note" style="margin-top:10px">Pilotene (${PILOTS.join(', ')}) betaler ikke${S.companies.some(c => PILOTS.some(p => c.name.toLowerCase().startsWith(p.toLowerCase().split(' ')[0]))) ? '' : ' og ligger ikke i CRM-et ennå. Legg dem inn i CRM med status «Onboarding» så de telles her'}. Når en kunde vinnes, setter du MRR på kundekortet i CRM-et, så oppdateres tallene her. Fakturert inntekt fra regnskapet er ikke koblet til.</p>
+    <p class="note">CRM-et har ${S.companies.length} selskaper registrert.</p>`;
+  const mods = {}; openReal.forEach(o => (o.modules || []).forEach(m => mods[m.name] = (mods[m.name] || 0) + 1));
+  $('#ecoPipe').innerHTML = (S.err.eco ? `<li class="err">${esc(S.err.eco)}</li>` : '') + (offs.map(o => { const f = offerFlag(o), [lab, cls] = OST[o.status] || [o.status, 'mute']; return `<li class="row"><span class="chip ${cls}">${esc(lab)}</span><div><b>${esc(o.company_name || 'Uten navn')}</b> ${f ? `<span class="chip ${f === 'Nærstående part' ? 'warn' : 'mute'}">${f}</span>` : ''}<div class="meta"><span>${esc(o.ref || '')}</span><span>${esc(fmtD(o.created_at))}</span>${o.total_findings ? `<span>Funn: ${nok(o.total_findings)}/år</span>` : ''}${(o.modules || []).length ? `<span>Moduler: ${esc(o.modules.map(m => m.name).join(', '))}</span>` : ''}</div></div><div><b>${nok(o.price_month)}</b>/mnd</div></li>`; }).join('') || '<li class="empty">Ingen tilbud.</li>') + `<li class="note" style="padding-top:8px">Samme tilbud sendt flere ganger vises én gang. Testdata, nærstående parter og «Ukjent selskap» er holdt utenfor summen.</li>`;
+  const R = D.eco.ring, by = (f) => { const m = {}; R.forEach(r => { const k = f(r); if (k) m[k] = (m[k] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  const place = by(r => r.place ? r.place.trim().toLowerCase().replace(/(^|[\s-])\S/g, s => s.toUpperCase()) : '');
+  const bat = by(r => (r.batch || 'Uten kilde').replace(/\.(csv|xlsx)$/i, ''));
+  const st = by(r => r.status), conv = R.filter(r => r.status === 'konvertert' || r.company_id).length;
+  $('#ecoLeads').innerHTML = `<div class="grid g2" style="gap:10px"><div><div class="note">I ringelisten</div><b style="font-size:22px">${R.length}</b></div><div><div class="note">Urørte / konvertert</div><b style="font-size:22px">${(st.find(x => x[0] === 'ny') || [0, 0])[1]} / ${conv}</b></div><div><div class="note">Med telefon</div><b>${R.filter(r => r.phone).length}</b></div><div><div class="note">Med e-post</div><b>${R.filter(r => r.email).length}</b></div></div>
+    <h3 style="margin-top:14px;font-size:14px">Flest leads</h3><ul class="list">${place.slice(0, 6).map(([k, n]) => `<li class="row"><span class="chip mute">${n}</span><div>${esc(k)}</div><div></div></li>`).join('')}</ul>
+    <h3 style="margin-top:14px;font-size:14px">Kilder</h3><ul class="list">${bat.map(([k, n]) => `<li class="row"><span class="chip mute">${n}</span><div>${esc(k)}</div><div></div></li>`).join('')}</ul>
+    <p class="note" style="margin-top:8px">Listen fra NOR Logistikk kommer fra en nærstående part. Bransje og ansatte er ikke fylt inn i ringelisten ennå. <a href="kart.html" target="_blank" rel="noopener">Se på kart ↗</a></p>`;
+  const NE = D.company_needs, groups = {}; NE.forEach(n => (groups[n.company_name] = groups[n.company_name] || []).push(n));
+  const agg = {}; NE.forEach(n => { const k = n.need.trim().toLowerCase(); agg[k] = agg[k] || { need: n.need, n: 0, cos: new Set(), cov: n.coverage }; agg[k].n++; agg[k].cos.add(n.company_name); if (n.coverage === 'mangler') agg[k].cov = 'mangler'; });
+  const top = Object.values(agg).sort((a, b) => b.cos.size - a.cos.size || (a.cov === 'mangler' ? -1 : 1)).slice(0, 8);
+  const covC = { dekket: 'ok', delvis: 'warn', mangler: 'bad' };
+  $('#ecoNeeds').innerHTML = (S.err.company_needs ? `<p class="err">${esc(S.err.company_needs)}</p>` : '') + (NE.length ? `<p class="note">${NE.length} behov fra ${Object.keys(groups).length} kunder. ${NE.filter(n => n.coverage === "mangler").length} mangler i produktet i dag.</p>
+    <h3 style="font-size:14px;margin-top:10px">Mest etterspurt</h3><ul class="list">${top.map(a => `<li class="row"><span class="chip ${covC[a.cov]}">${a.cos.size} kunde${a.cos.size > 1 ? 'r' : ''}</span><div><b>${esc(a.need)}</b><div class="meta"><span>${esc([...a.cos].join(', '))}</span></div></div><div></div></li>`).join('')}</ul>
+    <h3 style="font-size:14px;margin-top:14px">Per kunde</h3>${Object.entries(groups).map(([co, list]) => `<details style="border-bottom:1px solid var(--line);padding:8px 0"><summary><b>${esc(co)}</b> <span class="note">${list.length} behov · ${list.filter(n => n.coverage === 'mangler').length} mangler</span></summary><ul class="list">${list.map(n => `<li class="row"><span class="chip ${covC[n.coverage]}">${esc(L(NEED_COV)[n.coverage])}</span><div><b>${esc(n.need)}</b><div class="meta"><span>${esc(L(NEED_CAT)[n.category])}</span><span>${esc(L(NEED_PRI)[n.priority])}</span>${n.source ? `<span>${esc(n.source)}</span>` : ''}</div>${n.notes ? `<div class="note">${esc(n.notes)}</div>` : ''}</div><div class="acts"><button class="sm" data-edit="company_needs" data-id="${n.id}">Rediger</button></div></li>`).join('')}</ul></details>`).join('')}` : `<p class="empty">Ingen behov registrert ennå. Legg inn det hver kunde og pilot ber om etter møter og demoer – f.eks. «Lønnsintegrasjon», «Duett», «Rapport per bil». Da ser du hva som går igjen, og hva produktet mangler.</p>`);
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.new) crudForm(t.dataset.new);
+  if (t.dataset.edit) crudForm(t.dataset.edit, D[t.dataset.edit].find(x => x.id === t.dataset.id));
+  if (t.dataset.dldone) dlDone(t.dataset.dldone);
+  if (t.id === 'upBtn') runUptime(true);
+});
+
+const VIEWS = ['oversikt', 'okonomi', 'nettside', 'moter', 'oppgaver', 'pipeline', 'integrasjoner', 'dokumenter', 'drift', 'systemer', 'branding'];
+function route() { const [h, sub] = location.hash.slice(1).split('/'); const v = VIEWS.includes(h) ? h : 'oversikt'; if (v === 'drift' && S.status.user) runUptime(false); if (v === 'integrasjoner') { if (sub) IG.sel = sub; renderIG(); if (sub) window.scrollTo({ top: 0 }); } document.querySelectorAll('[data-v]').forEach(s => s.classList.toggle('hide', s.dataset.v !== v)); document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + v)); }
 window.addEventListener('hashchange', route);
 sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') location.reload(); });
 boot();
