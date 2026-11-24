@@ -28,7 +28,7 @@ const PEOPLE: Record<string, string> = { John: "396d872b-594c-8169-84e2-0002a562
 
 // Nøkler kan legges inn i kontrollsenteret (tabellen kontroll_secrets) eller som Supabase-secrets.
 // Nøkkel limt inn i kontrollsenteret vinner, slik at en ny nøkkel virker med en gang.
-const KEYS = ["GITHUB_TOKEN", "ANTHROPIC_API_KEY", "NOTION_TOKEN"] as const;
+const KEYS = ["GITHUB_TOKEN", "ANTHROPIC_API_KEY", "NOTION_TOKEN", "POCKET_API_KEY"] as const;
 const OVERRIDE: Record<string, string> = {};
 const env = (k: string) => OVERRIDE[k] || Deno.env.get(k) || "";
 const DEFAULT_ALLOWED = ["john@insiqt.ai", "ove@insiqt.ai"];
@@ -299,6 +299,13 @@ async function testKey(name: string, value: string): Promise<{ ok: boolean; mess
       if (!bug) return { ok: false, message: "Ser Gjøremål, men ikke Bug Tracker. Del «Software» med integrasjonen." };
       return { ok: true, message: "Nøkkelen virker og ser både Gjøremål og Bug Tracker." };
     }
+    if (name === "POCKET_API_KEY") {
+      const r = await fetch(`${POCKET}/public/folders`, { headers: { Authorization: `Bearer ${value}` } });
+      if (r.status === 401 || r.status === 403) return { ok: false, message: "Pocket godtar ikke nøkkelen. Lag en ny under Settings → Developers → API Keys og kopier hele (pk_…)." };
+      if (!r.ok) return { ok: false, message: `Pocket svarte ${r.status}.` };
+      const d = await r.json(); const f = flatFolders(d.data || []).find((x: any) => norm(x.name) === norm(POCKET_FOLDER));
+      return f ? { ok: true, message: `Nøkkelen virker. Fant mappen «${f.name}» med ${f.total_recording_count ?? f.recording_count ?? "?"} opptak.` } : { ok: false, message: `Nøkkelen virker, men mappen «${POCKET_FOLDER}» finnes ikke for denne brukeren. Lag nøkkelen fra kontoen som eier mappen.` };
+    }
     return { ok: false, message: "Ukjent nøkkel." };
   } catch (e) { return { ok: false, message: "Fikk ikke kontakt: " + String((e as Error).message || e).slice(0, 150) }; }
 }
@@ -308,6 +315,73 @@ async function secretStatus() {
   return Object.fromEntries(KEYS.map(k => [k, by[k] ? { set: true, source: "kontrollsenter", ...by[k] } : Deno.env.get(k) ? { set: true, source: "supabase" } : { set: false }]));
 }
 
+
+// ---------- Pocket ----------
+const POCKET = "https://public.heypocketai.com/api/v1";
+const POCKET_FOLDER = "Insiqt.ai Project"; // bare denne mappen hentes
+const norm = (s: unknown) => String(s || "").trim().toLowerCase();
+const flatFolders = (arr: any[]): any[] => arr.flatMap((f: any) => [f, ...flatFolders(f.children || [])]);
+async function pocket(path: string) {
+  const r = await fetch(`${POCKET}${path}`, { headers: { Authorization: `Bearer ${env("POCKET_API_KEY")}` }, signal: AbortSignal.timeout(20000) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d?.success === false) throw new Error(`Pocket ${r.status}: ${d?.error || "ukjent feil"}`);
+  return d;
+}
+// Oppsummeringen er ikke beskrevet i Pockets dokumentasjon, så vi henter tekst ut av strukturen uansett form.
+function sumText(x: any, depth = 0): string {
+  if (x == null || depth > 6) return "";
+  if (typeof x === "string") return x;
+  if (Array.isArray(x)) return x.map(v => sumText(v, depth + 1)).filter(Boolean).join("\n\n");
+  if (typeof x === "object") {
+    const pref = ["markdown", "content", "summary", "text", "body", "notes", "value"];
+    for (const k of pref) if (typeof x[k] === "string" && x[k].trim().length > 20) return (x.title || x.name ? `## ${x.title || x.name}\n` : "") + x[k];
+    return Object.entries(x).filter(([k]) => !/(^id$|_id$|_at$|^id_|color|status|language|type|kind|model|version|error)/i.test(k)).map(([, v]) => sumText(v, depth + 1)).filter(t => t.trim().length > 2).join("\n");
+  }
+  return "";
+}
+function transcriptText(t: any) {
+  const seg = t?.segments || [];
+  return seg.map((s: any) => `${s.speakerName || s.speaker || "?"}: ${s.text || ""}`).join("\n");
+}
+async function pocketSync(who: string) {
+  const fd = await pocket("/public/folders");
+  const all = flatFolders(fd.data || []);
+  const root = all.find((f: any) => norm(f.name) === norm(POCKET_FOLDER));
+  if (!root) throw new Error(`Fant ikke mappen «${POCKET_FOLDER}» i Pocket.`);
+  const ids = new Set(flatFolders([root]).map((f: any) => f.id));
+  const { data: last } = await admin.from("conversations").select("recorded_at").order("recorded_at", { ascending: false }).limit(1);
+  const since = last?.[0]?.recorded_at ? new Date(new Date(last[0].recorded_at).getTime() - 3 * 864e5) : new Date(Date.now() - 180 * 864e5);
+  const recs: any[] = [];
+  for (let page = 1; page <= 10; page++) {
+    const d = await pocket(`/public/recordings?start_date=${since.toISOString().slice(0, 10)}&page=${page}&limit=100`);
+    recs.push(...(d.data || []));
+    if (!d.pagination?.has_more) break;
+  }
+  const mine = recs.filter((r: any) => ids.has(r.folder_id));
+  const { data: have } = await admin.from("conversations").select("id,summary_kind").in("id", mine.map((r: any) => r.id).concat(["00000000-0000-0000-0000-000000000000"]));
+  const known = new Map((have || []).map((r: any) => [r.id, r.summary_kind]));
+  let added = 0, updated = 0, waiting = 0;
+  for (const r of mine) {
+    if (known.has(r.id) && known.get(r.id) !== "transkripsjon") continue; // allerede hentet med oppsummering
+    const det = await pocket(`/public/recordings/${r.id}?include_transcript=true&include_summarizations=true`);
+    const g = det.data || {};
+    let notes = sumText(g.summarizations).trim(), kind = "oppsummering";
+    if (!notes) {
+      const ageH = (Date.now() - new Date(g.recording_at || r.recording_at).getTime()) / 36e5;
+      if (ageH < 3) { waiting++; continue; } // Pocket lager fortsatt oppsummeringen
+      notes = transcriptText(g.transcript).trim(); kind = "transkripsjon";
+      if (!notes) { waiting++; continue; }
+    }
+    if (known.has(r.id) && kind === "transkripsjon") continue;
+    const row = { id: r.id, title: g.title || r.title || "Uten tittel", recorded_at: g.recording_at || r.recording_at, folder: POCKET_FOLDER, notes: notes.slice(0, 20000), source: "pocket-api", summary_kind: kind, synced_at: new Date().toISOString() };
+    const { error } = await admin.from("conversations").upsert(row, { onConflict: "id" });
+    if (error) throw new Error(error.message);
+    known.has(r.id) ? updated++ : added++;
+  }
+  const note = `${added} nye${updated ? `, ${updated} oppdatert` : ""}${waiting ? `, ${waiting} venter på oppsummering i Pocket` : ""} · ${who.split("@")[0]}`;
+  await admin.from("sync_log").upsert({ source: "pocket", synced_at: new Date().toISOString(), note }, { onConflict: "source" });
+  return { added, updated, waiting, checked: mine.length, note };
+}
 
 // ---------- AI (Claude) ----------
 const FACTS = `Faste fakta om Insiqt.AI AS (org.nr. 920 298 796):
@@ -346,7 +420,7 @@ async function buildContext(nConv = 12) {
     admin.from("onboarding_steps").select("key,sort,title,readiness,internal_note").order("sort"),
     admin.from("onboarding_progress").select("customer_name,step_key"),
     admin.from("calendar_events").select("title,starts_at,attendees").gte("starts_at", iso(now - 7 * 864e5)).lte("starts_at", iso(now + 21 * 864e5)).order("starts_at"),
-    admin.from("conversations").select("title,recorded_at,notes").order("recorded_at", { ascending: false }).limit(nConv),
+    admin.from("conversations").select("title,recorded_at,notes").eq("hidden", false).order("recorded_at", { ascending: false }).limit(nConv),
     admin.from("brand_assets").select("name,status"),
     admin.from("website_changes").select("title,status,created_at").order("created_at", { ascending: false }).limit(8),
   ]);
@@ -456,7 +530,7 @@ Deno.serve(async (req) => {
     await loadSecrets();
     const need = (k: string, label: string) => { if (!env(k)) throw new Error(`${label} er ikke koblet til ennå. Se Integrasjoner i kontrollsenteret.`); };
 
-    if (a === "status") return json({ github: !!env("GITHUB_TOKEN"), anthropic: !!env("ANTHROPIC_API_KEY"), notion: !!env("NOTION_TOKEN"), user: who, keys: await secretStatus() });
+    if (a === "status") return json({ github: !!env("GITHUB_TOKEN"), anthropic: !!env("ANTHROPIC_API_KEY"), notion: !!env("NOTION_TOKEN"), pocket: !!env("POCKET_API_KEY"), user: who, keys: await secretStatus() });
     if (a === "secret.set") {
       const name = String(body.name || ""), value = String(body.value || "").trim();
       if (!(KEYS as readonly string[]).includes(name)) return json({ error: "Ukjent nøkkel." }, 400);
@@ -513,6 +587,7 @@ Deno.serve(async (req) => {
       return json(await aiMeeting(text, title, String(body.company || "")));
     }
     if (a === "ai.bug") { const t = String(body.text || "").trim(); if (!t) return json({ error: "Beskriv feilen." }, 400); return json(await aiBug(t, String(body.link || ""))); }
+    if (a === "pocket.sync") { need("POCKET_API_KEY", "Pocket"); return json(await pocketSync(who)); }
     if (a === "ai.weekly") { return json(await aiWeekly(who)); }
     if (a === "uptime") {
       const results = await Promise.all(UPTIME.map(async ([name, url]) => {

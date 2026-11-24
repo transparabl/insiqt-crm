@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no" data-build="1795490541">
+<html lang="no" data-build="1795492146">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -180,7 +180,7 @@ h1,h2,h3{margin:0;letter-spacing:-.3px}h2{font-size:22px;margin-bottom:12px}h3{f
     <div class="framebar" style="justify-content:space-between"><h2 style="margin:0">Møter</h2><span class="note" id="calSync"></span></div>
     <div class="grid g2"><div class="card"><h3>Kommende</h3><ul class="list" id="calNext"></ul></div><div class="card"><h3>Siste 7 dager</h3><ul class="list" id="calPast"></ul></div></div>
     <p class="note" style="margin-top:12px">Fra Google Kalender (john@insiqt.ai). Referatene fra Google Meet ligger også under Dokumenter.</p>
-    <div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Samtaler fra Pocket</h3><span class="note" id="convSync"></span></div><p class="note">Oppsummeringer fra mappen «Insiqt.ai Project» i Pocket. Hele opptaket ligger i Pocket. Trykk «Lag oppfølging» for oppgaver, kundebehov og e-postutkast.</p><ul class="list" id="convList"></ul></div>
+    <div class="card" style="margin-top:16px"><div class="framebar" style="justify-content:space-between;margin:0"><h3 style="margin:0">Samtaler fra Pocket</h3><div class="acts"><span class="note" id="convSync"></span><span id="convBtn"></span></div></div><p class="note">Oppsummeringer fra mappen «Insiqt.ai Project» i Pocket. Andre mapper hentes ikke. Hele opptaket ligger i Pocket. Trykk «Lag oppfølging» for oppgaver, kundebehov og e-postutkast.</p><div id="convMsg"></div><ul class="list" id="convList"></ul></div>
   </section>
 
   <section data-v="oppgaver" class="hide">
@@ -320,10 +320,10 @@ async function loadNotion() {
   if (!S.status.notion) return;
   try { const [b, t] = await Promise.all([api('notion.list', { db: 'bug' }), api('notion.list', { db: 'task' })]); S.bugs = b.rows; S.tasks = t.rows; delete S.err.notion; } catch (e) { S.err.notion = e.message; }
 }
-async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA(), loadAI()]); render(); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
+async function loadAll() { await loadStatus(); await Promise.all([loadWeb(), loadCRM(), loadNotion(), loadGuides(), loadDocs(), loadCal(), loadAssets(), loadDrift(), loadEco(), loadBA(), loadAI()]); render(); if (S.status.pocket && (!AI.pocketSync || Date.now() - new Date(AI.pocketSync.synced_at).getTime() > 3 * 36e5)) pocketSync(true); if (location.hash.startsWith('#drift')) runUptime(false); poll(); }
 
 /* ---------- render ---------- */
-const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs']];
+const KEYMAP = [['GITHUB_TOKEN', 'kontroll-github', 'GitHub', 'nettsideendringer'], ['ANTHROPIC_API_KEY', 'kontroll-claude', 'Claude API', 'nettsideendringer'], ['NOTION_TOKEN', 'kontroll-notion', 'Notion', 'oppgaver og bugs'], ['POCKET_API_KEY', 'kontroll-pocket', 'Pocket', 'møteopptak']];
 function renderSetup() {
   const k = S.status.keys || {}, box = $('#setup');
   const miss = KEYMAP.filter(([n]) => !(k[n] && k[n].set));
@@ -786,7 +786,7 @@ document.addEventListener('submit', async e => {
   if (!f.dataset.kform) return; e.preventDefault();
   const name = f.dataset.kform, inp = f.querySelector('input'), btn = f.querySelector('button'), msg = document.querySelector(`[data-kmsg="${name}"]`);
   if (!inp.value.trim()) return; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Tester';
-  try { const r = await api('secret.set', { name, value: inp.value }); inp.value = ''; if (r.ok) { toast('Koblet til'); await loadStatus(); await Promise.all([loadNotion(), loadGuides()]); render(); } else { msg.innerHTML = `<p class="err">${esc(r.message)}</p>`; } }
+  try { const r = await api('secret.set', { name, value: inp.value }); inp.value = ''; if (r.ok) { toast('Koblet til'); await loadStatus(); await Promise.all([loadNotion(), loadGuides(), loadAI()]); render(); } else { msg.innerHTML = `<p class="err">${esc(r.message)}</p>`; } }
   catch (err) { msg.innerHTML = `<p class="err">${esc(err.message)}</p>`; }
   btn.disabled = false; btn.textContent = 'Lagre og test';
 });
@@ -1001,7 +1001,7 @@ document.addEventListener('click', e => {
 /* ---------- AI-assistent og Pocket-samtaler ---------- */
 const AI = { conv: [], reports: [], log: [], meet: null, bug: null };
 async function loadAI() {
-  const [c, r, l] = await Promise.all([sb.from('conversations').select('*').order('recorded_at', { ascending: false }), sb.from('ai_reports').select('*').order('created_at', { ascending: false }).limit(20), sb.from('sync_log').select('*').eq('source', 'pocket')]);
+  const [c, r, l] = await Promise.all([sb.from('conversations').select('*').eq('hidden', false).order('recorded_at', { ascending: false }), sb.from('ai_reports').select('*').order('created_at', { ascending: false }).limit(20), sb.from('sync_log').select('*').eq('source', 'pocket')]);
   if (!c.error) AI.conv = c.data; if (!r.error) AI.reports = r.data; AI.pocketSync = (l.data || [])[0];
 }
 function md(t) {
@@ -1012,10 +1012,19 @@ function md(t) {
 const convDate = c => new Date(c.recorded_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
 function renderConv() {
   if (!$('#convList')) return;
-  $('#convSync').textContent = AI.pocketSync ? `Hentet ${fmt(AI.pocketSync.synced_at)} · ${AI.pocketSync.note || ''}` : '';
-  $('#convList').innerHTML = AI.conv.map(c => `<li class="row"><span class="chip mute">${esc(convDate(c))}</span><div><details><summary><b>${esc(c.title || 'Uten tittel')}</b></summary><div class="note" style="margin-top:6px">${md(c.notes)}</div></details></div><div class="acts"><button class="sm pri" data-convai="${esc(c.id)}">Lag oppfølging</button></div></li>`).join('') || '<li class="empty">Ingen samtaler hentet ennå.</li>';
+  $('#convSync').textContent = AI.pocketSync ? `Sist hentet ${fmt(AI.pocketSync.synced_at)} · ${AI.pocketSync.note || ''}` : '';
+  $('#convBtn').innerHTML = S.status.pocket ? `<button class="sm pri" data-pocketsync>${AI.syncing ? '<span class="spin"></span> Henter' : 'Hent nye fra Pocket'}</button>` : `<a class="btn sm pri" href="#integrasjoner/kontroll-pocket">Koble til Pocket</a>`;
+  if (AI.syncing) $('#convBtn button').disabled = true;
+  $('#convList').innerHTML = AI.conv.map(c => `<li class="row"><span class="chip mute">${esc(convDate(c))}</span><div><details><summary><b>${esc(c.title || 'Uten tittel')}</b></summary><div class="note" style="margin-top:6px">${md(c.notes)}</div></details></div><div class="acts"><button class="sm pri" data-convai="${esc(c.id)}">Lag oppfølging</button><button class="sm" data-convhide="${esc(c.id)}" title="Skjul samtalen fra kontrollsenteret og AI-assistenten. Den blir liggende i Pocket.">Skjul</button></div></li>`).join('') || '<li class="empty">Ingen samtaler hentet ennå.</li>';
   const sel = $('#mtConv'); if (sel) { const v = sel.value; sel.innerHTML = '<option value="">Lim inn referat i stedet …</option>' + AI.conv.map(c => `<option value="${esc(c.id)}">${esc(convDate(c))} – ${esc(c.title || '')}</option>`).join(''); sel.value = v; }
   const dl = $('#coList2'); if (dl) dl.innerHTML = (typeof obCustomers === 'function' ? obCustomers() : []).map(n => `<option value="${esc(n)}">`).join('');
+}
+async function pocketSync(silent) {
+  if (!S.status.pocket || AI.syncing) return;
+  AI.syncing = true; renderConv();
+  try { const r = await api('pocket.sync'); await loadAI(); if (!silent || r.added || r.updated) toast(r.added || r.updated ? `Hentet ${r.added} nye samtaler fra Pocket` : 'Ingen nye samtaler i Pocket'); $('#convMsg').innerHTML = ''; }
+  catch (e) { $('#convMsg').innerHTML = `<p class="err">Pocket: ${esc(e.message)}</p>`; }
+  AI.syncing = false; renderAI();
 }
 const SUGG = ['Hva mangler før Bjørnars kan komme i gang?', 'Hvilke frister har vi de neste 30 dagene?', 'Hva er besluttet om Duett i møtene?', 'Hvilke integrasjoner er faktisk live?', 'Hva bør jeg ta opp med Raman denne uka?'];
 function renderAI() {
@@ -1078,6 +1087,8 @@ $('#wkBtn').onclick = async () => {
 document.addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.asksugg) ask(t.dataset.asksugg);
+  if (t.dataset.pocketsync !== undefined) pocketSync(false);
+  if (t.dataset.convhide) { const c = AI.conv.find(x => x.id === t.dataset.convhide); if (!c) return; t.disabled = true; const { error } = await sb.from('conversations').update({ hidden: true }).eq('id', c.id); if (error) { toast(error.message); t.disabled = false; return; } AI.conv = AI.conv.filter(x => x.id !== c.id); renderAI(); toast(`«${c.title}» er skjult`); }
   if (t.dataset.convai) { location.hash = '#ai'; $('#mtConv').value = t.dataset.convai; $('#mtBtn').click(); setTimeout(() => $('#mtOut').scrollIntoView({ behavior: 'smooth' }), 100); }
   if (t.dataset.mneed) { const n = AI.meet.kundebehov[+t.dataset.mneed]; t.disabled = true; const r = await sb.from('company_needs').insert({ company_name: n.kunde, need: n.behov, category: ['integrasjon', 'modul', 'funksjon', 'rapport', 'annet'].includes(n.kategori) ? n.kategori : 'annet', priority: ['ma', 'bor', 'kjekt'].includes(n.prioritet) ? n.prioritet : 'bor', coverage: ['dekket', 'delvis', 'mangler'].includes(n.dekning) ? n.dekning : 'mangler', source: 'AI fra møte', updated_by: S.status.user || '' }); if (r.error) { toast(r.error.message); t.disabled = false; return; } n.done = true; renderMeet(); toast('Lagt til i kundebehov'); if (typeof loadDrift === 'function') { await loadDrift(); renderEco(); } }
   if (t.dataset.mtask) { const o = AI.meet.oppgaver[+t.dataset.mtask]; t.disabled = true; try { await api('notion.create', { db: 'task', values: { name: o.tittel, du: o.du_skal, own: ['John', 'Ove', 'Raman'].includes(o.eier) ? o.eier : '', due: o.frist || null, omr: o.omrade || 'Drift' } }); o.done = true; renderMeet(); toast('Opprettet i Gjøremål'); } catch (err) { toast(err.message); t.disabled = false; } }
